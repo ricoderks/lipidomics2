@@ -7,11 +7,16 @@
 app_server <- function(input, output, session) {
   # for communication between modules
   r <- shiny::reactiveValues(
-    name = NA,
+    name = NULL,
     files = list(
-      meta_file = NA,
-      data_file = NA,
-      rda_file = NA
+      meta_file = NULL,
+      data_file = NULL,
+      rda_file = NULL
+    ),
+    data = list(
+      meta_data = NULL,
+      raw_data = NULL,
+      clean_data = NULL
     )
 
   )
