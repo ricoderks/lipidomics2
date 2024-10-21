@@ -8,17 +8,18 @@
 #'
 #' @importFrom shiny NS tagList
 #' @importFrom bslib navset_card_tab nav_panel
+#'
 mod_help_ui <- function(id){
-  ns <- NS(id)
-  tagList(
+  ns <- shiny::NS(id)
+  shiny::tagList(
     bslib::navset_card_tab(
       bslib::nav_panel(
         title = "File",
-        p("file stuff")
+        shiny::p("file stuff")
       ),
       bslib::nav_panel(
         title = "Data",
-        p("data stuff")
+        shiny::p("data stuff")
       )
     )
   )
@@ -28,7 +29,7 @@ mod_help_ui <- function(id){
 #'
 #' @noRd
 mod_help_server <- function(id){
-  moduleServer( id, function(input, output, session){
+  shiny::moduleServer( id, function(input, output, session){
     ns <- session$ns
 
   })

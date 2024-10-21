@@ -6,10 +6,11 @@
 #'
 #' @noRd
 #'
-#' @importFrom shiny NS tagList
+#' @importFrom shiny NS tagList moduleServer
+#'
 mod_data_ui <- function(id) {
-  ns <- NS(id)
-  tagList(
+  ns <- shiny::NS(id)
+  shiny::tagList(
 
   )
 }
@@ -18,14 +19,8 @@ mod_data_ui <- function(id) {
 #'
 #' @noRd
 mod_data_server <- function(id, r){
-  moduleServer(id, function(input, output, session){
+  shiny::moduleServer(id, function(input, output, session){
     ns <- session$ns
 
   })
 }
-
-## To be copied in the UI
-# mod_data_ui("data_1")
-
-## To be copied in the server
-# mod_data_server("data_1")

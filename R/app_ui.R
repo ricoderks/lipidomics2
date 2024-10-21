@@ -2,22 +2,25 @@
 #'
 #' @param request Internal parameter for `{shiny}`.
 #'     DO NOT REMOVE.
-#' @import shiny
+#'
+#' @rawNamespace import(shiny, except = c(dataTableOutput, renderDataTable))
 #' @importFrom utils packageVersion
 #' @importFrom bslib page_navbar nav_panel nav_spacer nav_menu
+#' @importFrom shinyjs useShinyjs
 #'
 #' @noRd
 app_ui <- function(request) {
   tagList(
     # Leave this function for adding external resources
     golem_add_external_resources(),
+    shinyjs::useShinyjs(),
 
     bslib::page_navbar(
       title = paste0("CPM - Lipidomics | v", utils::packageVersion("lipidomics2")),
       underline = TRUE,
       bslib::nav_panel(
         title = "Files",
-        # mod_data_ui(id = "file")
+        mod_file_ui(id = "file")
       ),
       bslib::nav_panel(
         title = "Data",
@@ -45,7 +48,7 @@ app_ui <- function(request) {
 #' This function is internally used to add external
 #' resources inside the Shiny application.
 #'
-#' @import shiny
+#' @rawNamespace import(shiny, except = c(dataTableOutput, renderDataTable))
 #' @importFrom golem add_resource_path activate_js favicon bundle_resources
 #' @noRd
 golem_add_external_resources <- function() {

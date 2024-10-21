@@ -2,24 +2,43 @@
 #'
 #' @param input,output,session Internal parameters for {shiny}.
 #'     DO NOT REMOVE.
-#' @import shiny
+#'
+#' @rawNamespace import(shiny, except = c(dataTableOutput, renderDataTable))
+#'
 #' @noRd
 app_server <- function(input, output, session) {
+  # increase upload limit
+  options(shiny.maxRequestSize = 30 * 1024^2)
+
   # for communication between modules
   r <- shiny::reactiveValues(
     name = NULL,
     files = list(
       meta_file = NULL,
-      data_file = NULL,
+      data_file_pos = NULL,
+      data_file_neg = NULL,
       rda_file = NULL
     ),
-    data = list(
+    columns = list(
+      sampleid = NULL,
+      sampletype = NULL,
+      acqorder = NULL
+    ),
+    index = list(
+      blanks = NULL,
+      pools = NULL,
+      samples = NULL
+    ),
+    tables = list(
       meta_data = NULL,
-      raw_data = NULL,
+      raw_data_pos = NULL,
+      raw_data_neg = NULL,
       clean_data = NULL
     )
-
   )
+
+  mod_file_server(id = "file",
+                  r = r)
 
 #--------------------------------------------------------------------- help ----
   mod_help_server(id = "help")

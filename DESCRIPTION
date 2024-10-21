@@ -9,11 +9,24 @@ License: GPL (>= 3)
 URL: https://github.com/ricoderks/lipidomics2
 BugReports: https://github.com/ricoderks/lipidomics2/issues
 Imports: 
+    bsicons,
     bslib,
     config,
+    dplyr,
+    DT,
+    ggplot2,
     golem,
+    patchwork,
+    readr,
+    readxl,
+    rlang,
     sessioninfo,
     shiny,
+    shinyjs,
+    shinyWidgets,
+    stringr,
+    tidyr,
+    tidyselect,
     utils
 Suggests: 
     spelling,
