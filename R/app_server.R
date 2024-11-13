@@ -34,7 +34,8 @@ app_server <- function(input, output, session) {
       raw_data_pos = NULL,
       raw_data_neg = NULL,
       raw_data = NULL,
-      clean_data = NULL
+      clean_data = NULL,
+      clean_data_wide = NULL
     )
   )
 

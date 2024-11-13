@@ -135,10 +135,17 @@ mod_file_ui <- function(id) {
                 ),
                 choices = c("Positive" = "pos", "Negative" = "neg"),
                 selected = c("pos", "neg")
+              ),
+              shiny::selectInput(
+                inputId = ns("raw_select_table"),
+                label = "Select table",
+                choices = c("Raw table" = "raw_data",
+                            "Filtered table" = "clean_data_wide"),
+                selected = "clean_data"
               )
             ),
             bslib::card_body(
-              height = "35%",
+              height = "15%",
               bslib::layout_column_wrap(
                 width = 1 / 2,
                 shiny::fileInput(
@@ -153,12 +160,8 @@ mod_file_ui <- function(id) {
                   multiple = FALSE,
                   accept = c(".txt")
                 ),
-                shiny::selectInput(
-                  inputId = ns("raw_select_table"),
-                  label = "Select table",
-                  choices = c("Raw table" = "raw_data",
-                              "Filtered table" = "clean_data"),
-                  selected = "clean_data"
+                shiny::textOutput(
+                  outputId = ns("rawdata_status")
                 )
               )
             ),
@@ -230,14 +233,42 @@ mod_file_server <- function(id, r){
       {
         shiny::req(input$rawdata_pos_file)
 
-        # need to add a polarity check here
-
         print("Raw data read - pos file")
+        output$rawdata_status <- shiny::renderText({
+          ""
+        })
         r$files$data_file_pos <- input$rawdata_pos_file
         tmp <- read_msdial(filename = input$rawdata_pos_file$datapath)
-        r$tables$raw_data_pos <- data.frame("polarity" = "pos",
-                                            tmp,
-                                            check.names = FALSE)
+        if(any(tmp$`Adduct type` == "[M+H]+")) {
+          r$tables$raw_data_pos <- data.frame("polarity" = "pos",
+                                              tmp,
+                                              check.names = FALSE)
+        } else {
+          shiny::showNotification(
+            ui = "Error: This data doesn't appear to contain any positive mode data!",
+            type = "error"
+          )
+          r$tables$raw_data_pos <- NULL
+          r$tables$clean_data <- NULL
+          r$tables$raw_data <- NULL
+
+          shinyWidgets::updateProgressBar(
+            session = session,
+            id = "feature_count_bar",
+            title = "Feature count",
+            value = 0,
+            total = 100
+          )
+
+          shinyWidgets::updateProgressBar(
+            session = session,
+            id = "sample_count_bar",
+            title = "Sample count",
+            value = 0,
+            total = 100
+          )
+        }
+
       })
 
 
@@ -246,14 +277,42 @@ mod_file_server <- function(id, r){
       {
         shiny::req(input$rawdata_neg_file)
 
-        # need to add a polarity check here
-
         print("Raw data read - neg file")
+        output$rawdata_status <- shiny::renderText({
+          ""
+        })
         r$files$data_file_neg <- input$rawdata_neg_file
         tmp <- read_msdial(filename = input$rawdata_neg_file$datapath)
-        r$tables$raw_data_neg <- data.frame("polarity" = "neg",
-                                            tmp,
-                                            check.names = FALSE)
+
+        if(any(tmp$`Adduct type` == "[M-H]-")) {
+          r$tables$raw_data_neg <- data.frame("polarity" = "neg",
+                                              tmp,
+                                              check.names = FALSE)
+        } else {
+          shiny::showNotification(
+            ui = "Error: This data doesn't appear to contain any negative mode data!",
+            type = "error"
+          )
+          r$tables$raw_data_neg <- NULL
+          r$tables$clean_data <- NULL
+          r$tables$raw_data <- NULL
+
+          shinyWidgets::updateProgressBar(
+            session = session,
+            id = "feature_count_bar",
+            title = "Feature count",
+            value = 0,
+            total = 100
+          )
+
+          shinyWidgets::updateProgressBar(
+            session = session,
+            id = "sample_count_bar",
+            title = "Sample count",
+            value = 0,
+            total = 100
+          )
+        }
 
       })
 
@@ -402,66 +461,66 @@ mod_file_server <- function(id, r){
 
 
     #----------------------------------------------------- process raw data ----
-    # shiny::observe({
-    shiny::observeEvent(c(input$rawdata_pos_file,
-                          input$rawdata_neg_file), {
-      shiny::req(r$columns$sampleid,
-                 r$index$blanks,
-                 r$index$pools,
-                 r$index$samples,
-                 input$raw_select_omics)
+    shiny::observeEvent(
+      c(input$rawdata_pos_file,
+        input$rawdata_neg_file),
+      {
+        shiny::req(r$columns$sampleid,
+                   r$index$blanks,
+                   r$index$pools,
+                   r$index$samples,
+                   input$raw_select_omics)
 
-      if(!(is.null(r$tables$raw_data_pos) & is.null(r$tables$raw_data_neg))) {
-        print("Combine data")
-        r$tables$raw_data <- rbind.data.frame(r$tables$raw_data_pos,
-                                              r$tables$raw_data_neg)
+        if(!(is.null(r$tables$raw_data_pos) & is.null(r$tables$raw_data_neg))) {
+          print("Combine data")
+          r$tables$raw_data <- rbind.data.frame(r$tables$raw_data_pos,
+                                                r$tables$raw_data_neg)
 
-        if(!is.null(r$tables$raw_data)) {
-          print("Clean up")
-          clean_data <- clean_up(raw_data = r$tables$raw_data,
-                                 blanks = r$index$blanks,
-                                 pools = r$index$pools,
-                                 samples = r$index$samples)
+          if(!is.null(r$tables$raw_data)) {
+            print("Clean up")
+            clean_data_wide <- clean_up(raw_data = r$tables$raw_data,
+                                        blanks = r$index$blanks,
+                                        pools = r$index$pools,
+                                        samples = r$index$samples)
 
-          clean_data <- select_identified(data = clean_data,
-                                          omics = input$raw_select_omics)
+            r$tables$clean_data_wide <- select_identified(data = clean_data_wide,
+                                                          omics = input$raw_select_omics)
 
-          clean_data <- make_tidy(data = clean_data,
-                                  blanks = r$index$blanks,
-                                  pools = r$index$pools,
-                                  samples = r$index$samples,
-                                  omics = input$raw_select_omics)
+            r$tables$clean_data <- make_tidy(data = r$tables$clean_data_wide,
+                                             blanks = r$index$blanks,
+                                             pools = r$index$pools,
+                                             samples = r$index$samples,
+                                             omics = input$raw_select_omics)
 
-          r$tables$clean_data <- clean_data
 
-          total_features <- sum(c(length(unique(r$tables$raw_data_pos$`Alignment ID`)),
-            length(unique(r$tables$raw_data_pos$`Alignment ID`))), na.rm = TRUE)
-          total_samples <- sum(c(length(r$index$blanks),
-                                 length(r$index$pools),
-                                 length(r$index$samples)),
-                               na.rm = TRUE)
+            total_features <- sum(c(length(unique(r$tables$raw_data_pos$`Alignment ID`)),
+                                    length(unique(r$tables$raw_data_pos$`Alignment ID`))), na.rm = TRUE)
+            total_samples <- sum(c(length(r$index$blanks),
+                                   length(r$index$pools),
+                                   length(r$index$samples)),
+                                 na.rm = TRUE)
 
-          shinyWidgets::updateProgressBar(
-            session = session,
-            id = "feature_count_bar",
-            title = "Feature count",
-            value = length(unique(r$tables$clean_data$my_id)),
-            total = total_features
-          )
+            shinyWidgets::updateProgressBar(
+              session = session,
+              id = "feature_count_bar",
+              title = "Feature count",
+              value = length(unique(r$tables$clean_data$my_id)),
+              total = total_features
+            )
 
-          shinyWidgets::updateProgressBar(
-            session = session,
-            id = "sample_count_bar",
-            title = "Sample count",
-            value = length(unique(r$tables$clean_data$sample_name)),
-            total = total_samples
-          )
+            shinyWidgets::updateProgressBar(
+              session = session,
+              id = "sample_count_bar",
+              title = "Sample count",
+              value = length(unique(r$tables$clean_data$sample_name)),
+              total = total_samples
+            )
+          }
         }
-      }
-    })
+      })
 
 
-    output$rawdata_preview_table = DT::renderDataTable({
+    output$rawdata_preview_table <- DT::renderDataTable({
       shiny::req(r$tables$raw_data,
                  input$raw_select_table)
 
