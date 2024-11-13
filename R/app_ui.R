@@ -23,8 +23,8 @@ app_ui <- function(request) {
         mod_file_ui(id = "file")
       ),
       bslib::nav_panel(
-        title = "Data",
-        # mod_data_ui(id = "data")
+        title = "Settings",
+        mod_settings_ui(id = "settings")
       ),
       bslib::nav_spacer(),
       bslib::nav_menu(
@@ -61,7 +61,7 @@ golem_add_external_resources <- function() {
     favicon(),
     bundle_resources(
       path = app_sys("app/www"),
-      app_title = "lipidomics2"
+      app_title = paste0("CPM - Lipidomics | v", utils::packageVersion("lipidomics2"))
     )
     # Add here other external resources
     # for example, you can add shinyalert::useShinyalert()

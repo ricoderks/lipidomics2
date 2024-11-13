@@ -13,6 +13,7 @@ app_server <- function(input, output, session) {
   # for communication between modules
   r <- shiny::reactiveValues(
     name = NULL,
+    omics = NULL,
     files = list(
       meta_file = NULL,
       data_file_pos = NULL,
@@ -41,6 +42,9 @@ app_server <- function(input, output, session) {
 
   mod_file_server(id = "file",
                   r = r)
+
+  mod_settings_server(id = "settings",
+                      r = r)
 
 #--------------------------------------------------------------------- help ----
   mod_help_server(id = "help")

@@ -11,6 +11,7 @@
 #' @importFrom DT dataTableOutput
 #' @importFrom shinyWidgets progressBar
 #' @importFrom shinyjs disabled disable enable
+#' @importFrom utils head
 #'
 mod_file_ui <- function(id) {
   ns <- NS(id)
@@ -469,7 +470,7 @@ mod_file_server <- function(id, r){
                    r$index$blanks,
                    r$index$pools,
                    r$index$samples,
-                   input$raw_select_omics)
+                   r$omics)
 
         if(!(is.null(r$tables$raw_data_pos) & is.null(r$tables$raw_data_neg))) {
           print("Combine data")
@@ -484,13 +485,13 @@ mod_file_server <- function(id, r){
                                         samples = r$index$samples)
 
             r$tables$clean_data_wide <- select_identified(data = clean_data_wide,
-                                                          omics = input$raw_select_omics)
+                                                          omics = r$omics)
 
             r$tables$clean_data <- make_tidy(data = r$tables$clean_data_wide,
                                              blanks = r$index$blanks,
                                              pools = r$index$pools,
                                              samples = r$index$samples,
-                                             omics = input$raw_select_omics)
+                                             omics = r$omics)
 
 
             total_features <- sum(c(length(unique(r$tables$raw_data_pos$`Alignment ID`)),
@@ -526,10 +527,16 @@ mod_file_server <- function(id, r){
 
       data_table <- r$tables[[input$raw_select_table]]
 
-      DT::datatable(data = head(data_table, n = 10),
+      DT::datatable(data = utils::head(data_table, n = 10),
                     rownames = FALSE,
                     options = list(dom = "t",
                                    pageLength = -1))
+    })
+
+
+    shiny::observeEvent(input$raw_select_omics, {
+      r$omics <- input$raw_select_omics
+      print("omics")
     })
 
   })
