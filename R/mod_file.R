@@ -16,6 +16,7 @@ mod_file_ui <- function(id) {
   ns <- NS(id)
   tagList(
     bslib::navset_card_tab(
+      #---------------------------------------------------------- meta data ----
       bslib::nav_panel(
         title = "Meta data",
         bslib::card(
@@ -108,6 +109,7 @@ mod_file_ui <- function(id) {
           )
         )
       ), # end navpanel meta data
+      #----------------------------------------------------------- raw data ----
       bslib::nav_panel(
         title = "Raw data",
         bslib::card(
@@ -136,7 +138,7 @@ mod_file_ui <- function(id) {
               )
             ),
             bslib::card_body(
-              height = "25%",
+              height = "35%",
               bslib::layout_column_wrap(
                 width = 1 / 2,
                 shiny::fileInput(
@@ -150,14 +152,14 @@ mod_file_ui <- function(id) {
                   label = "Data file negative:",
                   multiple = FALSE,
                   accept = c(".txt")
+                ),
+                shiny::selectInput(
+                  inputId = ns("raw_select_table"),
+                  label = "Select table",
+                  choices = c("Raw table" = "raw_data",
+                              "Filtered table" = "clean_data"),
+                  selected = "clean_data"
                 )
-                # shiny::selectInput(
-                #   inputId = ns("raw_select_table"),
-                #   label = "Select table",
-                #   choices = c("Raw table" = "raw_data",
-                #               "Filtered table" = "clean_data"),
-                #   selected = "clean_data"
-                # )
               )
             ),
             bslib::card_body(
@@ -174,15 +176,15 @@ mod_file_ui <- function(id) {
                 width = 1 / 2,
                 height = "15%",
                 shinyWidgets::progressBar(
-                  id = ns("row_count_bar"),
-                  title = "Row count",
+                  id = ns("sample_count_bar"),
+                  title = "Sample count",
                   value = 0,
                   total = 100,
                   unit_mark = "%"
                 ),
                 shinyWidgets::progressBar(
-                  id = ns("col_count_bar"),
-                  title = "Column count",
+                  id = ns("feature_count_bar"),
+                  title = "Feature count",
                   value = 0,
                   total = 100,
                   unit_mark = "%"
@@ -228,6 +230,8 @@ mod_file_server <- function(id, r){
       {
         shiny::req(input$rawdata_pos_file)
 
+        # need to add a polarity check here
+
         print("Raw data read - pos file")
         r$files$data_file_pos <- input$rawdata_pos_file
         tmp <- read_msdial(filename = input$rawdata_pos_file$datapath)
@@ -241,6 +245,8 @@ mod_file_server <- function(id, r){
       input$rawdata_neg_file,
       {
         shiny::req(input$rawdata_neg_file)
+
+        # need to add a polarity check here
 
         print("Raw data read - neg file")
         r$files$data_file_neg <- input$rawdata_neg_file
@@ -396,20 +402,23 @@ mod_file_server <- function(id, r){
 
 
     #----------------------------------------------------- process raw data ----
-    shiny::observe({
+    # shiny::observe({
+    shiny::observeEvent(c(input$rawdata_pos_file,
+                          input$rawdata_neg_file), {
       shiny::req(r$columns$sampleid,
                  r$index$blanks,
                  r$index$pools,
-                 r$index$samples)
-      print(!(is.null(r$tables$raw_data_pos) & is.null(r$tables$raw_data_neg)))
+                 r$index$samples,
+                 input$raw_select_omics)
+
       if(!(is.null(r$tables$raw_data_pos) & is.null(r$tables$raw_data_neg))) {
-        print("combine data")
-        raw_data <- rbind.data.frame(r$tables$raw_data_pos,
-                                     r$tables$raw_data_neg)
+        print("Combine data")
+        r$tables$raw_data <- rbind.data.frame(r$tables$raw_data_pos,
+                                              r$tables$raw_data_neg)
 
-
-        if(!is.null(raw_data)) {
-          clean_data <- clean_up(raw_data = raw_data,
+        if(!is.null(r$tables$raw_data)) {
+          print("Clean up")
+          clean_data <- clean_up(raw_data = r$tables$raw_data,
                                  blanks = r$index$blanks,
                                  pools = r$index$pools,
                                  samples = r$index$samples)
@@ -423,10 +432,30 @@ mod_file_server <- function(id, r){
                                   samples = r$index$samples,
                                   omics = input$raw_select_omics)
 
-          # this causes the observe to be executed again
-          # r$tables$clean_data <- clean_data
-          print(dim(raw_data))
-          print(dim(clean_data))
+          r$tables$clean_data <- clean_data
+
+          total_features <- sum(c(length(unique(r$tables$raw_data_pos$`Alignment ID`)),
+            length(unique(r$tables$raw_data_pos$`Alignment ID`))), na.rm = TRUE)
+          total_samples <- sum(c(length(r$index$blanks),
+                                 length(r$index$pools),
+                                 length(r$index$samples)),
+                               na.rm = TRUE)
+
+          shinyWidgets::updateProgressBar(
+            session = session,
+            id = "feature_count_bar",
+            title = "Feature count",
+            value = length(unique(r$tables$clean_data$my_id)),
+            total = total_features
+          )
+
+          shinyWidgets::updateProgressBar(
+            session = session,
+            id = "sample_count_bar",
+            title = "Sample count",
+            value = length(unique(r$tables$clean_data$sample_name)),
+            total = total_samples
+          )
         }
       }
     })
@@ -438,7 +467,7 @@ mod_file_server <- function(id, r){
 
       data_table <- r$tables[[input$raw_select_table]]
 
-      DT::datatable(data = data_table,
+      DT::datatable(data = head(data_table, n = 10),
                     rownames = FALSE,
                     options = list(dom = "t",
                                    pageLength = -1))
