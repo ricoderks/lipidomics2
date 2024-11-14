@@ -28,7 +28,10 @@ app_server <- function(input, output, session) {
     index = list(
       blanks = NULL,
       pools = NULL,
-      samples = NULL
+      samples = NULL,
+      selected_blanks = NULL,
+      selected_pools = NULL,
+      selected_samples = NULL
     ),
     tables = list(
       meta_data = NULL,

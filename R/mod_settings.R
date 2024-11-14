@@ -18,10 +18,11 @@ mod_settings_ui <- function(id) {
   ns <- shiny::NS(id)
   tagList(
     bslib::navset_card_tab(
-      id = "settings",
+      id = "Settings",
       #--------------------------------------------------- general settings ----
       bslib::nav_panel(
         title = "General settings",
+        value = "general_settings",
         bslib::card(
           bslib::card_header(bslib::tooltip(
             trigger = list(
@@ -96,15 +97,23 @@ mod_settings_ui <- function(id) {
         title = "Lipid classes",
         value = "lipid_classes",
         bslib::card(
-          "Lipid classes"
+          shiny::uiOutput(
+            outputId = ns("settings_select_lipidclass")
+          )
         )
       ),
 
       #------------------------------------------------------------ samples ----
       bslib::nav_panel(
         title = "Samples",
+        value = "samples",
         bslib::card(
-          "Samples"
+          bslib::layout_column_wrap(
+            width = 1 / 3,
+            shiny::uiOutput(outputId = ns("settings_blanks_list")),
+            shiny::uiOutput(outputId = ns("settings_pools_list")),
+            shiny::uiOutput(outputId = ns("settings_samples_list"))
+          )
         )
       )
     )
@@ -118,22 +127,214 @@ mod_settings_server <- function(id, r){
   shiny::moduleServer(id, function(input, output, session){
     ns <- session$ns
 
-    shiny::observeEvent(r$omics, {
-      print(r$omics)
-      switch(
-        r$omics,
-        "lip" = {
-          bslib::nav_show(id = "settings",
-                          target = "lipid_classes")
-          print("show")
-        },
-        "met" = {
-          bslib::nav_hide(id = "settings",
-                          target = "lipid_classes")
-          print("hide")
-        }
+    #-------------------------------------------------------------- samples ----
+    output$settings_blanks_list <- shiny::renderUI({
+      req(r$tables$clean_data)
+
+      tagList(
+        checkboxGroupInput(inputId = ns("settings_select_blanks"),
+                           label = "(De-)select blanks:",
+                           choices = r$index$blanks,
+                           selected = r$index$blanks)
       )
     })
+
+    output$settings_pools_list <- shiny::renderUI({
+      req(r$tables$clean_data)
+
+      tagList(
+        checkboxGroupInput(inputId = ns("settings_select_pools"),
+                           label = "(De-)select pooled samples:",
+                           choices = r$index$pools,
+                           selected = r$index$pools)
+      )
+    })
+
+    output$settings_samples_list <- shiny::renderUI({
+      req(r$tables$clean_data)
+
+      tagList(
+        checkboxGroupInput(inputId = ns("settings_select_samples"),
+                           label = "(De-)select samples:",
+                           choices = r$index$samples,
+                           selected = r$index$samples)
+      )
+    })
+
+
+    #-------------------------------------------- some lipid class settings ----
+    default_class_ion <- c("ADGGA - [M-H]-", "AHexBRS - [M+HCOO]-", "AHexCAS - [M+HCOO]-", "AHexCS - [M+HCOO]-", "AHexSIS - [M+HCOO]-", "ASM - [M+H]+", "BASulfate - [M-H]-",
+                           "BileAcid - [M-H]-", "BMP - [M+NH4]+", "CAR - [M+H]+", "CE - [M+NH4]+", "Cer_ADS - [M+HCOO]-", "Cer_AP - [M+HCOO]-",
+                           "Cer_AS - [M+HCOO]-", "Cer_BS - [M+HCOO]-", "Cer_HS - [M+H]+", "Cer_NDS - [M+HCOO]-",
+                           "Cer_NP - [M+HCOO]-", "Cer_NS - [M+HCOO]-", "CerP - [M+H]+",
+                           "CL - [M+NH4]+", "CoQ - [M+H]+", "DCAE - [M+NH4]+", "DG - [M+NH4]+", "DGGA - [M-H]-", "EtherDG - [M+NH4]+",
+                           "EtherLPC - [M+HCOO]-", "EtherLPE - [M-H]-", "EtherMGDG - [M+NH4]+", "EtherPC - [M+HCOO]-",
+                           "EtherPE - [M-H]-", "EtherPG - [M-H]-", "EtherPI - [M-H]-", "EtherTG - [M+NH4]+", "FA - [M-H]-", "FAHFA - [M-H]-",
+                           "HBMP - [M-H]-", "Hex2Cer - [M+HCOO]-", "HexCer_EOS - [M-H]-", "HexCer_HS - [M+HCOO]-", "HexCer_NS - [M+HCOO]-",
+                           "LPA - [M-H]-", "LPC - [M+HCOO]-", "LPE - [M-H]-", "LPI - [M-H]-",
+                           "LPS - [M-H]-", "MG - [M+NH4]+", "MGDG - [M+HCOO]-", "MLCL - [M-H]-", "NAE - [M+H]+", "NAGly - [M+H]+", "NAGlySer - [M-H]-",
+                           "NAOrn - [M+H]+", "OxFA - [M-H]-", "OxPC - [M+HCOO]-", "OxPE - [M-H]-", "OxPG - [M-H]-", "OxPI - [M-H]-", "OxTG - [M+NH4]+",
+                           "PA - [M-H]-", "PC - [M+HCOO]-", "PE - [M-H]-", "PE_Cer - [M-H]-", "PEtOH - [M-H]-",
+                           "PG - [M-H]-", "PI - [M-H]-",  "PI_Cer - [M+H]+", "PMeOH - [M-H]-",
+                           "PS - [M-H]-", "SHexCer - [M-H]-", "SL - [M-H]-", "SM - [M+H]+", "Sph - [M+H]+",
+                           "SQDG - [M-H]-", "SSulfate - [M-H]-", "ST - [M+H-H2O]+", "ST - [M+H]+", "TG - [M+NH4]+", "TG_EST - [M+NH4]+", "VAE - [M+H]+")
+
+    # regular expression patterns
+    pattern_PL <- "^((Ether)?(Ox)?(L)?(LNA)?(MM)?P[ACEGISM]|HBMP|BMP)"
+    pattern_GL <- "^(Ox|Ether|SQ|EtherS|L|A)?[DMT]G"
+    pattern_Cer <- "^Cer[P_]"
+    pattern_HexCer <- "^A?Hex[23]?Cer"
+    pattern_FA <- "^((Ox)?FA|FAHFA|NAGly|NAGlySer|NAOrn|NAE|CAR)"
+    pattern_PSL <- "^(ASM|PE_Cer(\\+O)?|PI_Cer(\\+O)?|SM|SM\\+O)"
+    pattern_SB <- "^(PhytoSph|SL|SL\\+O|DHSph|Sph)"
+    pattern_SA <- "^(GM3|SHexCer|SHexCer\\+O)"
+    pattern_CL <- "^([DM]L)?CL"
+    pattern_ACPIM <- "^Ac[2-4]PIM[12]"
+    pattern_STL <- "^((BA|S)Sulfate|BileAcid|AHex[BCS][AIRTS][S]?|(BRS|CAS|C|SIS|STS|DCA|TDCA)E|SHex|Cholesterol|VitaminD|ST) "
+    pattern_PRL <- "^(VAE|CoQ|VitaminE)"
+
+    output$settings_select_lipidclass <- shiny::renderUI({
+      req(r$tables$clean_data)
+
+      my_col_width <- 3
+
+      tagList(
+        p("Select the lipid classes you want to keep."),
+        column(width = my_col_width,
+               checkboxGroupInput(inputId = "select_PL_class",
+                                  label = "Glycerophospholipids:",
+                                  choices = r$tables$clean_data$class_ion[grepl(x = r$tables$clean_data$class_ion, pattern = pattern_PL)],
+                                  selected = r$tables$clean_data$class_ion_selected[grepl(x = r$tables$clean_data$class_ion_selected, pattern = pattern_PL)])
+        ),
+        column(width = my_col_width,
+               checkboxGroupInput(inputId = "select_Cer_class",
+                                  label = "Ceramides:",
+                                  choices = r$tables$clean_data$class_ion[grepl(x = r$tables$clean_data$class_ion, pattern = pattern_Cer)],
+                                  selected = r$tables$clean_data$class_ion_selected[grepl(x = r$tables$clean_data$class_ion_selected, pattern = pattern_Cer)]),
+               checkboxGroupInput(inputId = "select_HexCer_class",
+                                  label = "Neutral glycosphingolipids:",
+                                  choices = r$tables$clean_data$class_ion[grepl(x = r$tables$clean_data$class_ion, pattern = pattern_HexCer)],
+                                  selected = r$tables$clean_data$class_ion_selected[grepl(x = r$tables$clean_data$class_ion_selected, pattern = pattern_HexCer)])
+        ),
+        column(width = my_col_width,
+               checkboxGroupInput(inputId = "select_FA_class",
+                                  label = "Fatty acyls:",
+                                  choices = r$tables$clean_data$class_ion[grepl(x = r$tables$clean_data$class_ion, pattern = pattern_FA)],
+                                  selected = r$tables$clean_data$class_ion_selected[grepl(x = r$tables$clean_data$class_ion_selected, pattern = pattern_FA)]),
+               checkboxGroupInput(inputId = "select_PSL_class",
+                                  label = "Phosphosphingolipids:",
+                                  choices = r$tables$clean_data$class_ion[grepl(x = r$tables$clean_data$class_ion, pattern = pattern_PSL)],
+                                  selected = r$tables$clean_data$class_ion_selected[grepl(x = r$tables$clean_data$class_ion_selected, pattern = pattern_PSL)]),
+               checkboxGroupInput(inputId = "select_SB_class",
+                                  label = "Sphingoid bases:",
+                                  choices = r$tables$clean_data$class_ion[grepl(x = r$tables$clean_data$class_ion, pattern = pattern_SB)],
+                                  selected = r$tables$clean_data$class_ion_selected[grepl(x = r$tables$clean_data$class_ion_selected, pattern = pattern_SB)]),
+               checkboxGroupInput(inputId = "select_SA_class",
+                                  label = "Acidic glycosphingolipids:",
+                                  choices = r$tables$clean_data$class_ion[grepl(x = r$tables$clean_data$class_ion, pattern = pattern_SA)],
+                                  selected = r$tables$clean_data$class_ion_selected[grepl(x = r$tables$clean_data$class_ion_selected, pattern = pattern_SA)]),
+               checkboxGroupInput(inputId = "select_GL_class",
+                                  label = "Glcyerolipids:",
+                                  choices = r$tables$clean_data$class_ion[grepl(x = r$tables$clean_data$class_ion, pattern = pattern_GL)],
+                                  selected = r$tables$clean_data$class_ion_selected[grepl(x = r$tables$clean_data$class_ion_selected, pattern = pattern_GL)]),
+               checkboxGroupInput(inputId = "select_CL_class",
+                                  label = "Cardiolipins:",
+                                  choices = r$tables$clean_data$class_ion[grepl(x = r$tables$clean_data$class_ion, pattern = pattern_CL)],
+                                  selected = r$tables$clean_data$class_ion_selected[grepl(x = r$tables$clean_data$class_ion_selected, pattern = pattern_CL)])
+        ),
+        column(width = my_col_width,
+               checkboxGroupInput(inputId = "select_STL_class",
+                                  label = "Sterol lipids:",
+                                  choices = r$tables$clean_data$class_ion[grepl(x = r$tables$clean_data$class_ion, pattern = pattern_STL)],
+                                  selected = r$tables$clean_data$class_ion_selected[grepl(x = r$tables$clean_data$class_ion_selected, pattern = pattern_STL)]),
+               checkboxGroupInput(inputId = "select_ACPIM_class",
+                                  label = "Glycerophosphoinositolglycans:",
+                                  choices = r$tables$clean_data$class_ion[grepl(x = r$tables$clean_data$class_ion, pattern = pattern_ACPIM)],
+                                  selected = r$tables$clean_data$class_ion_selected[grepl(x = r$tables$clean_data$class_ion_selected, pattern = pattern_ACPIM)]),
+               checkboxGroupInput(inputId = "select_PRL_class",
+                                  label = "Prenol lipids:",
+                                  choices = r$tables$clean_data$class_ion[grepl(x = r$tables$clean_data$class_ion, pattern = pattern_PRL)],
+                                  selected = r$tables$clean_data$class_ion_selected[grepl(x = r$tables$clean_data$class_ion_selected, pattern = pattern_PRL)])
+        )
+      )
+    })
+
+
+    shiny::observeEvent({
+      input$select_PL_class
+      input$select_GL_class
+      input$select_Cer_class
+      input$select_HexCer_class
+      input$select_FA_class
+      input$select_PSL_class
+      input$select_SB_class
+      input$select_CL_class
+      input$select_ACPIM_class
+      input$select_PRL_class
+      input$select_SA_class
+      input$select_STL_class
+    }, {
+      # req(all_data$lipid_data_filter)
+
+      # get all the selected classes
+      class_ion_selected <- c(input$select_PL_class,
+                              input$select_GL_class,
+                              input$select_Cer_class,
+                              input$select_HexCer_class,
+                              input$select_FA_class,
+                              input$select_PSL_class,
+                              input$select_SB_class,
+                              input$select_CL_class,
+                              input$select_ACPIM_class,
+                              input$select_PRL_class,
+                              input$select_SA_class,
+                              input$select_STL_class)
+
+      # # if they where not visible yet, keep what was already there
+      # if(!any(is.null(class_ion_selected))) {
+      #   all_data$class_ion_selected <- class_ion_selected
+      # }
+      #
+      # # how many lipid classes are selected
+      # all_data$num_lipid_classes <- length(unique(sapply(all_data$class_ion_selected, function(x) {
+      #   unlist(strsplit(x = x,
+      #                   split = " - "))[1]
+      # })))
+      #
+      # tmp_filter <- isolate(all_data$lipid_data_filter)
+      #
+      # # get the id's to keep lipids which lipid class is selected
+      # keep_lipids_class <- tmp_filter %>%
+      #   filter(.data$class_ion %in% all_data$class_ion_selected) %>%
+      #   distinct(.data$my_id) %>%
+      #   pull(.data$my_id)
+      #
+      # all_data$lipid_data_filter <- tmp_filter %>%
+      #   mutate(class_keep = if_else(.data$my_id %in% keep_lipids_class,
+      #                               TRUE,
+      #                               FALSE))
+    },
+    ignoreInit = TRUE)
+
+    # so far not working
+    # shiny::observeEvent(r$omics, {
+    #   print(r$omics)
+    #   switch(
+    #     r$omics,
+    #     "lip" = {
+    #       bslib::nav_show(id = "Settings",
+    #                       target = "lipid_classes",
+    #                       session = session)
+    #       print("show")
+    #     },
+    #     "met" = {
+    #       bslib::nav_hide(id = "Settings",
+    #                       target = "lipid_classes",
+    #                       session = session)
+    #       print("hide")
+    #     }
+    #   )
+    # })
 
   })
 }

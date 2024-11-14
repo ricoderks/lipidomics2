@@ -441,6 +441,9 @@ mod_file_server <- function(id, r){
       r$index$blanks <- blank_table[, input$metadata_select_sampleid]
       r$index$pools <- qcpool_table[, input$metadata_select_sampleid]
       r$index$samples <- sample_table[, input$metadata_select_sampleid]
+      r$index$selected_blanks <- r$index$blanks
+      r$index$selected_pools <- r$index$pools
+      r$index$selected_samples <- r$index$samples
 
       data_table <- rbind(
         blank_table,
