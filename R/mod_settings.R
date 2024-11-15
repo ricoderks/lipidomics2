@@ -31,12 +31,8 @@ mod_settings_ui <- function(id) {
             ),
             "Features are immediately tagged with `large_rsd` and will not show up in the bubble plots (identification tab) or in the analysis part."
           )),
-          shiny::numericInput(
-            inputId = ns("settings_rsd_cutoff"),
-            label = "RSD cut off value :",
-            value = 0.3,
-            min = 0,
-            max = 1
+          shiny::uiOutput(
+            outputId = ns("settings_qc_ui")
           )
         ),
         bslib::card(
@@ -49,19 +45,8 @@ mod_settings_ui <- function(id) {
               "Features are immediately tagged with `no_match`. They will show up in the bubble plots (identification tab), but not in the analysis part. Individual features can be added back via the bubble plots (identification part). Keep in mind that when the value of this filter is changed they might be removed again!!"
             )
           ),
-          shiny::numericInput(
-            inputId = ns("settings_dot_cutoff"),
-            label = "Dot product cut off value :",
-            value = 50,
-            min = 0,
-            max = 100
-          ),
-          shiny::numericInput(
-            inputId = ns("settings_revdot_cutoff"),
-            label = "Reverse dot product cut off value :",
-            value = 50,
-            min = 0,
-            max = 100
+          shiny::uiOutput(
+            outputId = ns("settings_id_ui")
           )
         ),
         bslib::card(
@@ -74,20 +59,8 @@ mod_settings_ui <- function(id) {
               "For all samples are sample / blank ratio is calculated. In 80% (default threshold) of the samples this value should be higher than the sample / blank ratio cut off. If it is not the feature is removed from the data set (set as high background)."
             )
           ),
-          shiny::numericInput(
-            inputId = ns("settings_ratio"),
-            label = "Sample / average blank ratio",
-            value = 5,
-            min = 0,
-            step = 0.01
-          ),
-          shiny::sliderInput(
-            inputId = ns("settings_threshold"),
-            label = "Threshold",
-            value = 0.8,
-            min = 0,
-            max = 1,
-            step = 0.01
+          shiny::uiOutput(
+            outputId = ns("settings_blanksample_ui")
           )
         )
       ),
@@ -127,11 +100,63 @@ mod_settings_server <- function(id, r){
   shiny::moduleServer(id, function(input, output, session){
     ns <- session$ns
 
+    #----------------------------------------------------- general settings ----
+    output$settings_qc_ui <- shiny::renderUI({
+      shiny::tagList(
+        shiny::numericInput(
+          inputId = ns("settings_rsd_cutoff"),
+          label = "RSD cut off value :",
+          value = r$defaults$rsd_cutoff,
+          min = 0,
+          max = 1
+        )
+      )
+    })
+
+
+    output$settings_id_ui <- shiny::renderUI({
+      shiny::tagList(
+        shiny::numericInput(
+          inputId = ns("settings_dot_cutoff"),
+          label = "Dot product cut off value :",
+          value = r$defaults$dot_cutoff,
+          min = 0,
+          max = 100
+        ),
+        shiny::numericInput(
+          inputId = ns("settings_revdot_cutoff"),
+          label = "Reverse dot product cut off value :",
+          value = r$defaults$revdot_cutoff,
+          min = 0,
+          max = 100
+        )
+      )
+    })
+
+
+    output$settings_blanksample_ui <- shiny::renderUI({
+      shiny::tagList(
+        shiny::numericInput(
+          inputId = ns("settings_ratio"),
+          label = "Sample / average blank ratio",
+          value = r$defaults$blanksample_ratio,
+          min = 0,
+          step = 0.01
+        ),
+        shiny::sliderInput(
+          inputId = ns("settings_threshold"),
+          label = "Threshold",
+          value = r$defaults$blanksample_threshold,
+          min = 0,
+          max = 1,
+          step = 0.01
+        )
+      )
+    })
+
     #-------------------------------------------------------------- samples ----
     output$settings_blanks_list <- shiny::renderUI({
-      req(r$tables$clean_data)
-
-      tagList(
+      shiny::tagList(
         checkboxGroupInput(inputId = ns("settings_select_blanks"),
                            label = "(De-)select blanks:",
                            choices = r$index$blanks,
@@ -140,9 +165,7 @@ mod_settings_server <- function(id, r){
     })
 
     output$settings_pools_list <- shiny::renderUI({
-      req(r$tables$clean_data)
-
-      tagList(
+      shiny::tagList(
         checkboxGroupInput(inputId = ns("settings_select_pools"),
                            label = "(De-)select pooled samples:",
                            choices = r$index$pools,
@@ -151,9 +174,7 @@ mod_settings_server <- function(id, r){
     })
 
     output$settings_samples_list <- shiny::renderUI({
-      req(r$tables$clean_data)
-
-      tagList(
+      shiny::tagList(
         checkboxGroupInput(inputId = ns("settings_select_samples"),
                            label = "(De-)select samples:",
                            choices = r$index$samples,
@@ -244,8 +265,8 @@ mod_settings_server <- function(id, r){
       shiny::tagList(
         checkboxGroupInput(inputId = ns("select_PL_class"),
                            label = "Glycerophospholipids:",
-                           choices = r$index$feature_class[grepl(x = r$index$feature_class, pattern = pattern_PL)],
-                           selected = r$index$selected_feature_class[grepl(x = r$index$selected_feature_class, pattern = pattern_PL)])
+                           choices = r$settings$feature_class[grepl(x = r$settings$feature_class, pattern = pattern_PL)],
+                           selected = r$settings$selected_feature_class[grepl(x = r$settings$selected_feature_class, pattern = pattern_PL)])
       )
     })
 
@@ -254,12 +275,12 @@ mod_settings_server <- function(id, r){
       shiny::tagList(
         checkboxGroupInput(inputId = ns("select_Cer_class"),
                            label = "Ceramides:",
-                           choices = r$index$feature_class[grepl(x = r$index$feature_class, pattern = pattern_Cer)],
-                           selected = r$index$selected_feature_class[grepl(x = r$index$selected_feature_class, pattern = pattern_Cer)]),
+                           choices = r$settings$feature_class[grepl(x = r$settings$feature_class, pattern = pattern_Cer)],
+                           selected = r$settings$selected_feature_class[grepl(x = r$settings$selected_feature_class, pattern = pattern_Cer)]),
         checkboxGroupInput(inputId = ns("select_HexCer_class"),
                            label = "Neutral glycosphingolipids:",
-                           choices = r$index$feature_class[grepl(x = r$index$feature_class, pattern = pattern_HexCer)],
-                           selected = r$index$selected_feature_class[grepl(x = r$index$selected_feature_class, pattern = pattern_HexCer)])
+                           choices = r$settings$feature_class[grepl(x = r$settings$feature_class, pattern = pattern_HexCer)],
+                           selected = r$settings$selected_feature_class[grepl(x = r$settings$selected_feature_class, pattern = pattern_HexCer)])
       )
     })
 
@@ -268,28 +289,28 @@ mod_settings_server <- function(id, r){
       shiny::tagList(
         checkboxGroupInput(inputId = ns("select_FA_class"),
                            label = "Fatty acyls:",
-                           choices = r$index$feature_class[grepl(x = r$index$feature_class, pattern = pattern_FA)],
-                           selected = r$index$selected_feature_class[grepl(x = r$index$selected_feature_class, pattern = pattern_FA)]),
+                           choices = r$settings$feature_class[grepl(x = r$settings$feature_class, pattern = pattern_FA)],
+                           selected = r$settings$selected_feature_class[grepl(x = r$settings$selected_feature_class, pattern = pattern_FA)]),
         checkboxGroupInput(inputId = ns("select_PSL_class"),
                            label = "Phosphosphingolipids:",
-                           choices = r$index$feature_class[grepl(x = r$index$feature_class, pattern = pattern_PSL)],
-                           selected = r$index$selected_feature_class[grepl(x = r$index$selected_feature_class, pattern = pattern_PSL)]),
+                           choices = r$settings$feature_class[grepl(x = r$settings$feature_class, pattern = pattern_PSL)],
+                           selected = r$settings$selected_feature_class[grepl(x = r$settings$selected_feature_class, pattern = pattern_PSL)]),
         checkboxGroupInput(inputId = ns("select_SB_class"),
                            label = "Sphingoid bases:",
-                           choices = r$index$feature_class[grepl(x = r$index$feature_class, pattern = pattern_SB)],
-                           selected = r$index$selected_feature_class[grepl(x = r$index$selected_feature_class, pattern = pattern_SB)]),
+                           choices = r$settings$feature_class[grepl(x = r$settings$feature_class, pattern = pattern_SB)],
+                           selected = r$settings$selected_feature_class[grepl(x = r$settings$selected_feature_class, pattern = pattern_SB)]),
         checkboxGroupInput(inputId = ns("select_SA_class"),
                            label = "Acidic glycosphingolipids:",
-                           choices = r$index$feature_class[grepl(x = r$index$feature_class, pattern = pattern_SA)],
-                           selected = r$index$selected_feature_class[grepl(x = r$index$selected_feature_class, pattern = pattern_SA)]),
+                           choices = r$settings$feature_class[grepl(x = r$settings$feature_class, pattern = pattern_SA)],
+                           selected = r$settings$selected_feature_class[grepl(x = r$settings$selected_feature_class, pattern = pattern_SA)]),
         checkboxGroupInput(inputId = ns("select_GL_class"),
                            label = "Glcyerolipids:",
-                           choices = r$index$feature_class[grepl(x = r$index$feature_class, pattern = pattern_GL)],
-                           selected = r$index$selected_feature_class[grepl(x = r$index$selected_feature_class, pattern = pattern_GL)]),
+                           choices = r$settings$feature_class[grepl(x = r$settings$feature_class, pattern = pattern_GL)],
+                           selected = r$settings$selected_feature_class[grepl(x = r$settings$selected_feature_class, pattern = pattern_GL)]),
         checkboxGroupInput(inputId = ns("select_CL_class"),
                            label = "Cardiolipins:",
-                           choices = r$index$feature_class[grepl(x = r$index$feature_class, pattern = pattern_CL)],
-                           selected = r$index$selected_feature_class[grepl(x = r$index$selected_feature_class, pattern = pattern_CL)])
+                           choices = r$settings$feature_class[grepl(x = r$settings$feature_class, pattern = pattern_CL)],
+                           selected = r$settings$selected_feature_class[grepl(x = r$settings$selected_feature_class, pattern = pattern_CL)])
       )
     })
 
@@ -297,16 +318,16 @@ mod_settings_server <- function(id, r){
       shiny::tagList(
         checkboxGroupInput(inputId = ns("select_STL_class"),
                            label = "Sterol lipids:",
-                           choices = r$index$feature_class[grepl(x = r$index$feature_class, pattern = pattern_STL)],
-                           selected = r$index$selected_feature_class[grepl(x = r$index$selected_feature_class, pattern = pattern_STL)]),
+                           choices = r$settings$feature_class[grepl(x = r$settings$feature_class, pattern = pattern_STL)],
+                           selected = r$settings$selected_feature_class[grepl(x = r$settings$selected_feature_class, pattern = pattern_STL)]),
         checkboxGroupInput(inputId = ns("select_ACPIM_class"),
                            label = "Glycerophosphoinositolglycans:",
-                           choices = r$index$feature_class[grepl(x = r$index$feature_class, pattern = pattern_ACPIM)],
-                           selected = r$index$selected_feature_class[grepl(x = r$index$selected_feature_class, pattern = pattern_ACPIM)]),
+                           choices = r$settings$feature_class[grepl(x = r$settings$feature_class, pattern = pattern_ACPIM)],
+                           selected = r$settings$selected_feature_class[grepl(x = r$settings$selected_feature_class, pattern = pattern_ACPIM)]),
         checkboxGroupInput(inputId = ns("select_PRL_class"),
                            label = "Prenol lipids:",
-                           choices = r$index$feature_class[grepl(x = r$index$feature_class, pattern = pattern_PRL)],
-                           selected = r$index$selected_feature_class[grepl(x = r$index$selected_feature_class, pattern = pattern_PRL)])
+                           choices = r$settings$feature_class[grepl(x = r$settings$feature_class, pattern = pattern_PRL)],
+                           selected = r$settings$selected_feature_class[grepl(x = r$settings$selected_feature_class, pattern = pattern_PRL)])
       )
     })
 
@@ -342,7 +363,6 @@ mod_settings_server <- function(id, r){
       r$index$selected_feature_class <- class_ion_selected
 
       r$tables$analysis_data$class_keep <- r$tables$analysis_data$class_ion %in% class_ion_selected
-      print(sum(r$tables$analysis_data$class_keep))
     },
     ignoreInit = TRUE)
 

@@ -478,3 +478,118 @@ distribution_plot <- function(data = NULL,
 
   return(p)
 }
+
+
+#' @title Calculate RSD values of all lipids
+#'
+#' @description Calculate RSD values of all lipids within all QCpool samples..
+#'
+#' @param data tibble in tidy format.
+#' @param pools character() vector with the qcpool names.
+#' @param cut_off numeric(1), the RSD cut off value.
+#'
+#' @return Returns a tibble in tidy with RSD values for each lipid.
+#'
+#' @importFrom stats sd
+#'
+#' @author Rico Derks
+#'
+calc_rsd <- function(data = NULL,
+                     pools = NULL,
+                     cut_off = 0.3) {
+  print("Calculate RSD's")
+  qc_df <- data[data$sample_name %in% pools, ]
+
+  if(nrow(qc_df) > 0) {
+    res <- tapply(qc_df, list(qc_df$my_id), function(x) {
+      rsd <- stats::sd(x$area, na.rm = TRUE) / mean(x$area, na.rm = TRUE)
+      res <- data.frame(
+        my_id = x$my_id[1],
+        rsd = rsd
+      )
+      return(res)
+    },
+    simplify = FALSE)
+
+    res <- do.call("rbind", res)
+  } else {
+    res <- tapply(data, list(data$my_id), function(x) {
+      res <- data.frame(
+        my_id = x$my_id[1],
+        rsd = 0
+      )
+      return(res)
+    },
+    simplify = FALSE)
+
+    res <- do.call("rbind", res)
+  }
+
+  keep <- res$my_id[res$rsd <= cut_off]
+
+  return(keep)
+}
+
+
+#' @title Calculate the sample to average blank ratio
+#'
+#' @description Calculate for each lipid the ratio between the sample and the
+#'     average of all blanks.
+#'
+#' @param data tibble in tidy format.
+#' @param ratio numeric(1) cutoff ratio of sample/ blank.
+#' @param threshold numeric(1) threshold.
+#' @param blanks character() vector with the blank names.
+#' @param samples character() vector with the sample names.
+#'
+#' @return Returns a tibble in tidy with sample / blank ratio for each lipid
+#'     species.
+#'
+#' @importFrom dplyr filter group_by summarise left_join mutate ungroup
+#' @importFrom rlang .data
+#'
+#' @author Rico Derks
+#'
+calc_blank_ratio <- function(data = NULL,
+                             blanks = NULL,
+                             samples = NULL,
+                             ratio = 5,
+                             threshold = 0.8) {
+  print("Calculate blank ratio")
+  samples_df <- data[data$sample_name %in% samples, ]
+  blank_df <- data[data$sample_name %in% blanks, ]
+
+  res <- tapply(blank_df, list(blank_df$my_id), function(x) {
+    mean_area <- mean(x$area, na.rm = TRUE)
+    res <- data.frame(
+      my_id = x$my_id[1],
+      blankArea = mean_area
+    )
+    return(res)
+  })
+
+  res <- do.call("rbind", res)
+
+  data <- merge(
+    x = samples_df,
+    y = res,
+    by = "my_id",
+    suffixes = c("", ".y")
+  )
+
+  data$blankRatio <- data$area / data$blankArea
+  data$threshold <- data$blankRatio >= ratio
+
+  res <- tapply(data, list(data$my_id), function(x) {
+    thresh <- mean(x$blankRatio >= ratio, na.rm = TRUE)
+    res <- data.frame(
+      my_id = x$my_id[1],
+      threshold = thresh
+    )
+  })
+  res <- do.call("rbind", res)
+
+  keep <- res$my_id[res$threshold >= threshold]
+
+  return(keep)
+}
