@@ -31,7 +31,9 @@ app_server <- function(input, output, session) {
       samples = NULL,
       selected_blanks = NULL,
       selected_pools = NULL,
-      selected_samples = NULL
+      selected_samples = NULL,
+      feature_class = NULL,
+      selected_feature_class = NULL
     ),
     tables = list(
       meta_data = NULL,
@@ -39,7 +41,8 @@ app_server <- function(input, output, session) {
       raw_data_neg = NULL,
       raw_data = NULL,
       clean_data = NULL,
-      clean_data_wide = NULL
+      clean_data_wide = NULL,
+      analysis_data = NULL
     )
   )
 
