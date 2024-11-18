@@ -503,13 +503,29 @@ mod_file_server <- function(id, r){
             r$index$keep_rsd <- calc_rsd(data = r$tables$clean_data,
                                          pools = r$index$selected_pools,
                                          cut_off = r$settings$rsd_cutoff)
+            # ID filtering
+            r$index$keep_id <- filter_id(data = r$tables$clean_data,
+                                         dot_cutoff = r$defaults$dot_cutoff,
+                                         revdot_cutoff = r$defaults$revdot_cutoff)
             # Blank filtering
             r$index$keep_blankratio <- calc_blank_ratio(data = r$tables$clean_data,
                                                         blanks = r$index$selected_blanks,
                                                         samples = r$index$selected_samples,
                                                         ratio = r$defaults$blanksample_ratio)
 
+            # what to keep
             r$tables$analysis_data <- r$tables$clean_data
+            r$tables$analysis_data$rsd_keep <- r$tables$analysis_data$my_id %in%
+              r$index$keep_rsd
+            r$tables$analysis_data$match_keep <- r$tables$analysis_data$my_id %in%
+              r$index$keep_id
+            r$tables$analysis_data$background_keep <- r$tables$analysis_data$my_id %in%
+              r$index$keep_blankratio
+
+            r$tables$analysis_data$comment <- "keep"
+            r$tables$analysis_data$comment[!r$tables$analysis_data$background_keep] <- "high_bg"
+            r$tables$analysis_data$comment[!r$tables$analysis_data$match_keep] <- "no_match"
+            r$tables$analysis_data$comment[!r$tables$analysis_data$rsd_keep] <- "large_rsd"
 
             total_features <- sum(c(length(unique(r$tables$raw_data_pos$`Alignment ID`)),
                                     length(unique(r$tables$raw_data_pos$`Alignment ID`))), na.rm = TRUE)

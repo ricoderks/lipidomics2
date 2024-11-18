@@ -488,7 +488,7 @@ distribution_plot <- function(data = NULL,
 #' @param pools character() vector with the qcpool names.
 #' @param cut_off numeric(1), the RSD cut off value.
 #'
-#' @return Returns a tibble in tidy with RSD values for each lipid.
+#' @return Character vector with id's.
 #'
 #' @importFrom stats sd
 #'
@@ -507,6 +507,7 @@ calc_rsd <- function(data = NULL,
         my_id = x$my_id[1],
         rsd = rsd
       )
+
       return(res)
     },
     simplify = FALSE)
@@ -518,6 +519,7 @@ calc_rsd <- function(data = NULL,
         my_id = x$my_id[1],
         rsd = 0
       )
+
       return(res)
     },
     simplify = FALSE)
@@ -542,11 +544,7 @@ calc_rsd <- function(data = NULL,
 #' @param blanks character() vector with the blank names.
 #' @param samples character() vector with the sample names.
 #'
-#' @return Returns a tibble in tidy with sample / blank ratio for each lipid
-#'     species.
-#'
-#' @importFrom dplyr filter group_by summarise left_join mutate ungroup
-#' @importFrom rlang .data
+#' @return Character vector with id's.
 #'
 #' @author Rico Derks
 #'
@@ -565,6 +563,7 @@ calc_blank_ratio <- function(data = NULL,
       my_id = x$my_id[1],
       blankArea = mean_area
     )
+
     return(res)
   })
 
@@ -586,10 +585,36 @@ calc_blank_ratio <- function(data = NULL,
       my_id = x$my_id[1],
       threshold = thresh
     )
+
+    return(res)
   })
   res <- do.call("rbind", res)
 
   keep <- res$my_id[res$threshold >= threshold]
+
+  return(keep)
+}
+
+
+#' @title Calculate the sample to average blank ratio
+#'
+#' @description Calculate for each lipid the ratio between the sample and the
+#'     average of all blanks.
+#'
+#' @param data tibble in tidy format.
+#' @param dev_cutoff numeric(1) cutoff value dot product.
+#' @param revdot_cutoff numeric(1) reverse dot product cutoff value.
+#'
+#' @return Character vector with id's.
+#'
+#' @author Rico Derks
+#'
+filter_id <- function(data = NULL,
+                      dot_cutoff = 50,
+                      revdot_cutoff = 50) {
+  print(data$DotProduct)
+  keep <- unique(data$my_id[data$DotProduct >= dot_cutoff &
+                              data$RevDotProduct >= revdot_cutoff])
 
   return(keep)
 }

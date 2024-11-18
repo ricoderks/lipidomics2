@@ -207,6 +207,7 @@ mod_settings_server <- function(id, r){
 
 
     #-------------------------------------------- some lipid class settings ----
+    # this is not needed here
     default_lipidclass_ion <- c("ADGGA - [M-H]-", "AHexBRS - [M+HCOO]-", "AHexCAS - [M+HCOO]-", "AHexCS - [M+HCOO]-", "AHexSIS - [M+HCOO]-", "ASM - [M+H]+", "BASulfate - [M-H]-",
                                 "BileAcid - [M-H]-", "BMP - [M+NH4]+", "CAR - [M+H]+", "CE - [M+NH4]+", "Cer_ADS - [M+HCOO]-", "Cer_AP - [M+HCOO]-",
                                 "Cer_AS - [M+HCOO]-", "Cer_BS - [M+HCOO]-", "Cer_HS - [M+H]+", "Cer_NDS - [M+HCOO]-",
@@ -360,7 +361,7 @@ mod_settings_server <- function(id, r){
                               input$select_SA_class,
                               input$select_STL_class)
 
-      r$index$selected_feature_class <- class_ion_selected
+      r$settings$selected_feature_class <- class_ion_selected
 
       r$tables$analysis_data$class_keep <- r$tables$analysis_data$class_ion %in% class_ion_selected
     },
