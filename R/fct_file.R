@@ -488,7 +488,7 @@ distribution_plot <- function(data = NULL,
 #' @param pools character() vector with the qcpool names.
 #' @param cut_off numeric(1), the RSD cut off value.
 #'
-#' @return Character vector with id's.
+#' @return List with character vector with id's and data.frame with all RSD's.
 #'
 #' @importFrom stats sd
 #'
@@ -505,6 +505,8 @@ calc_rsd <- function(data = NULL,
       rsd <- stats::sd(x$area, na.rm = TRUE) / mean(x$area, na.rm = TRUE)
       res <- data.frame(
         my_id = x$my_id[1],
+        class = x$Class[1],
+        polarity = x$polarity[1],
         rsd = rsd
       )
 
@@ -529,7 +531,8 @@ calc_rsd <- function(data = NULL,
 
   keep <- res$my_id[res$rsd <= cut_off]
 
-  return(keep)
+  return(list(keep = keep,
+              qc_data = res))
 }
 
 

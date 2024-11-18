@@ -23,6 +23,7 @@ attachment::att_amend_desc()
 golem::add_module(name = "file", with_test = TRUE)
 golem::add_module(name = "data", with_test = TRUE)
 golem::add_module(name = "settings", with_test = TRUE)
+golem::add_module(name = "qc", with_test = TRUE)
 golem::add_module(name = "help", with_test = FALSE)
 golem::add_module(name = "about", with_test = FALSE)
 

@@ -500,9 +500,12 @@ mod_file_server <- function(id, r){
 
             # apply all filtering here (rsd, id, blank/sample, etc.)
             # RSD filtering
-            r$index$keep_rsd <- calc_rsd(data = r$tables$clean_data,
-                                         pools = r$index$selected_pools,
-                                         cut_off = r$settings$rsd_cutoff)
+            rsd_res <- calc_rsd(data = r$tables$clean_data,
+                                pools = r$index$selected_pools,
+                                cut_off = r$settings$rsd_cutoff)
+            r$index$keep_rsd <- rsd_res$keep
+            r$tables$qc_data <- rsd_res$qc_data
+
             # ID filtering
             r$index$keep_id <- filter_id(data = r$tables$clean_data,
                                          dot_cutoff = r$settings$dot_cutoff,

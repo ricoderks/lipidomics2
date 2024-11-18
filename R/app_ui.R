@@ -26,6 +26,10 @@ app_ui <- function(request) {
         title = "Settings",
         mod_settings_ui(id = "settings")
       ),
+      bslib::nav_panel(
+        title = "QC",
+        mod_qc_ui(id = "qc")
+      ),
       bslib::nav_spacer(),
       bslib::nav_menu(
         title = "Help",
