@@ -26,7 +26,7 @@ mod_settings_ui <- function(id) {
         bslib::card(
           bslib::card_header(bslib::tooltip(
             trigger = list(
-              "QC",
+              "Quality control",
               bsicons::bs_icon(name = "info-circle")
             ),
             "Features are immediately tagged with `large_rsd` and will not show up in the bubble plots (identification tab) or in the analysis part."
