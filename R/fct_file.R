@@ -602,7 +602,7 @@ calc_blank_ratio <- function(data = NULL,
 #'     average of all blanks.
 #'
 #' @param data tibble in tidy format.
-#' @param dev_cutoff numeric(1) cutoff value dot product.
+#' @param dot_cutoff numeric(1) cutoff value dot product.
 #' @param revdot_cutoff numeric(1) reverse dot product cutoff value.
 #'
 #' @return Character vector with id's.
@@ -612,7 +612,7 @@ calc_blank_ratio <- function(data = NULL,
 filter_id <- function(data = NULL,
                       dot_cutoff = 50,
                       revdot_cutoff = 50) {
-  print(data$DotProduct)
+  print("Filter by DOT /reverse DOT product")
   keep <- unique(data$my_id[data$DotProduct >= dot_cutoff &
                               data$RevDotProduct >= revdot_cutoff])
 

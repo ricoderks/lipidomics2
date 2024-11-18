@@ -14,7 +14,7 @@ calc_rsd(data = NULL, pools = NULL, cut_off = 0.3)
 \item{cut_off}{numeric(1), the RSD cut off value.}
 }
 \value{
-Returns a tibble in tidy with RSD values for each lipid.
+Character vector with id's.
 }
 \description{
 Calculate RSD values of all lipids within all QCpool samples..

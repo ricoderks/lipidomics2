@@ -505,13 +505,14 @@ mod_file_server <- function(id, r){
                                          cut_off = r$settings$rsd_cutoff)
             # ID filtering
             r$index$keep_id <- filter_id(data = r$tables$clean_data,
-                                         dot_cutoff = r$defaults$dot_cutoff,
-                                         revdot_cutoff = r$defaults$revdot_cutoff)
+                                         dot_cutoff = r$settings$dot_cutoff,
+                                         revdot_cutoff = r$settings$revdot_cutoff)
             # Blank filtering
             r$index$keep_blankratio <- calc_blank_ratio(data = r$tables$clean_data,
                                                         blanks = r$index$selected_blanks,
                                                         samples = r$index$selected_samples,
-                                                        ratio = r$defaults$blanksample_ratio)
+                                                        ratio = r$settings$blanksample_ratio,
+                                                        threshold = r$settings$blanksample_threshold)
 
             # what to keep
             r$tables$analysis_data <- r$tables$clean_data

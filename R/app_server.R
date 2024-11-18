@@ -30,19 +30,19 @@ app_server <- function(input, output, session) {
                          "PG - [M-H]-", "PI - [M-H]-",  "PI_Cer - [M+H]+", "PMeOH - [M-H]-",
                          "PS - [M-H]-", "SHexCer - [M-H]-", "SL - [M-H]-", "SM - [M+H]+", "Sph - [M+H]+",
                          "SQDG - [M-H]-", "SSulfate - [M-H]-", "ST - [M+H-H2O]+", "ST - [M+H]+", "TG - [M+NH4]+", "TG_EST - [M+NH4]+", "VAE - [M+H]+"),
-      metclass_ion = NULL,
+      metclass_ion = NULL
+      # rsd_cutoff = 0.3,
+      # dot_cutoff = 50,
+      # revdot_cutoff = 50,
+      # blanksample_ratio = 5,
+      # blanksample_threshold = 0.8
+    ),
+    settings = list(
       rsd_cutoff = 0.3,
       dot_cutoff = 50,
       revdot_cutoff = 50,
       blanksample_ratio = 5,
-      blanksample_threshold = 0.8
-    ),
-    settings = list(
-      rsd_cutoff = NULL,
-      dot_cutoff = NULL,
-      revdot_cutoff = NULL,
-      blanksample_ratio = NULL,
-      blanksample_threshold = NULL,
+      blanksample_threshold = 0.8,
       feature_class = NULL,
       selected_feature_class = NULL
     ),
