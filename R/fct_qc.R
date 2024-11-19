@@ -14,6 +14,8 @@
 #' @importFrom ggplot2 ggplot aes .data geom_vline geom_histogram labs guides
 #'     guide_legend theme_minimal theme
 #'
+#' @noRd
+#'
 #' @author Rico Derks
 #'
 show_overall_hist <- function(data = NULL,
@@ -49,6 +51,8 @@ show_overall_hist <- function(data = NULL,
 #'
 #' @importFrom ggplot2 ggplot aes .data geom_violin geom_hline labs guides
 #'     guide_legend theme_minimal theme
+#'
+#' @noRd
 #'
 #' @author Rico Derks
 #'
@@ -89,6 +93,8 @@ show_class_violin <- function(data = NULL,
 #' @importFrom ggplot2 ggplot aes .data geom_tile scale_fill_gradient
 #'     theme_minimal theme element_text element_blank guides guide_colourbar
 #'
+#' @noRd
+#'
 #' @author Rico Derks
 #'
 qc_cor_plot <- function(data = NULL) {
@@ -126,6 +132,8 @@ qc_cor_plot <- function(data = NULL) {
 #'
 #' @importFrom tidyr pivot_wider pivot_longer
 #' @importFrom stats cor
+#'
+#' @noRd
 #'
 #' @author Rico Derks
 #'

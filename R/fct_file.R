@@ -10,6 +10,8 @@
 #'
 #' @importFrom readr read_delim cols col_double col_character col_integer
 #'
+#' @noRd
+#'
 #' @author Rico Derks
 #'
 read_msdial <- function(filename = NULL) {
@@ -125,6 +127,8 @@ read_msdial <- function(filename = NULL) {
 #' @importFrom tidyr unnest
 #' @importFrom rlang .data
 #'
+#' @noRd
+#'
 #' @author Rico Derks
 #'
 clean_up <- function(raw_data = NULL,
@@ -204,6 +208,8 @@ clean_up <- function(raw_data = NULL,
 #' @importFrom dplyr filter arrange mutate
 #' @importFrom rlang .data
 #' @importFrom stringr str_replace
+#'
+#' @noRd
 #'
 #' @author Rico Derks
 #'
@@ -293,6 +299,8 @@ select_identified <- function(data = NULL,
 #' @importFrom tidyselect matches
 #' @importFrom rlang .data
 #' @importFrom stringr str_extract str_replace
+#'
+#' @noRd
 #'
 #' @author Rico Derks
 #'
@@ -414,6 +422,8 @@ read_data <- function(file_path = NULL,
 #'
 #' @return character(1), the delimiter found.
 #'
+#' @noRd
+#'
 #' @author Damien Olivier
 #' @author Rico Derks
 #'
@@ -455,11 +465,13 @@ find_delim = function(file_path = NULL) {
 #'
 #' @return ggplot2 object
 #'
-#' @author Rico Derks
-#'
 #' @importFrom ggplot2 ggplot aes .data geom_bar geom_text labs theme_minimal
 #'
 #' @noRd
+#'
+#'@author Rico Derks
+#'
+#'
 distribution_plot <- function(data = NULL,
                               title = NULL) {
   p <- data |>
@@ -491,6 +503,8 @@ distribution_plot <- function(data = NULL,
 #' @return List with character vector with id's and data.frame with all RSD's.
 #'
 #' @importFrom stats sd
+#'
+#' @noRd
 #'
 #' @author Rico Derks
 #'
@@ -548,6 +562,8 @@ calc_rsd <- function(data = NULL,
 #' @param samples character() vector with the sample names.
 #'
 #' @return Character vector with id's.
+#'
+#' @noRd
 #'
 #' @author Rico Derks
 #'
@@ -609,6 +625,8 @@ calc_blank_ratio <- function(data = NULL,
 #' @param revdot_cutoff numeric(1) reverse dot product cutoff value.
 #'
 #' @return Character vector with id's.
+#'
+#' @noRd
 #'
 #' @author Rico Derks
 #'
