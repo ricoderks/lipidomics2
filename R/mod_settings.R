@@ -370,7 +370,7 @@ mod_settings_server <- function(id, r){
                            choices = r$settings$feature_class[grepl(x = r$settings$feature_class, pattern = pattern_SA)],
                            selected = r$settings$selected_feature_class[grepl(x = r$settings$selected_feature_class, pattern = pattern_SA)]),
         checkboxGroupInput(inputId = ns("select_GL_class"),
-                           label = "Glcyerolipids:",
+                           label = "Glycerolipids:",
                            choices = r$settings$feature_class[grepl(x = r$settings$feature_class, pattern = pattern_GL)],
                            selected = r$settings$selected_feature_class[grepl(x = r$settings$selected_feature_class, pattern = pattern_GL)]),
         checkboxGroupInput(inputId = ns("select_CL_class"),

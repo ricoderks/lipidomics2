@@ -7,7 +7,7 @@
 #' @noRd
 #'
 #' @importFrom shiny NS tagList moduleServer
-#' @importFrom bslib layout_sidebar sidebar
+#' @importFrom bslib layout_sidebar sidebar card card_header
 #'
 mod_identification_ui <- function(id) {
   ns <- shiny::NS(id)
@@ -21,8 +21,8 @@ mod_identification_ui <- function(id) {
       ),
       shiny::uiOutput(
         outputId = ns("id_main_ui")
-      ),
-      mod_bubbleplot_ui(id = ns("bubble"))
+      )
+      # mod_bubbleplot_ui(id = ns("bubble"))
     )
   )
 }
@@ -46,8 +46,8 @@ mod_identification_server <- function(id, r){
       shiny::tagList(
         shiny::selectInput(
           inputId = ns("id_select_class"),
-          label = "Select class",
-          choices = c("Select a class", class_choices),
+          label = "Select a class:",
+          choices = c("None", class_choices),
           multiple = FALSE
         )
       )
@@ -57,26 +57,26 @@ mod_identification_server <- function(id, r){
     output$id_main_ui <- shiny::renderUI({
       shiny::req(input$id_select_class)
 
-      if(input$id_select_class != "Select a class") {
+      if(input$id_select_class != "None") {
+        pattern <- get_class_pattern(classes = r$defaults$lipid_classes,
+                                     class_name = input$id_select_class)
+
         main_title <- shiny::h2(input$id_select_class)
         mod_bubbleplot_server(id = "bubble",
                               r = r,
-                              class_pattern = "^FA$")
+                              class_pattern = pattern)
       } else {
         main_title <- NULL
       }
 
       shiny::tagList(
-        shiny::h2(main_title)
+        bslib::card(
+          bslib::card_header(main_title),
+          mod_bubbleplot_ui(id = ns("bubble")),
+          height = "100%"
+        )
       )
     })
-
-
-    # mod_bubbleplot_server(id = "bubble",
-    #                       r = r,
-    #                       class_pattern = "^FA$")
-
-
 
   })
 }

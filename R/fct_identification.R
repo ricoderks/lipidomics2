@@ -28,3 +28,33 @@ lip_class_choices <- function(lipid_classes = NULL) {
 
   return(res)
 }
+
+
+#' @title Get the regex pattern for a lipid class
+#'
+#' @description
+#' Get the regex pattern for a lipid class.
+#'
+#' @param classes list(), with all class information.
+#' @param class_name character(1), with the class name.
+#'
+#' @return character(1) with the pattern for these classes.
+#'
+#' @noRd
+#'
+#' @author Rico Derks
+#'
+get_class_pattern <- function(classes = NULL,
+                              class_name = NULL) {
+  res <- sapply(classes, function(x) {
+    which(sapply(x, function(y) {
+      class_name %in% y$name
+    }))
+  })
+
+  res <- res[sapply(res, length) > 0]
+
+  pattern <- classes[[names(res)]][[res[[1]]]]$pattern
+
+  return(pattern)
+}

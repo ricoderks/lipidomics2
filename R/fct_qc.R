@@ -26,7 +26,7 @@ show_overall_hist <- function(data = NULL,
     ggplot2::geom_vline(xintercept = rsd_cutoff,
                         colour = "red",
                         linetype = 2) +
-    ggplot2::geom_histogram(binwidth = 0.05,
+    ggplot2::geom_histogram(binwidth = 0.005,
                             alpha = 0.4) +
     ggplot2::labs(x = "Relative standard deviation") +
     ggplot2::guides(fill = ggplot2::guide_legend(title = "Polarity",
