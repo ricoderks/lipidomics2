@@ -30,6 +30,7 @@ golem::add_module(name = "about", with_test = FALSE)
 ## Add helper functions ----
 ## Creates fct_* and utils_*
 golem::add_fct("file", with_test = TRUE)
+golem::add_fct("qc", with_test = TRUE)
 # golem::add_utils("helpers", with_test = TRUE)
 
 ## External resources
