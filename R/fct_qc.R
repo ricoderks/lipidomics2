@@ -7,9 +7,9 @@
 #' @param data data.frame with the RSD data.
 #' @param rsd_cutoff numeric(1), the RSD cut off value.
 #'
-#' @details data should contain the columns rsd and polarity.
+#' @details data should contain the columns RSD and polarity.
 #'
-#' @return ggplot2 object, histogram of the RSD values
+#' @return ggplot2 object, histogram of the RSD values.
 #'
 #' @importFrom ggplot2 ggplot aes .data geom_vline geom_histogram labs guides
 #'     guide_legend theme_minimal theme
@@ -38,14 +38,14 @@ show_overall_hist <- function(data = NULL,
 
 #' @title Create RSD violin plot
 #'
-#' @description Create RSD violin plot per lipid class.
+#' @description Create RSD violin plot per class.
 #'
 #' @param data data.frame with the RSD data.
 #' @param rsd_cutoff numeric(1), the RSD cut off value.
 #'
-#' @details data should contain the columns rsd, class and polarity.
+#' @details data should contain the columns RSD, class and polarity.
 #'
-#' @return ggplot2 object, histogram of the RSD values
+#' @return ggplot2 object, violin plot of the RSD values per class.
 #'
 #' @importFrom ggplot2 ggplot aes .data geom_violin geom_hline labs guides
 #'     guide_legend theme_minimal theme
@@ -80,30 +80,34 @@ show_class_violin <- function(data = NULL,
 
 #' @title Correlation heatmap
 #'
-#' @description Correlatoin heatmap of all samples and pooled samples.
+#' @description Correlation heatmap of all samples and pooled samples.
 #'
 #' @param data data.frame with all the data.
 #'
 #' @return ggplot2 object, histogram of the RSD values
 #'
 #' @importFrom ggplot2 ggplot aes .data geom_tile scale_fill_gradient
-#'     theme_minimal theme element_text element_blank
+#'     theme_minimal theme element_text element_blank guides guide_colourbar
 #'
 #' @author Rico Derks
 #'
 qc_cor_plot <- function(data = NULL) {
   p <- data |>
     ggplot2::ggplot(ggplot2::aes(x = .data$x,
-                                 y = .data$y,
-                                 fill = .data$area)) +
-    ggplot2::geom_tile() +
+                                 y = .data$y)) +
+    ggplot2::geom_tile(ggplot2::aes(fill = .data$cor),
+                       color = "white",
+                       lwd = 0.5,
+                       linetype = 1) +
     ggplot2::scale_fill_gradient(limits = c(-1, 1),
                                  low = "blue",
                                  high = "red") +
+    ggplot2::guides(fill = ggplot2::guide_colourbar(title = "Pearson corr.")) +
     ggplot2::theme_minimal() +
     ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90,
                                                        hjust = 1),
                    axis.title = ggplot2::element_blank())
+
 
   return(p)
 }
@@ -118,9 +122,9 @@ qc_cor_plot <- function(data = NULL) {
 #' @param idx_samples character(), with all the sample names.
 #' @param idx_pools character(), with all the pooled sample names.
 #'
-#' @return data.frame in long format for qc_cor_plot().
+#' @return data.frame in long format for `qc_cor_plot()`.
 #'
-#' @importFrom tidyr pivot_wider pivot_longer .data
+#' @importFrom tidyr pivot_wider pivot_longer
 #' @importFrom stats cor
 #'
 #' @author Rico Derks
@@ -129,9 +133,9 @@ calc_cor <- function(data = NULL,
                      idx_samples = NULL,
                      idx_pools = NULL) {
   df_m <- data[data$sample_name %in% c(idx_pools, idx_samples), ] |>
-    tidyr::pivot_wider(id_cols = .data$my_id,
-                       names_from = .data$sample_name,
-                       values_from = .data$area)
+    tidyr::pivot_wider(id_cols = "my_id",
+                       names_from = "sample_name",
+                       values_from = "area")
 
   df_m <- df_m[, -1]
   df_m[df_m == 0] <- 1
@@ -142,8 +146,13 @@ calc_cor <- function(data = NULL,
     tidyr::pivot_longer(
       cols = colnames(cormat)[-ncol(cormat)],
       names_to = "y",
-      values_to = "area"
+      values_to = "cor"
     )
+
+  cormat_long$tooltip <- sprintf("%s</br>%s</br>Pearson corr.:%0.2f",
+                                 cormat_long$x,
+                                 cormat_long$y,
+                                 cormat_long$cor)
 
   return(cormat_long)
 }

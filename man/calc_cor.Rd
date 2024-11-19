@@ -14,7 +14,7 @@ calc_cor(data = NULL, idx_samples = NULL, idx_pools = NULL)
 \item{idx_pools}{character(), with all the pooled sample names.}
 }
 \value{
-data.frame in long format for qc_cor_plot().
+data.frame in long format for `qc_cor_plot()`.
 }
 \description{
 Calculate correlation between all samples and pooled samples.

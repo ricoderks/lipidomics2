@@ -13,7 +13,7 @@ qc_cor_plot(data = NULL)
 ggplot2 object, histogram of the RSD values
 }
 \description{
-Correlatoin heatmap of all samples and pooled samples.
+Correlation heatmap of all samples and pooled samples.
 }
 \author{
 Rico Derks

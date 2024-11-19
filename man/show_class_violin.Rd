@@ -12,13 +12,13 @@ show_class_violin(data = NULL, rsd_cutoff = 0.3)
 \item{rsd_cutoff}{numeric(1), the RSD cut off value.}
 }
 \value{
-ggplot2 object, histogram of the RSD values
+ggplot2 object, violin plot of the RSD values per class.
 }
 \description{
-Create RSD violin plot per lipid class.
+Create RSD violin plot per class.
 }
 \details{
-data should contain the columns rsd, class and polarity.
+data should contain the columns RSD, class and polarity.
 }
 \author{
 Rico Derks

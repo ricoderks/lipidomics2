@@ -7,6 +7,7 @@
 #' @noRd
 #'
 #' @importFrom shiny NS tagList moduleServer
+#' @importFrom plotly plotlyOutput renderPlotly ggplotly
 #'
 mod_qc_ui <- function(id) {
   ns <- shiny::NS(id)
@@ -32,16 +33,15 @@ mod_qc_ui <- function(id) {
         )
       ),
       bslib::nav_panel(
-        title = "QC - correlation",
+        title = "QC - correlation ",
         value = "qc_correlation",
         bslib::card(
-          shiny::plotOutput(
+          plotly::plotlyOutput(
             outputId = ns("qc_correlation_plot")
           )
         )
       )
     )
-
   )
 }
 
@@ -74,7 +74,7 @@ mod_qc_server <- function(id, r){
     })
 
 
-    output$qc_correlation_plot <- shiny::renderPlot({
+    output$qc_correlation_plot <- plotly::renderPlotly({
       shiny::req(r$tables$analysis_data)
 
       cor_df <- calc_cor(data = r$tables$analysis_data,
@@ -83,7 +83,10 @@ mod_qc_server <- function(id, r){
 
       p <- qc_cor_plot(data = cor_df)
 
-      return(p)
+      ply <- plotly::ggplotly(p = p)
+
+      return(ply)
     })
+
   })
 }

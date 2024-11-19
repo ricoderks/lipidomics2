@@ -12,7 +12,7 @@ show_overall_hist(data = NULL, rsd_cutoff = 0.3)
 \item{rsd_cutoff}{numeric(1), the RSD cut off value.}
 }
 \value{
-ggplot2 object, histogram of the RSD values
+ggplot2 object, histogram of the RSD values.
 }
 \description{
 Create RSD histogram.
@@ -20,7 +20,7 @@ Create RSD histogram.
 \details{
 qc
 
-data should contain the columns rsd and polarity.
+data should contain the columns RSD and polarity.
 }
 \author{
 Rico Derks
