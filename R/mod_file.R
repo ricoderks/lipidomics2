@@ -531,6 +531,12 @@ mod_file_server <- function(id, r){
               r$index$keep_id
             r$tables$analysis_data$background_keep <- r$tables$analysis_data$my_id %in%
               r$index$keep_blankratio
+            r$tables$analysis_data$keep <- mapply(all,
+                                                  r$tables$analysis_data$rsd_keep,
+                                                  r$tables$analysis_data$match_keep,
+                                                  r$tables$analysis_data$background_keep)
+
+
 
             r$tables$analysis_data$comment <- "keep"
             r$tables$analysis_data$comment[!r$tables$analysis_data$background_keep] <- "high_bg"
