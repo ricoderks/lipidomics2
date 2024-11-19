@@ -26,8 +26,8 @@ mod_file_ui <- function(id) {
               shiny::div(
                 shiny::h4("Column selection"),
                 shiny::selectInput(
-                  inputId = ns("metadata_select_sampleid"),
-                  label = "Sample ID",
+                  inputId = ns("metadata_select_filename"),
+                  label = "File name",
                   choices = NULL
                 ),
                 shiny::selectInput(
@@ -67,7 +67,7 @@ mod_file_ui <- function(id) {
                     ),
                     "Regular expression to recognize pooled samples."
                   ),
-                  value = "^pool",
+                  value = "^qcpool",
                   width = "100%"
                 ),
                 shiny::textInput(
@@ -340,13 +340,13 @@ mod_file_server <- function(id, r){
         # update column names
         column_names <- colnames(r$tables$meta_data)
         shiny::updateSelectInput(
-          inputId = "metadata_select_sampleid",
+          inputId = "metadata_select_filename",
           choices = sort(column_names),
           selected = ifelse(any(grepl(x = column_names,
-                                      pattern = ".*sampleid.*",
+                                      pattern = ".*filename*",
                                       ignore.case = TRUE)),
                             grep(x = column_names,
-                                 pattern = ".*sampleid.*",
+                                 pattern = ".*filename.*",
                                  ignore.case = TRUE,
                                  value = TRUE)[1],
                             column_names[1])
@@ -408,11 +408,11 @@ mod_file_server <- function(id, r){
 
 
     shiny::observeEvent(
-      c(input$metadata_select_sampleid,
+      c(input$metadata_select_filename,
         input$metadata_select_sampletype,
         input$metadata_select_acqorder),
       {
-        r$columns$sampleid <- input$metadata_select_sampleid
+        r$columns$sampleid <- input$metadata_select_filename
         r$columns$sampletype <- input$metadata_select_sampletype
         r$columns$acqorder <- input$metadata_select_acqorder
       }
@@ -421,7 +421,7 @@ mod_file_server <- function(id, r){
 
     output$metadata_sampletype_plot <- shiny::renderPlot({
       shiny::req(r$tables$meta_data,
-                 input$metadata_select_sampleid,
+                 input$metadata_select_filename,
                  input$metadata_select_sampletype,
                  input$metadata_blank_pattern,
                  input$metadata_qc_pattern,
@@ -444,9 +444,9 @@ mod_file_server <- function(id, r){
                                                ignore.case = TRUE), ]
 
       # store id's
-      r$index$blanks <- blank_table[, input$metadata_select_sampleid]
-      r$index$pools <- qcpool_table[, input$metadata_select_sampleid]
-      r$index$samples <- sample_table[, input$metadata_select_sampleid]
+      r$index$blanks <- blank_table[, input$metadata_select_filename]
+      r$index$pools <- qcpool_table[, input$metadata_select_filename]
+      r$index$samples <- sample_table[, input$metadata_select_filename]
       r$index$selected_blanks <- r$index$blanks
       r$index$selected_pools <- r$index$pools
       r$index$selected_samples <- r$index$samples
