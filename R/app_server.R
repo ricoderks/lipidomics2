@@ -30,7 +30,34 @@ app_server <- function(input, output, session) {
                          "PG - [M-H]-", "PI - [M-H]-",  "PI_Cer - [M+H]+", "PMeOH - [M-H]-",
                          "PS - [M-H]-", "SHexCer - [M-H]-", "SL - [M-H]-", "SM - [M+H]+", "Sph - [M+H]+",
                          "SQDG - [M-H]-", "SSulfate - [M-H]-", "ST - [M+H-H2O]+", "ST - [M+H]+", "TG - [M+NH4]+", "TG_EST - [M+NH4]+", "VAE - [M+H]+"),
-      metclass_ion = NULL
+      metclass_ion = NULL,
+      lipid_classes = list(
+        "Fatty acyls" = list(
+          "FA" = list(id = "FA",
+                      pattern = "^(Ox)?FA$",
+                      name = "Fatty acids and conjugates"),
+          "FAM" = list(id = "FAM",
+                       pattern = "^(NAGly|NAGlySer|NAOrn|NAE)",
+                       name = "Fatty amides"),
+          "FE" = list(id = "FE",
+                      pattern = "^(CAR|FAHFA)",
+                      name = "Fatty esters")
+        ),
+        "Glycerolipids" = list(
+          "EGL" = list(id = "EGL",
+                       pattern = "^(Ether|Ox)[MDT]G$",
+                       name = "Ether/Oxidized glycerolipids"),
+          "GL" = list(id = "GL",
+                      pattern = "^[MDT]G$",
+                      name = "Glycerolipids"),
+          "GLDG" = list(id = "GLDL",
+                        pattern = "^(Ether|EtherS)?[DMS][GQ]DG$",
+                        name = "Glycosyldiradylglycerols"),
+          "OGL" = list(id = "OGL",
+                       pattern = "^([AL]?DG(GA|CC|TS/A)|TG_EST)$",
+                       name = "Other glycerolipids")
+        )
+      )
     ),
     settings = list(
       rsd_cutoff = 0.3,
@@ -84,6 +111,9 @@ app_server <- function(input, output, session) {
 
   mod_qc_server(id = "qc",
                 r = r)
+
+  mod_identification_server(id = "id",
+                            r = r)
 
   #--------------------------------------------------------------------- help ----
   mod_help_server(id = "help")

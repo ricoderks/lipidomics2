@@ -30,6 +30,10 @@ app_ui <- function(request) {
         title = "QC",
         mod_qc_ui(id = "qc")
       ),
+      bslib::nav_panel(
+        title = "Identification",
+        mod_identification_ui(id = "id")
+      ),
       bslib::nav_spacer(),
       bslib::nav_menu(
         title = "Help",
