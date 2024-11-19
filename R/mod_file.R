@@ -132,7 +132,7 @@ mod_file_ui <- function(id) {
                     "Upload files",
                     bsicons::bs_icon(name = "info-circle")
                   ),
-                  "Which result files from MS-DIAl to upload!"
+                  "Which result files from MS-DIAL to upload!"
                 ),
                 choices = c("Positive" = "pos", "Negative" = "neg"),
                 selected = c("pos", "neg")
@@ -197,7 +197,13 @@ mod_file_ui <- function(id) {
             )
           )
         )
-      ) # end navpanel raw data
+      ), # end navpanel raw data
+      bslib::nav_panel(
+        title = "Rdata",
+        bslib::card(
+          p("Load a .Rdata file here.")
+        )
+      )
     )
   )
 }
