@@ -71,7 +71,7 @@ app_server <- function(input, output, session) {
                       pattern = "^(H?BMP|(Ether)?L?PG)$",
                       name = "Glycerophosphoglycerols (PG)"),
           "CL" = list(id = "CL",
-                      pattern = "^(H?BMP|(Ether)?L?PG)$",
+                      pattern = "^([DM]L)?CL$",
                       name = "Cardiolipins (CL)"),
           "AcPIM" = list(id = "AcPIM",
                          pattern = "^Ac[2-4]PIM[12]$",
