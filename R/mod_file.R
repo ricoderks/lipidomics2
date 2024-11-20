@@ -525,6 +525,12 @@ mod_file_server <- function(id, r){
 
             # what to keep
             r$tables$analysis_data <- r$tables$clean_data
+            r$tables$analysis_data$class_keep <- switch(
+              r$omics,
+              "lip" = r$tables$analysis_data$class_ion %in% r$defaults$lipidclass_ion,
+              "met" = r$tables$analysis_data$class_ion %in% r$defaults$metclass_ion
+            )
+            r$tables$analysis_data$class_ion %in% r$defaults$lipidclass_ion
             r$tables$analysis_data$rsd_keep <- r$tables$analysis_data$my_id %in%
               r$index$keep_rsd
             r$tables$analysis_data$match_keep <- r$tables$analysis_data$my_id %in%
