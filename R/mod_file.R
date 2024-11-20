@@ -542,8 +542,6 @@ mod_file_server <- function(id, r){
                                                   r$tables$analysis_data$match_keep,
                                                   r$tables$analysis_data$background_keep)
 
-
-
             r$tables$analysis_data$comment <- "keep"
             r$tables$analysis_data$comment[!r$tables$analysis_data$background_keep] <- "high_bg"
             r$tables$analysis_data$comment[!r$tables$analysis_data$match_keep] <- "no_match"
