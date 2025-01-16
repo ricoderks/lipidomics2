@@ -88,6 +88,45 @@ app_server <- function(input, output, session) {
           "OGPL" = list(id = "OGPL",
                         pattern = "^P(Et|Me)OH$",
                         name = "Other glycerophospholipids")
+        ),
+        "Prenol lipids" = list(
+          "PRL" = list(id = "PRL",
+                       pattern = "^(VAE|CoQ|VitaminE)$",
+                       name = "Prenol lipids")
+        ),
+        "Sphingolipids" = list(
+          "AcGL" = list(id = "AcGL",
+                        pattern = "^(GM3|SHexCer(\\+O)?)$",
+                        name = "Acidic glycosphingolipids"),
+          "Cer" = list(id = "Cer",
+                       pattern = "^Cer[P_]",
+                       name = "Ceramides"),
+          "PSL" = list(id = "PSL",
+                       pattern = "^(ASM|PE_Cer(\\+O)?|PI_Cer(\\+O)?|SM|SM\\+O)",
+                       name = "Phosphosphingolipids"),
+          "NPSL" = list(id = "NPSL",
+                        pattern = "^A?Hex[23]?Cer",
+                        name = "Neutral glycosphingolipids"),
+          "SB" = list(id = "SB",
+                      pattern = "^((Phyto|DH)?Sph|SL(\\+O)?)$",
+                      name = "Sphingoid bases")
+        ),
+        "Sterol lipids" = list(
+          "BA" = list(id = "BA",
+                      pattern = "^(BASulfate|BileAcid|DCAE)$",
+                      name = "Bile acids and conjugates"),
+          "SC" = list(id = "SC",
+                      pattern = "^VitaminD$",
+                      name = "Secosteroids"),
+          "STC" = list(id = "STC",
+                       pattern = "^SSulfate$",
+                       name = "Steroid conjugates"),
+          "ST" = list(id = "ST",
+                      pattern = "^((BR|CA|SI|ST)?[CS]E|Cholesterol|SHex)$",
+                      name = "Sterols"),
+          "OST" = list(id = "OST",
+                       pattern = "^AHex(CAS|CS|SIS|BRS|STS)$",
+                       name = "Other sterol lipids")
         )
       )
     ),
