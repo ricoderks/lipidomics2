@@ -149,6 +149,7 @@ mod_identification_server <- function(id, r){
                  r$index$selected_pools,
                  input$id_select_class != "None")
 
+      # if there is no plot this will give a warning, is there a way to check this
       d <- plotly::event_data(event = "plotly_click",
                               source = "bubbleplot_click")
 
