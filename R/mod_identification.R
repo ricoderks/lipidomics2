@@ -86,6 +86,7 @@ mod_identification_server <- function(id, r){
       shiny::req(r$tables$analysis_data,
                  r$index$selected_pools,
                  input$id_select_class != "None")
+
       class_pattern <- get_class_pattern(classes = r$defaults$lipid_classes,
                                          class_name = input$id_select_class)
 
@@ -104,6 +105,7 @@ mod_identification_server <- function(id, r){
                                        customdata = .data$my_id)) +
           ggplot2::geom_point(ggplot2::aes(size = .data$DotProduct),
                               alpha = 0.4) +
+          ggplot2::geom_line() +
           # show lipid which should be discarded as grey
           ggplot2::geom_point(data = plot_data[plot_data$keep == FALSE, ],
                               ggplot2::aes(size = .data$DotProduct),
@@ -111,7 +113,7 @@ mod_identification_server <- function(id, r){
                               alpha = 1) +
           ggplot2::scale_size(range = c(1, 10),
                               limits = c(0, 100)) +
-          ggplot2::geom_line() +
+          ggplot2::geom_line(ggplot2::aes(group = .data$carbons)) +
           ggplot2::geom_text(ggplot2::aes(label = .data$carbon_db),
                              size = 3.0,
                              color = "black") +
@@ -129,14 +131,14 @@ mod_identification_server <- function(id, r){
                                                             face = "bold"),
                          strip.background = ggplot2::element_rect(fill = "#007cc2",
                                                                   colour = "white"))
+
+        ply <- plotly::ggplotly(p = p,
+                                source = "bubbleplot_click") |>
+          plotly::event_register(event = "plotly_click")
       } else {
         print("Nothing to show")
-        p <- NULL
+        ply <- NULL
       }
-
-      ply <- plotly::ggplotly(p = p,
-                              source = "bubbleplot_click") |>
-        plotly::event_register(event = "plotly_click")
 
       return(ply)
     })
