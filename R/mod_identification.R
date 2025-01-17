@@ -33,9 +33,11 @@ mod_identification_ui <- function(id) {
 #'
 #' @noRd
 #'
-mod_identification_server <- function(id, r){
+mod_identification_server <- function(id, r) {
   shiny::moduleServer(id, function(input, output, session){
     ns <- session$ns
+
+    # selected <- shiny::reactiveValues()
 
     output$id_sidebar_ui <- shiny::renderUI({
       shiny::req(r$omics)
@@ -54,6 +56,9 @@ mod_identification_server <- function(id, r){
         ),
         shiny::hr(),
         shiny::htmlOutput(
+          outputId = ns("reason")
+        ),
+        shiny::htmlOutput(
           outputId = ns("id_info")
         )
       )
@@ -62,6 +67,8 @@ mod_identification_server <- function(id, r){
 
     output$id_main_ui <- shiny::renderUI({
       shiny::req(input$id_select_class)
+
+      r$tables$analysis_data <- r$tables$analysis_data
 
       if(input$id_select_class != "None") {
         main_title <- shiny::h2(input$id_select_class)
@@ -153,7 +160,7 @@ mod_identification_server <- function(id, r){
       d <- plotly::event_data(event = "plotly_click",
                               source = "bubbleplot_click")
 
-      if(!is.null(d)){
+      if(!is.null(d)) {
         info_df <- r$tables$analysis_data[r$tables$analysis_data$my_id == d$customdata, ][1, ]
 
         if(nrow(info_df) == 1) {
@@ -176,8 +183,79 @@ mod_identification_server <- function(id, r){
           } else {
             shiny::HTML("")
           }
+        } # end if is there only 1 point selected
+      } # end if is something found after click
+    })
+
+
+    output$reason <- shiny::renderUI({
+      shiny::req(r$tables$analysis_data,
+                 r$index$selected_pools,
+                 input$id_select_class != "None")
+
+      # if there is no plot this will give a warning, is there a way to check this
+      d <- plotly::event_data(event = "plotly_click",
+                              source = "bubbleplot_click")
+
+      if(!is.null(d)) {
+        info_df <- r$tables$analysis_data[r$tables$analysis_data$my_id == d$customdata, ][1, ]
+
+        lipid_status <- info_df$comment
+
+        # make sure if another class is selected, the info output is cleared
+        class_pattern <- get_class_pattern(classes = r$defaults$lipid_classes,
+                                           class_name = input$id_select_class)
+        if(grepl(x = info_df$Class,
+                 pattern = class_pattern)) {
+          shiny::tagList(
+            shiny::selectInput(inputId = session$ns("select_reason"),
+                               label = "Keep :",
+                               choices = c("Keep" = "keep",
+                                           "No convincing match" = "no_match",
+                                           "Incorrect ret. time" = "wrong_rt",
+                                           "High background" = "high_bg"),
+                               selected = lipid_status)
+          )
         }
       }
+
+    })
+
+
+    shiny::observeEvent(input$select_reason, {
+      shiny::req(r$tables$analysis_data)
+
+      # if there is no plot this will give a warning, is there a way to check this
+      d <- plotly::event_data(event = "plotly_click",
+                              source = "bubbleplot_click")
+
+      if(!is.null(d)) {
+        info_df <- r$tables$analysis_data[r$tables$analysis_data$my_id == d$customdata, ][1, ]
+
+        if(input$select_reason != info_df$comment) {
+          r$tables$analysis_data$comment[r$tables$analysis_data$my_id == info_df$my_id] <- input$select_reason
+
+          switch(
+            input$select_reason,
+            "keep" = {
+              r$tables$analysis_data$match_keep[r$tables$analysis_data$my_id == info_df$my_id] <- TRUE
+              r$tables$analysis_data$rt_keep[r$tables$analysis_data$my_id == info_df$my_id] <- TRUE
+              r$tables$analysis_data$background_keep[r$tables$analysis_data$my_id == info_df$my_id] <- TRUE
+            },
+            "no_match" = r$tables$analysis_data$match_keep[r$tables$analysis_data$my_id == info_df$my_id] <- FALSE,
+            "wrong_rt" = r$tables$analysis_data$rt_keep[r$tables$analysis_data$my_id == info_df$my_id] <- FALSE,
+            "high_bg" = r$tables$analysis_data$background_keep[r$tables$analysis_data$my_id == info_df$my_id] <- FALSE
+          )
+
+          if(input$select_reason == "keep") {
+            r$tables$analysis_data$keep[r$tables$analysis_data$my_id == info_df$my_id] <- TRUE
+          } else {
+            r$tables$analysis_data$keep[r$tables$analysis_data$my_id == info_df$my_id] <- FALSE
+          }
+        } # end if check reason changed
+      } # end is something found after click
+
+
     })
 
   })
