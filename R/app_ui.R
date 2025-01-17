@@ -34,6 +34,10 @@ app_ui <- function(request) {
         title = "Identification",
         mod_identification_ui(id = "id")
       ),
+      bslib::nav_panel(
+        title = "Issues",
+        mod_issues_ui(id = "issues")
+      ),
       bslib::nav_spacer(),
       bslib::nav_menu(
         title = "Help",

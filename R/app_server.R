@@ -186,6 +186,9 @@ app_server <- function(input, output, session) {
   mod_identification_server(id = "id",
                             r = r)
 
+  mod_issues_server(id = "issues",
+                    r = r)
+
   #--------------------------------------------------------------------- help ----
   mod_help_server(id = "help")
 
