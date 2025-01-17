@@ -40,7 +40,7 @@ app_ui <- function(request) {
       ),
       bslib::nav_panel(
         title = "Export",
-        mod_export_ui(id = "Export")
+        mod_export_ui(id = "export")
       ),
       bslib::nav_spacer(),
       bslib::nav_menu(

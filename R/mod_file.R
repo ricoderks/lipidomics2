@@ -412,7 +412,8 @@ mod_file_server <- function(id, r){
         input$metadata_select_sampletype,
         input$metadata_select_acqorder),
       {
-        r$columns$sampleid <- input$metadata_select_filename
+        # r$columns$sampleid <- input$metadata_select_filename
+        r$columns$filename <- input$metadata_select_filename
         r$columns$sampletype <- input$metadata_select_sampletype
         r$columns$acqorder <- input$metadata_select_acqorder
       }
@@ -475,7 +476,7 @@ mod_file_server <- function(id, r){
       c(input$rawdata_pos_file,
         input$rawdata_neg_file),
       {
-        shiny::req(r$columns$sampleid,
+        shiny::req(r$columns$filename, #r$columns$sampleid,
                    r$index$blanks,
                    r$index$pools,
                    r$index$samples,

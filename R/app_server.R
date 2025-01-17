@@ -146,9 +146,11 @@ app_server <- function(input, output, session) {
       rda_file = NULL
     ),
     columns = list(
+      filename = NULL,
       sampleid = NULL,
       sampletype = NULL,
-      acqorder = NULL
+      acqorder = NULL,
+      groups = NULL
     ),
     index = list(
       blanks = NULL,
