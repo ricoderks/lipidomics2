@@ -189,6 +189,9 @@ app_server <- function(input, output, session) {
   mod_issues_server(id = "issues",
                     r = r)
 
+  mod_export_server(id = "export",
+                    r = r)
+
   #--------------------------------------------------------------------- help ----
   mod_help_server(id = "help")
 
