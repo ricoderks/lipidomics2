@@ -490,96 +490,106 @@ mod_file_server <- function(id, r){
                    r$index$samples,
                    r$omics)
 
-        if(!(is.null(r$tables$raw_data_pos) & is.null(r$tables$raw_data_neg))) {
+        # is it neg or pos or both data
+        if(!is.null(r$tables$raw_data_pos) & !is.null(r$tables$raw_data_neg)) {
           print("Combine data")
           r$tables$raw_data <- rbind.data.frame(r$tables$raw_data_pos,
                                                 r$tables$raw_data_neg)
-
-          if(!is.null(r$tables$raw_data)) {
-            print("Clean up")
-            clean_data_wide <- clean_up(raw_data = r$tables$raw_data,
-                                        blanks = r$index$blanks,
-                                        pools = r$index$pools,
-                                        samples = r$index$samples)
-
-            r$tables$clean_data_wide <- select_identified(data = clean_data_wide,
-                                                          omics = r$omics)
-
-            r$tables$clean_data <- make_tidy(data = r$tables$clean_data_wide,
-                                             blanks = r$index$blanks,
-                                             pools = r$index$pools,
-                                             samples = r$index$samples,
-                                             omics = r$omics)
-
-            r$settings$feature_class <- sort(unique(r$tables$clean_data$class_ion))
-
-            # apply all filtering here (rsd, id, blank/sample, etc.)
-            # RSD filtering
-            rsd_res <- calc_rsd(data = r$tables$clean_data,
-                                pools = r$index$selected_pools,
-                                cut_off = r$settings$rsd_cutoff)
-            r$index$keep_rsd <- rsd_res$keep
-            r$tables$qc_data <- rsd_res$qc_data
-
-            # ID filtering
-            r$index$keep_id <- filter_id(data = r$tables$clean_data,
-                                         dot_cutoff = r$settings$dot_cutoff,
-                                         revdot_cutoff = r$settings$revdot_cutoff)
-            # Blank filtering
-            r$index$keep_blankratio <- calc_blank_ratio(data = r$tables$clean_data,
-                                                        blanks = r$index$selected_blanks,
-                                                        samples = r$index$selected_samples,
-                                                        ratio = r$settings$blanksample_ratio,
-                                                        threshold = r$settings$blanksample_threshold)
-
-            # what to keep
-            r$tables$analysis_data <- r$tables$clean_data
-            r$tables$analysis_data$class_keep <- switch(
-              r$omics,
-              "lip" = r$tables$analysis_data$class_ion %in% r$defaults$lipidclass_ion,
-              "met" = r$tables$analysis_data$class_ion %in% r$defaults$metclass_ion
-            )
-            r$tables$analysis_data$class_ion %in% r$defaults$lipidclass_ion
-            r$tables$analysis_data$rsd_keep <- r$tables$analysis_data$my_id %in%
-              r$index$keep_rsd
-            r$tables$analysis_data$match_keep <- r$tables$analysis_data$my_id %in%
-              r$index$keep_id
-            r$tables$analysis_data$background_keep <- r$tables$analysis_data$my_id %in%
-              r$index$keep_blankratio
-            r$tables$analysis_data$keep <- mapply(all,
-                                                  r$tables$analysis_data$rsd_keep,
-                                                  r$tables$analysis_data$match_keep,
-                                                  r$tables$analysis_data$background_keep)
-
-            r$tables$analysis_data$comment <- "keep"
-            r$tables$analysis_data$comment[!r$tables$analysis_data$background_keep] <- "high_bg"
-            r$tables$analysis_data$comment[!r$tables$analysis_data$match_keep] <- "no_match"
-            r$tables$analysis_data$comment[!r$tables$analysis_data$rsd_keep] <- "large_rsd"
-
-            total_features <- sum(c(length(unique(r$tables$raw_data_pos$`Alignment ID`)),
-                                    length(unique(r$tables$raw_data_pos$`Alignment ID`))), na.rm = TRUE)
-            total_samples <- sum(c(length(r$index$blanks),
-                                   length(r$index$pools),
-                                   length(r$index$samples)),
-                                 na.rm = TRUE)
-
-            shinyWidgets::updateProgressBar(
-              session = session,
-              id = "feature_count_bar",
-              title = "Feature count",
-              value = length(unique(r$tables$clean_data$my_id)),
-              total = total_features
-            )
-
-            shinyWidgets::updateProgressBar(
-              session = session,
-              id = "sample_count_bar",
-              title = "Sample count",
-              value = length(unique(r$tables$clean_data$sample_name)),
-              total = total_samples
-            )
+        }
+        if(length(input$raw_which_files) == 1) {
+          if(!is.null(r$tables$raw_data_pos)) {
+            r$tables$raw_data <- r$tables$raw_data_pos
+          }
+          if(!is.null(r$tables$raw_data_neg)) {
+            r$tables$raw_data <- r$tables$raw_data_neg
           }
         }
+
+        if(!is.null(r$tables$raw_data)) {
+          print("Clean up")
+          clean_data_wide <- clean_up(raw_data = r$tables$raw_data,
+                                      blanks = r$index$blanks,
+                                      pools = r$index$pools,
+                                      samples = r$index$samples)
+
+          r$tables$clean_data_wide <- select_identified(data = clean_data_wide,
+                                                        omics = r$omics)
+
+          r$tables$clean_data <- make_tidy(data = r$tables$clean_data_wide,
+                                           blanks = r$index$blanks,
+                                           pools = r$index$pools,
+                                           samples = r$index$samples,
+                                           omics = r$omics)
+
+          r$settings$feature_class <- sort(unique(r$tables$clean_data$class_ion))
+
+          # apply all filtering here (rsd, id, blank/sample, etc.)
+          # RSD filtering
+          rsd_res <- calc_rsd(data = r$tables$clean_data,
+                              pools = r$index$selected_pools,
+                              cut_off = r$settings$rsd_cutoff)
+          r$index$keep_rsd <- rsd_res$keep
+          r$tables$qc_data <- rsd_res$qc_data
+
+          # ID filtering
+          r$index$keep_id <- filter_id(data = r$tables$clean_data,
+                                       dot_cutoff = r$settings$dot_cutoff,
+                                       revdot_cutoff = r$settings$revdot_cutoff)
+          # Blank filtering
+          r$index$keep_blankratio <- calc_blank_ratio(data = r$tables$clean_data,
+                                                      blanks = r$index$selected_blanks,
+                                                      samples = r$index$selected_samples,
+                                                      ratio = r$settings$blanksample_ratio,
+                                                      threshold = r$settings$blanksample_threshold)
+
+          # what to keep
+          r$tables$analysis_data <- r$tables$clean_data
+          r$tables$analysis_data$class_keep <- switch(
+            r$omics,
+            "lip" = r$tables$analysis_data$class_ion %in% r$defaults$lipidclass_ion,
+            "met" = r$tables$analysis_data$class_ion %in% r$defaults$metclass_ion
+          )
+          r$tables$analysis_data$class_ion %in% r$defaults$lipidclass_ion
+          r$tables$analysis_data$rsd_keep <- r$tables$analysis_data$my_id %in%
+            r$index$keep_rsd
+          r$tables$analysis_data$match_keep <- r$tables$analysis_data$my_id %in%
+            r$index$keep_id
+          r$tables$analysis_data$background_keep <- r$tables$analysis_data$my_id %in%
+            r$index$keep_blankratio
+          r$tables$analysis_data$keep <- mapply(all,
+                                                r$tables$analysis_data$rsd_keep,
+                                                r$tables$analysis_data$match_keep,
+                                                r$tables$analysis_data$background_keep)
+
+          r$tables$analysis_data$comment <- "keep"
+          r$tables$analysis_data$comment[!r$tables$analysis_data$background_keep] <- "high_bg"
+          r$tables$analysis_data$comment[!r$tables$analysis_data$match_keep] <- "no_match"
+          r$tables$analysis_data$comment[!r$tables$analysis_data$rsd_keep] <- "large_rsd"
+
+          total_features <- sum(c(length(unique(r$tables$raw_data_pos$`Alignment ID`)),
+                                  length(unique(r$tables$raw_data_neg$`Alignment ID`))), na.rm = TRUE)
+          total_samples <- sum(c(length(r$index$blanks),
+                                 length(r$index$pools),
+                                 length(r$index$samples)),
+                               na.rm = TRUE)
+
+          shinyWidgets::updateProgressBar(
+            session = session,
+            id = "feature_count_bar",
+            title = "Feature count",
+            value = length(unique(r$tables$clean_data$my_id)),
+            total = total_features
+          )
+
+          shinyWidgets::updateProgressBar(
+            session = session,
+            id = "sample_count_bar",
+            title = "Sample count",
+            value = length(unique(r$tables$clean_data$sample_name)),
+            total = total_samples
+          )
+        }
+
       })
 
 
