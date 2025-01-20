@@ -128,6 +128,20 @@ app_server <- function(input, output, session) {
                        pattern = "^AHex(CAS|CS|SIS|BRS|STS)$",
                        name = "Other sterol lipids")
         )
+      ),
+      patterns = list(
+        PL = "^((Ether)?(Ox)?(L)?(LNA)?(MM)?P[ACEGISM]|HBMP|BMP)",
+        GL = "^(Ox|Ether|SQ|EtherS|L|A)?[DMT]G",
+        Cer = "^Cer[P_]",
+        HexCer = "^A?Hex[23]?Cer",
+        FA = "^((Ox)?FA|FAHFA|NAGly|NAGlySer|NAOrn|NAE|CAR)",
+        PSL = "^(ASM|PE_Cer(\\+O)?|PI_Cer(\\+O)?|SM|SM\\+O)",
+        SB = "^(PhytoSph|SL|SL\\+O|DHSph|Sph)",
+        SA = "^(GM3|SHexCer|SHexCer\\+O)",
+        CL = "^([DM]L)?CL",
+        ACPIM = "^Ac[2-4]PIM[12]",
+        STL = "^((BA|S)Sulfate|BileAcid|AHex[BCS][AIRTS][S]?|(BRS|CAS|C|SIS|STS|DCA|TDCA)E|SHex|Cholesterol|VitaminD|ST) ",
+        PRL = "^(VAE|CoQ|VitaminE)"
       )
     ),
     settings = list(
@@ -150,7 +164,13 @@ app_server <- function(input, output, session) {
       sampleid = NULL,
       sampletype = NULL,
       acqorder = NULL,
+      batch = NULL,
       groups = NULL
+    ),
+    text_patterns = list(
+      blanks = NULL,
+      pools = NULL,
+      samples = NULL
     ),
     index = list(
       blanks = NULL,

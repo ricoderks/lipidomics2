@@ -201,7 +201,11 @@ mod_file_ui <- function(id) {
       bslib::nav_panel(
         title = "Rdata",
         bslib::card(
-          p("Load a .Rdata file here.")
+          p("Load a .Rdata file here. NOT working yet!"),
+          shiny::fileInput(inputId = ns("load_rdata"),
+                           label = "Load Rdata file",
+                           multiple = FALSE,
+                           accept = c(".Rdata", ".RData"))
         )
       )
     )
@@ -412,10 +416,11 @@ mod_file_server <- function(id, r){
         input$metadata_select_sampletype,
         input$metadata_select_acqorder),
       {
-        # r$columns$sampleid <- input$metadata_select_filename
+        # r$columns$sampleid <- input$metadata_select_sampleid
         r$columns$filename <- input$metadata_select_filename
         r$columns$sampletype <- input$metadata_select_sampletype
         r$columns$acqorder <- input$metadata_select_acqorder
+        r$columns$batch <- input$metadata_select_batch
       }
     )
 
@@ -434,6 +439,9 @@ mod_file_server <- function(id, r){
       names(freq_table1) <- c("value", "count")
 
       # sample selection based on patterns
+      r$text_patterns$blanks <- input$metadata_blank_pattern
+      r$text_patterns$pools <- input$metadata_qc_pattern
+      r$text_patterns$samples <- input$metadata_sample_pattern
       blank_table <- r$tables$meta_data[grepl(x = r$tables$meta_data[, input$metadata_select_sampletype],
                                               pattern = input$metadata_blank_pattern,
                                               ignore.case = TRUE), ]
@@ -597,6 +605,182 @@ mod_file_server <- function(id, r){
         "met" = r$defaults$metclass_ion
       )
       print(r$omics)
+    })
+
+
+    #----------------------------------------------------------------- Rdata----
+    shiny::observeEvent(input$load_rdata, {
+      print("Loading Rdata file.")
+
+      import_env <- load_to_env(RData = input$load_rdata$datapath)
+      #---------------------------------------------------------- Settings -----
+      r$name <- import_env$r$name
+      r$omics <- import_env$r$omics
+      print(r$omics)
+
+      r$defaults$lipidclass_ion <- import_env$r$defaults$lipidclass_ion
+      r$defaults$metclass_ion <- import_env$r$defaults$metclass_ion
+      r$defaults$lipid_classes <- import_env$r$defaults$lipid_classes
+
+      r$settings$rsd_cutoff <- import_env$r$settings$rsd_cutoff
+      r$settings$dot_cutoff <- import_env$r$settings$dot_cutoff
+      r$settings$revdot_cutoff <- import_env$r$settings$revdot_cutoff
+      r$settings$blanksample_ratio <- import_env$r$settings$blanksample_ratio
+      r$settings$blanksample_threshold <- import_env$r$settings$blanksample_threshold
+      r$settings$feature_class <- import_env$r$settings$feature_class
+      r$settings$selected_feature_class <- import_env$r$settings$selected_feature_class
+      shiny::updateNumericInput(
+        inputId = "settings_rsd_cutoff",
+        value = r$settings$rsd_cutoff
+      )
+      shiny::updateNumericInput(
+        inputId = "settings_dot_cutoff",
+        value = r$settings$dot_cutoff
+      )
+      shiny::updateNumericInput(
+        inputId = "settings_revdot_cutoff",
+        value = r$settings$revdot_cutoff
+      )
+      shiny::updateNumericInput(
+        inputId = "settings_ratio",
+        value = r$settings$blanksample_ratio
+      )
+      shiny::updateSliderInput(
+        inputId = "settings_threshold",
+        value = r$settings$blanksample_threshold
+      )
+
+      #------------------------------------------------------------- Files -----
+      r$files$meta_file <- import_env$r$files$meta_file
+      r$files$data_file_pos <- import_env$r$files$data_file_pos
+      r$files$data_file_neg <- import_env$r$files$data_file_neg
+      r$files$rda_file <- input$load_rdata$datapath
+
+      #--------------------------------------------------------- Meta data -----
+      r$tables$meta_data <- import_env$r$tables$meta_data
+      r$columns$filename <- import_env$r$columns$filename
+      r$columns$sampletype <- import_env$r$columns$sampletype
+      r$columns$acqorder <- import_env$r$columns$acqorder
+      r$columns$batch <- import_env$r$columns$batch
+      r$text_patterns$blanks <- import_env$r$text_patterns$blanks
+      r$text_patterns$pools <- import_env$r$text_patterns$pools
+      r$text_patterns$samples <- import_env$r$text_patterns$samples
+      column_names <- colnames(r$tables$meta_data)
+      shiny::updateSelectInput(
+        inputId = "metadata_select_filename",
+        choices = sort(column_names),
+        selected = r$columns$filename
+      )
+      shiny::updateSelectInput(
+        inputId = "metadata_select_sampletype",
+        choices = sort(column_names),
+        selected = r$columns$sampletype
+      )
+      shiny::updateSelectInput(
+        inputId = "metadata_select_acqorder",
+        choices = sort(column_names),
+        selected = r$columns$acqorder
+      )
+      shiny::updateSelectInput(
+        inputId = "metadata_select_batch",
+        choices = sort(column_names),
+        selected = r$columns$batch
+      )
+      shiny::updateTextInput(
+        inputId = "metadata_blank_pattern",
+        value = r$text_patterns$blanks
+      )
+      shiny::updateTextInput(
+        inputId = "metadata_qc_pattern",
+        value = r$text_patterns$pools
+      )
+      shiny::updateTextInput(
+        inputId = "metadata_samples_pattern",
+        value = r$text_patterns$samples
+      )
+
+      #---------------------------------------------------------- Raw data -----
+      r$tables$raw_data_pos <- import_env$r$tables$raw_data_pos
+      r$tables$raw_data_neg <- import_env$r$tables$raw_data_neg
+      r$tables$raw_data <- import_env$r$tables$raw_data
+      r$tables$clean_data <- import_env$r$tables$clean_data
+      r$tables$clean_data_wide <- import_env$r$tables$clean_data_wide
+      r$tables$blank_data <- import_env$r$tables$blank_data
+      r$tables$qc_data <- import_env$r$tables$qc_data
+      r$tables$analysis_data <- import_env$r$tables$analysis_data
+
+      #---------------------------------------------------- class selection ----
+      r$defaults$patterns$PL <- import_env$r$defaults$patterns$PL
+      r$defaults$patterns$GL <- import_env$r$defaults$patterns$GL
+      r$defaults$patterns$Cer <- import_env$r$defaults$patterns$Cer
+      r$defaults$patterns$HexCer <- import_env$r$defaults$patterns$HexCer
+      r$defaults$patterns$FA <- import_env$r$defaults$patterns$FA
+      r$defaults$patterns$PSL <- import_env$r$defaults$patterns$PSL
+      r$defaults$patterns$SB <- import_env$r$defaults$patterns$SB
+      r$defaults$patterns$SA <- import_env$r$defaults$patterns$SA
+      r$defaults$patterns$CL <- import_env$r$defaults$patterns$CL
+      r$defaults$patterns$ACPIM <- import_env$r$defaults$patterns$ACPIM
+      r$defaults$patterns$STL <- import_env$r$defaults$patterns$STL
+      r$defaults$patterns$PRL <- import_env$r$defaults$patterns$PRL
+      shiny::updateCheckboxGroupInput(
+        inputId = "select_PL_class",
+        selected = r$defaults$patterns$PL
+      )
+      shiny::updateCheckboxGroupInput(
+        inputId = "select_Cer_class",
+        selected = r$defaults$patterns$Cer
+      )
+      shiny::updateCheckboxGroupInput(
+        inputId = "select_HexCer_class",
+        selected = r$defaults$patterns$HexCer
+      )
+      shiny::updateCheckboxGroupInput(
+        inputId = "select_FA_class",
+        selected = r$defaults$patterns$FA
+      )
+      shiny::updateCheckboxGroupInput(
+        inputId = "select_PSL_class",
+        selected = r$defaults$patterns$PSL
+      )
+      shiny::updateCheckboxGroupInput(
+        inputId = "select_SB_class",
+        selected = r$defaults$patterns$SB
+      )
+      shiny::updateCheckboxGroupInput(
+        inputId = "select_SA_class",
+        selected = r$defaults$patterns$SA
+      )
+      shiny::updateCheckboxGroupInput(
+        inputId = "select_GL_class",
+        selected = r$defaults$patterns$GL
+      )
+      shiny::updateCheckboxGroupInput(
+        inputId = "select_CL_class",
+        selected = r$defaults$patterns$CL
+      )
+      shiny::updateCheckboxGroupInput(
+        inputId = "select_STL_class",
+        selected = r$defaults$patterns$STL
+      )
+      shiny::updateCheckboxGroupInput(
+        inputId = "select_ACPIM_class",
+        selected = r$defaults$patterns$ACPIM
+      )
+      shiny::updateCheckboxGroupInput(
+        inputId = "select_PRL_class",
+        selected = r$defaults$patterns$PRL
+      )
+
+      #------------------------------------------------------------ Indexes ----
+      r$index$blanks <- import_env$r$index$blanks
+      r$index$pools <- import_env$r$index$pools
+      r$index$samples <- import_env$r$index$samples
+      r$index$selected_blanks <- import_env$r$index$selected_blanks
+      r$index$selected_pools <- import_env$r$index$selected_pools
+      r$index$selected_samples <- import_env$r$index$selected_samples
+      r$index$keep_rsd <- import_env$r$index$keep_rsd
+      r$index$keep_blankratio <- import_env$r$index$keep_blankratio
+      r$index$keep_id <- import_env$r$index$keep_id
     })
 
   })

@@ -16,7 +16,7 @@ mod_export_ui <- function(id) {
     bslib::card(
       id = "export",
       shiny::h3("Save work"),
-      shiny::p("Save the current state of your work into a Rdata file."),
+      shiny::p("Save the current state of your work into an Rdata file."),
       shiny::downloadButton(outputId = ns("save_rdata"),
                             label = "Save (Rdata)",
                             style = "width:20%;"),
@@ -57,10 +57,20 @@ mod_export_server <- function(id, r) {
         openxlsx2::write_xlsx(x = export,
                               file = file,
                               na.strings = "")
+      }
+    )
 
-        # utils::write.csv(x = export,
-        #                  file = file,
-        #                  row.names = FALSE)
+
+    output$save_rdata <- shiny::downloadHandler(
+      filename = function() {
+        paste("Current_state_", Sys.Date(), ".Rdata", sep = "")
+      },
+      content = function(file) {
+        shiny::req(r$tables$analysis_data,
+                   r$tables$meta_data)
+
+        save(r,
+             file = file)
       }
     )
   })
