@@ -6,9 +6,12 @@
 #'
 #' @noRd
 #'
-#' @importFrom shiny NS tagList moduleServer
+#' @importFrom shiny NS tagList moduleServer selectizeInput uiOutput htmlOutput
+#'     renderText
 #' @importFrom bslib layout_sidebar sidebar card card_header
-#' @importFrom plotly event_data
+#' @importFrom plotly event_data event_register plotlyOutput ggplotly renderPlotly
+#' @importFrom ggplot2 ggplot aes theme_minimal theme geom_point geom_line
+#'     geom_text facet_grid labs guides element_rect element_text
 #'
 mod_identification_ui <- function(id) {
   ns <- shiny::NS(id)
@@ -37,8 +40,6 @@ mod_identification_server <- function(id, r) {
   shiny::moduleServer(id, function(input, output, session){
     ns <- session$ns
 
-    # selected <- shiny::reactiveValues()
-
     output$id_sidebar_ui <- shiny::renderUI({
       shiny::req(r$omics)
 
@@ -48,7 +49,7 @@ mod_identification_server <- function(id, r) {
       )
 
       shiny::tagList(
-        shiny::selectInput(
+        shiny::selectizeInput(
           inputId = ns("id_select_class"),
           label = "Select a class:",
           choices = c("None", class_choices),
@@ -104,6 +105,8 @@ mod_identification_server <- function(id, r) {
                                plot_data$class_keep == TRUE &
                                plot_data$rsd_keep == TRUE, ]
 
+      plot_height <- length(unique(plot_data$class_ion)) * 350
+
       if(nrow(plot_data) > 0) {
         p <- plot_data |>
           ggplot2::ggplot(ggplot2::aes(x = .data$AverageRT,
@@ -140,7 +143,8 @@ mod_identification_server <- function(id, r) {
                                                                   colour = "white"))
 
         ply <- plotly::ggplotly(p = p,
-                                source = "bubbleplot_click") |>
+                                source = "bubbleplot_click",
+                                height = plot_height) |>
           plotly::event_register(event = "plotly_click")
       } else {
         print("Nothing to show")
