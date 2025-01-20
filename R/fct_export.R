@@ -48,7 +48,8 @@ prepare_export_data <- function(meta_data = NULL,
   colnames(export_meta)[1] <- "my_id"
 
   # analysis data
-  export_data <- analysis_data[analysis_data$keep == TRUE, ] |>
+  export_data <- analysis_data[analysis_data$keep == TRUE &
+                                 analysis_data$class_keep == TRUE, ] |>
     tidyr::pivot_wider(
       id_cols = c("my_id", "ShortLipidName",  "LongLipidName", "Class", "ion"),
       names_from = "sample_name",

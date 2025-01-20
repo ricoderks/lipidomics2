@@ -8,6 +8,7 @@
 #'
 #' @importFrom shiny NS tagList moduleServer downloadButton downloadHandler
 #' @importFrom bslib card
+#' @importFrom openxlsx2 write_xlsx
 #'
 mod_export_ui <- function(id) {
   ns <- shiny::NS(id)
@@ -53,11 +54,13 @@ mod_export_server <- function(id, r) {
                                       qcpools = r$index$selected_pools,
                                       samples = r$index$selected_samples)
 
+        openxlsx2::write_xlsx(x = export,
+                              file = file,
+                              na.strings = "")
 
-
-        write.csv(x = export,
-                  file = file,
-                  row.names = FALSE)
+        # utils::write.csv(x = export,
+        #                  file = file,
+        #                  row.names = FALSE)
       }
     )
   })
