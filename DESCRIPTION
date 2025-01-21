@@ -16,6 +16,7 @@ Imports:
     DT,
     ggplot2,
     golem,
+    openxlsx2,
     patchwork,
     plotly,
     readr,

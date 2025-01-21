@@ -25,6 +25,8 @@ golem::add_module(name = "data", with_test = TRUE)
 golem::add_module(name = "settings", with_test = TRUE)
 golem::add_module(name = "qc", with_test = TRUE)
 golem::add_module(name = "identification", with_test = TRUE)
+golem::add_module(name = "issues", with_test = TRUE)
+golem::add_module(name = "export", with_test = TRUE)
 golem::add_module(name = "help", with_test = FALSE)
 golem::add_module(name = "about", with_test = FALSE)
 
@@ -33,6 +35,7 @@ golem::add_module(name = "about", with_test = FALSE)
 golem::add_fct("file", with_test = TRUE)
 golem::add_fct("qc", with_test = TRUE)
 golem::add_fct("identification", with_test = TRUE)
+golem::add_fct("export", with_test = TRUE)
 # golem::add_utils("helpers", with_test = TRUE)
 
 ## External resources

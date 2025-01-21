@@ -6,9 +6,12 @@
 #'
 #' @noRd
 #'
-#' @importFrom shiny NS tagList moduleServer
+#' @importFrom shiny NS tagList moduleServer selectizeInput uiOutput htmlOutput
+#'     renderText
 #' @importFrom bslib layout_sidebar sidebar card card_header
-#' @importFrom plotly event_data
+#' @importFrom plotly event_data event_register plotlyOutput ggplotly renderPlotly
+#' @importFrom ggplot2 ggplot aes theme_minimal theme geom_point geom_line
+#'     geom_text facet_grid labs guides element_rect element_text
 #'
 mod_identification_ui <- function(id) {
   ns <- shiny::NS(id)
@@ -33,7 +36,7 @@ mod_identification_ui <- function(id) {
 #'
 #' @noRd
 #'
-mod_identification_server <- function(id, r){
+mod_identification_server <- function(id, r) {
   shiny::moduleServer(id, function(input, output, session){
     ns <- session$ns
 
@@ -46,13 +49,16 @@ mod_identification_server <- function(id, r){
       )
 
       shiny::tagList(
-        shiny::selectInput(
+        shiny::selectizeInput(
           inputId = ns("id_select_class"),
           label = "Select a class:",
           choices = c("None", class_choices),
           multiple = FALSE
         ),
         shiny::hr(),
+        shiny::htmlOutput(
+          outputId = ns("reason")
+        ),
         shiny::htmlOutput(
           outputId = ns("id_info")
         )
@@ -62,6 +68,8 @@ mod_identification_server <- function(id, r){
 
     output$id_main_ui <- shiny::renderUI({
       shiny::req(input$id_select_class)
+
+      r$tables$analysis_data <- r$tables$analysis_data
 
       if(input$id_select_class != "None") {
         main_title <- shiny::h2(input$id_select_class)
@@ -86,6 +94,7 @@ mod_identification_server <- function(id, r){
       shiny::req(r$tables$analysis_data,
                  r$index$selected_pools,
                  input$id_select_class != "None")
+
       class_pattern <- get_class_pattern(classes = r$defaults$lipid_classes,
                                          class_name = input$id_select_class)
 
@@ -96,6 +105,8 @@ mod_identification_server <- function(id, r){
                                plot_data$class_keep == TRUE &
                                plot_data$rsd_keep == TRUE, ]
 
+      plot_height <- length(unique(plot_data$class_ion)) * 350
+
       if(nrow(plot_data) > 0) {
         p <- plot_data |>
           ggplot2::ggplot(ggplot2::aes(x = .data$AverageRT,
@@ -104,6 +115,7 @@ mod_identification_server <- function(id, r){
                                        customdata = .data$my_id)) +
           ggplot2::geom_point(ggplot2::aes(size = .data$DotProduct),
                               alpha = 0.4) +
+          ggplot2::geom_line() +
           # show lipid which should be discarded as grey
           ggplot2::geom_point(data = plot_data[plot_data$keep == FALSE, ],
                               ggplot2::aes(size = .data$DotProduct),
@@ -111,7 +123,7 @@ mod_identification_server <- function(id, r){
                               alpha = 1) +
           ggplot2::scale_size(range = c(1, 10),
                               limits = c(0, 100)) +
-          ggplot2::geom_line() +
+          ggplot2::geom_line(ggplot2::aes(group = .data$carbons)) +
           ggplot2::geom_text(ggplot2::aes(label = .data$carbon_db),
                              size = 3.0,
                              color = "black") +
@@ -129,14 +141,15 @@ mod_identification_server <- function(id, r){
                                                             face = "bold"),
                          strip.background = ggplot2::element_rect(fill = "#007cc2",
                                                                   colour = "white"))
+
+        ply <- plotly::ggplotly(p = p,
+                                source = "bubbleplot_click",
+                                height = plot_height) |>
+          plotly::event_register(event = "plotly_click")
       } else {
         print("Nothing to show")
-        p <- NULL
+        ply <- NULL
       }
-
-      ply <- plotly::ggplotly(p = p,
-                              source = "bubbleplot_click") |>
-        plotly::event_register(event = "plotly_click")
 
       return(ply)
     })
@@ -147,10 +160,11 @@ mod_identification_server <- function(id, r){
                  r$index$selected_pools,
                  input$id_select_class != "None")
 
+      # if there is no plot this will give a warning, is there a way to check this
       d <- plotly::event_data(event = "plotly_click",
                               source = "bubbleplot_click")
 
-      if(!is.null(d)){
+      if(!is.null(d)) {
         info_df <- r$tables$analysis_data[r$tables$analysis_data$my_id == d$customdata, ][1, ]
 
         if(nrow(info_df) == 1) {
@@ -173,8 +187,79 @@ mod_identification_server <- function(id, r){
           } else {
             shiny::HTML("")
           }
+        } # end if is there only 1 point selected
+      } # end if is something found after click
+    })
+
+
+    output$reason <- shiny::renderUI({
+      shiny::req(r$tables$analysis_data,
+                 r$index$selected_pools,
+                 input$id_select_class != "None")
+
+      # if there is no plot this will give a warning, is there a way to check this
+      d <- plotly::event_data(event = "plotly_click",
+                              source = "bubbleplot_click")
+
+      if(!is.null(d)) {
+        info_df <- r$tables$analysis_data[r$tables$analysis_data$my_id == d$customdata, ][1, ]
+
+        lipid_status <- info_df$comment
+
+        # make sure if another class is selected, the info output is cleared
+        class_pattern <- get_class_pattern(classes = r$defaults$lipid_classes,
+                                           class_name = input$id_select_class)
+        if(grepl(x = info_df$Class,
+                 pattern = class_pattern)) {
+          shiny::tagList(
+            shiny::selectInput(inputId = session$ns("select_reason"),
+                               label = "Keep :",
+                               choices = c("Keep" = "keep",
+                                           "No convincing match" = "no_match",
+                                           "Incorrect ret. time" = "wrong_rt",
+                                           "High background" = "high_bg"),
+                               selected = lipid_status)
+          )
         }
       }
+
+    })
+
+
+    shiny::observeEvent(input$select_reason, {
+      shiny::req(r$tables$analysis_data)
+
+      # if there is no plot this will give a warning, is there a way to check this
+      d <- plotly::event_data(event = "plotly_click",
+                              source = "bubbleplot_click")
+
+      if(!is.null(d)) {
+        info_df <- r$tables$analysis_data[r$tables$analysis_data$my_id == d$customdata, ][1, ]
+
+        if(input$select_reason != info_df$comment) {
+          r$tables$analysis_data$comment[r$tables$analysis_data$my_id == info_df$my_id] <- input$select_reason
+
+          switch(
+            input$select_reason,
+            "keep" = {
+              r$tables$analysis_data$match_keep[r$tables$analysis_data$my_id == info_df$my_id] <- TRUE
+              r$tables$analysis_data$rt_keep[r$tables$analysis_data$my_id == info_df$my_id] <- TRUE
+              r$tables$analysis_data$background_keep[r$tables$analysis_data$my_id == info_df$my_id] <- TRUE
+            },
+            "no_match" = r$tables$analysis_data$match_keep[r$tables$analysis_data$my_id == info_df$my_id] <- FALSE,
+            "wrong_rt" = r$tables$analysis_data$rt_keep[r$tables$analysis_data$my_id == info_df$my_id] <- FALSE,
+            "high_bg" = r$tables$analysis_data$background_keep[r$tables$analysis_data$my_id == info_df$my_id] <- FALSE
+          )
+
+          if(input$select_reason == "keep") {
+            r$tables$analysis_data$keep[r$tables$analysis_data$my_id == info_df$my_id] <- TRUE
+          } else {
+            r$tables$analysis_data$keep[r$tables$analysis_data$my_id == info_df$my_id] <- FALSE
+          }
+        } # end if check reason changed
+      } # end is something found after click
+
+
     })
 
   })

@@ -77,18 +77,71 @@ app_server <- function(input, output, session) {
                          pattern = "^Ac[2-4]PIM[12]$",
                          name = "Glycerophosphoinositolglycans"),
           "PI" = list(id = "PI",
-                         pattern = "^(Ether)?L?PI$",
-                         name = "Glycerophosphoinositols (PI)"),
+                      pattern = "^(Ether)?L?PI$",
+                      name = "Glycerophosphoinositols (PI)"),
           "PS" = list(id = "PS",
                       pattern = "^(LNA)?(Ether)?L?PS$",
                       name = "Glycerophosphoserines (PS)"),
           "OPL" = list(id = "OPL",
-                      pattern = "^OxP[ACEGIS]$",
-                      name = "Oxidized glycerophospholipids"),
+                       pattern = "^OxP[ACEGIS]$",
+                       name = "Oxidized glycerophospholipids"),
           "OGPL" = list(id = "OGPL",
                         pattern = "^P(Et|Me)OH$",
                         name = "Other glycerophospholipids")
+        ),
+        "Prenol lipids" = list(
+          "PRL" = list(id = "PRL",
+                       pattern = "^(VAE|CoQ|VitaminE)$",
+                       name = "Prenol lipids")
+        ),
+        "Sphingolipids" = list(
+          "AcGL" = list(id = "AcGL",
+                        pattern = "^(GM3|SHexCer(\\+O)?)$",
+                        name = "Acidic glycosphingolipids"),
+          "Cer" = list(id = "Cer",
+                       pattern = "^Cer[P_]",
+                       name = "Ceramides"),
+          "PSL" = list(id = "PSL",
+                       pattern = "^(ASM|PE_Cer(\\+O)?|PI_Cer(\\+O)?|SM|SM\\+O)",
+                       name = "Phosphosphingolipids"),
+          "NPSL" = list(id = "NPSL",
+                        pattern = "^A?Hex[23]?Cer",
+                        name = "Neutral glycosphingolipids"),
+          "SB" = list(id = "SB",
+                      pattern = "^((Phyto|DH)?Sph|SL(\\+O)?)$",
+                      name = "Sphingoid bases")
+        ),
+        "Sterol lipids" = list(
+          "BA" = list(id = "BA",
+                      pattern = "^(BASulfate|BileAcid|DCAE)$",
+                      name = "Bile acids and conjugates"),
+          "SC" = list(id = "SC",
+                      pattern = "^VitaminD$",
+                      name = "Secosteroids"),
+          "STC" = list(id = "STC",
+                       pattern = "^SSulfate$",
+                       name = "Steroid conjugates"),
+          "ST" = list(id = "ST",
+                      pattern = "^((BR|CA|SI|ST)?[CS]E|Cholesterol|SHex)$",
+                      name = "Sterols"),
+          "OST" = list(id = "OST",
+                       pattern = "^AHex(CAS|CS|SIS|BRS|STS)$",
+                       name = "Other sterol lipids")
         )
+      ),
+      patterns = list(
+        PL = "^((Ether)?(Ox)?(L)?(LNA)?(MM)?P[ACEGISM]|HBMP|BMP)",
+        GL = "^(Ox|Ether|SQ|EtherS|L|A)?[DMT]G",
+        Cer = "^Cer[P_]",
+        HexCer = "^A?Hex[23]?Cer",
+        FA = "^((Ox)?FA|FAHFA|NAGly|NAGlySer|NAOrn|NAE|CAR)",
+        PSL = "^(ASM|PE_Cer(\\+O)?|PI_Cer(\\+O)?|SM|SM\\+O)",
+        SB = "^(PhytoSph|SL|SL\\+O|DHSph|Sph)",
+        SA = "^(GM3|SHexCer|SHexCer\\+O)",
+        CL = "^([DM]L)?CL",
+        ACPIM = "^Ac[2-4]PIM[12]",
+        STL = "^((BA|S)Sulfate|BileAcid|AHex[BCS][AIRTS][S]?|(BRS|CAS|C|SIS|STS|DCA|TDCA)E|SHex|Cholesterol|VitaminD|ST) ",
+        PRL = "^(VAE|CoQ|VitaminE)"
       )
     ),
     settings = list(
@@ -107,9 +160,17 @@ app_server <- function(input, output, session) {
       rda_file = NULL
     ),
     columns = list(
+      filename = NULL,
       sampleid = NULL,
       sampletype = NULL,
-      acqorder = NULL
+      acqorder = NULL,
+      batch = NULL,
+      groups = NULL
+    ),
+    text_patterns = list(
+      blanks = NULL,
+      pools = NULL,
+      samples = NULL
     ),
     index = list(
       blanks = NULL,
@@ -146,6 +207,12 @@ app_server <- function(input, output, session) {
 
   mod_identification_server(id = "id",
                             r = r)
+
+  mod_issues_server(id = "issues",
+                    r = r)
+
+  mod_export_server(id = "export",
+                    r = r)
 
   #--------------------------------------------------------------------- help ----
   mod_help_server(id = "help")
