@@ -7,6 +7,7 @@
 #' @importFrom utils packageVersion
 #' @importFrom bslib page_navbar nav_panel nav_spacer nav_menu
 #' @importFrom shinyjs useShinyjs
+#' @importFrom waiter useWaiter
 #'
 #' @noRd
 app_ui <- function(request) {
@@ -14,6 +15,7 @@ app_ui <- function(request) {
     # Leave this function for adding external resources
     golem_add_external_resources(),
     shinyjs::useShinyjs(),
+    waiter::useWaiter(),
 
     bslib::page_navbar(
       title = paste0("CPM - Lipidomics | v", utils::packageVersion("lipidomics2")),
