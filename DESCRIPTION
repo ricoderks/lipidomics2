@@ -22,6 +22,7 @@ Imports:
     readr,
     readxl,
     rlang,
+    rmarkdown,
     sessioninfo,
     shiny,
     shinyjs,
