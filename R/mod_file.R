@@ -31,6 +31,11 @@ mod_file_ui <- function(id) {
                   choices = NULL
                 ),
                 shiny::selectInput(
+                  inputId = ns("metadata_select_sampleid"),
+                  label = "Sample ID",
+                  choices = NULL
+                ),
+                shiny::selectInput(
                   inputId = ns("metadata_select_sampletype"),
                   label = "Sample type",
                   choices = NULL
@@ -43,6 +48,18 @@ mod_file_ui <- function(id) {
                 shiny::selectInput(
                   inputId = ns("metadata_select_batch"),
                   label = "Batch",
+                  choices = NULL
+                ),
+                shiny::selectInput(
+                  inputId = ns("metadata_select_groups"),
+                  label = bslib::tooltip(
+                    trigger = list(
+                      "Groups",
+                      bsicons::bs_icon(name = "info-circle")
+                    ),
+                    "Select \"grouping\" columns which can be later used in the analysis. These columns will also be exported."
+                  ),
+                  multiple = TRUE,
                   choices = NULL
                 ),
                 shiny::h4("Text patterns"),
@@ -82,15 +99,24 @@ mod_file_ui <- function(id) {
                   value = "^sample",
                   width = "100%"
                 ),
-                style = "font-size:85%"
+                style = "font-size:75%"
               )
 
             ),
-            shiny::fileInput(
-              inputId = ns("metadata_file"),
-              label = "Data file:",
-              multiple = FALSE,
-              accept = c(".csv", ".tsv", ".txt", ".xlsx")
+            shiny::div(
+              bslib::card_body(
+                shiny::fileInput(
+                  inputId = ns("metadata_file"),
+                  label = "Data file:",
+                  multiple = FALSE,
+                  accept = c(".csv", ".tsv", ".txt", ".xlsx")
+                ),
+                min_height = "125px",
+                height = "125px",
+                fill = FALSE,
+                gap = 0
+              ),
+              style = "font-size:75%"
             ),
             bslib::card_body(
               shiny::div(
@@ -356,6 +382,18 @@ mod_file_server <- function(id, r){
                             column_names[1])
         )
         shiny::updateSelectInput(
+          inputId = "metadata_select_sampleid",
+          choices = sort(column_names),
+          selected = ifelse(any(grepl(x = column_names,
+                                      pattern = ".*sampleid*",
+                                      ignore.case = TRUE)),
+                            grep(x = column_names,
+                                 pattern = ".*sampleid*",
+                                 ignore.case = TRUE,
+                                 value = TRUE)[1],
+                            column_names[1])
+        )
+        shiny::updateSelectInput(
           inputId = "metadata_select_sampletype",
           choices = sort(column_names),
           selected = ifelse(any(grepl(x = column_names,
@@ -391,6 +429,10 @@ mod_file_server <- function(id, r){
                                  value = TRUE)[1],
                             column_names[1])
         )
+        shiny::updateSelectInput(
+          inputId = "metadata_select_groups",
+          choices = sort(column_names)
+        )
 
         # r$bc_applied <- "none"
         # r$tables$bc_data <- NULL
@@ -416,7 +458,7 @@ mod_file_server <- function(id, r){
         input$metadata_select_sampletype,
         input$metadata_select_acqorder),
       {
-        # r$columns$sampleid <- input$metadata_select_sampleid
+        r$columns$sampleid <- input$metadata_select_sampleid
         r$columns$filename <- input$metadata_select_filename
         r$columns$sampletype <- input$metadata_select_sampletype
         r$columns$acqorder <- input$metadata_select_acqorder
