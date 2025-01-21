@@ -5,7 +5,7 @@
 #' @param id,input,output,session Internal parameters for {shiny}.
 #' @noRd
 #'
-#' @importFrom shiny NS tagList
+#' @importFrom shiny NS tagList Progress
 #' @importFrom bslib navset_card_tab nav_panel card page_sidebar sidebar tooltip
 #' @importFrom bsicons bs_icon
 #' @importFrom DT dataTableOutput
@@ -548,20 +548,37 @@ mod_file_server <- function(id, r){
         }
 
         if(!is.null(r$tables$raw_data)) {
+          progress <- shiny::Progress$new(session = session,
+                                          min = 0,
+                                          max = 100)
+          on.exit(progress$close())
+
           print("Clean up")
           clean_data_wide <- clean_up(raw_data = r$tables$raw_data,
                                       blanks = r$index$blanks,
                                       pools = r$index$pools,
                                       samples = r$index$samples)
 
+          progress$set(value = 15,
+                       message = "Processing...",
+                       detail = NULL)
+
           r$tables$clean_data_wide <- select_identified(data = clean_data_wide,
                                                         omics = r$omics)
+
+          progress$set(value = 30,
+                       message = "Processing...",
+                       detail = NULL)
 
           r$tables$clean_data <- make_tidy(data = r$tables$clean_data_wide,
                                            blanks = r$index$blanks,
                                            pools = r$index$pools,
                                            samples = r$index$samples,
                                            omics = r$omics)
+
+          progress$set(value = 45,
+                       message = "Processing...",
+                       detail = NULL)
 
           r$settings$feature_class <- sort(unique(r$tables$clean_data$class_ion))
 
@@ -573,6 +590,10 @@ mod_file_server <- function(id, r){
           r$index$keep_rsd <- rsd_res$keep
           r$tables$qc_data <- rsd_res$qc_data
 
+          progress$set(value = 60,
+                       message = "Processing...",
+                       detail = NULL)
+
           # ID filtering
           r$index$keep_id <- filter_id(data = r$tables$clean_data,
                                        dot_cutoff = r$settings$dot_cutoff,
@@ -583,6 +604,10 @@ mod_file_server <- function(id, r){
                                                       samples = r$index$selected_samples,
                                                       ratio = r$settings$blanksample_ratio,
                                                       threshold = r$settings$blanksample_threshold)
+
+          progress$set(value = 75,
+                       message = "Processing...",
+                       detail = NULL)
 
           # what to keep
           r$tables$analysis_data <- r$tables$clean_data
@@ -614,6 +639,10 @@ mod_file_server <- function(id, r){
                                  length(r$index$pools),
                                  length(r$index$samples)),
                                na.rm = TRUE)
+
+          progress$set(value = 100,
+                       message = "Processing...",
+                       detail = NULL)
 
           shinyWidgets::updateProgressBar(
             session = session,
