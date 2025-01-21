@@ -44,9 +44,9 @@ mod_export_server <- function(id, r) {
       html = shiny::tagList(
         waiter::spin_loaders(id = 8,
                              color = "black"),
-        shiny::h3("Collecting data....")
+        shiny::h3("Collecting data....", style = "color:black")
       ),
-      color = "rgba(255, 255, 255, 0.3)"
+      color = "rgba(255, 255, 255, 0.5)"
     )
 
     output$download_lipid_xlsx <- shiny::downloadHandler(
