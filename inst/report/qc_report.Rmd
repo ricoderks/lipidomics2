@@ -20,6 +20,7 @@ knitr::opts_chunk$set(echo = FALSE)
 
 library(lipidomics2)
 library(sessioninfo)
+library(ggplot2)
 library(plotly)
 
 # get all the information/data
@@ -53,6 +54,20 @@ RSD values per lipid class.
 show_class_violin(data = qc_data,
                   rsd = rsd_cutoff)
 ```
+
+## Trend plot
+
+```{r fig.width=10, fig.height=7}
+trend_data <- calc_trend(data = analysis_data[analysis_data$keep == TRUE, ],
+                         idx_pools = selected_pools)
+
+p <- show_trend_plot(data = trend_data)
+p <- p +
+  theme(axis.text.x = element_text(angle = 45,
+                                   hjust = 1))
+p
+```
+
 
 ## Correlation
 
