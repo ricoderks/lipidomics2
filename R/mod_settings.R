@@ -335,7 +335,7 @@ mod_settings_server <- function(id, r){
 
         w$hide()
       },
-      # everything is stll recalculated the first time you visit Settings - Samples
+      # everything is still recalculated the first time you visit Settings - Samples
       ignoreInit = TRUE
     )
 
