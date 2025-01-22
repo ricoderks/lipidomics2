@@ -120,7 +120,7 @@ mod_settings_server <- function(id, r){
           value = r$settings$rsd_cutoff,
           min = 0,
           max = 1,
-          step = 0.01
+          step = 0.05
         )
       )
     })
@@ -155,7 +155,7 @@ mod_settings_server <- function(id, r){
           label = "Sample / average blank ratio",
           value = r$settings$blanksample_ratio,
           min = 0,
-          step = 0.01
+          step = 0.1
         ),
         shiny::sliderInput(
           inputId = ns("settings_threshold"),
@@ -163,7 +163,7 @@ mod_settings_server <- function(id, r){
           value = r$settings$blanksample_threshold,
           min = 0,
           max = 1,
-          step = 0.01
+          step = 0.1
         )
       )
     })
