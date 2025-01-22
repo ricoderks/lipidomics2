@@ -164,13 +164,21 @@ mod_settings_server <- function(id, r){
 
         r$settings$rsd_cutoff <- input$settings_rsd_cutoff
 
-        r$index$keep_rsd <- calc_rsd(data = shiny::isolate(r$tables$analysis_data),
-                                     pools = r$index$selected_pools,
-                                     cut_off = input$settings_rsd_cutoff)
+        rsd_res <- calc_rsd(data = shiny::isolate(r$tables$analysis_data),
+                            pools = r$index$selected_pools,
+                            cut_off = input$settings_rsd_cutoff)
+
+        r$index$keep_rsd <- rsd_res$keep
+        r$tables$qc_data <- rsd_res$qc_data
 
         r$tables$analysis_data$rsd_keep <- r$tables$analysis_data$my_id %in% r$index$keep_rsd
 
         r$tables$analysis_data$comment[!r$tables$analysis_data$rsd_keep] <- "large_rsd"
+
+        r$tables$analysis_data$keep <- mapply(all,
+                                              r$tables$analysis_data$rsd_keep,
+                                              r$tables$analysis_data$match_keep,
+                                              r$tables$analysis_data$background_keep)
       },
       ignoreInit = TRUE
     )
@@ -192,6 +200,11 @@ mod_settings_server <- function(id, r){
 
         r$tables$analysis_data$comment[!r$tables$analysis_data$match_keep] <- "no_match"
         r$tables$analysis_data$comment[!r$tables$analysis_data$rsd_keep] <- "large_rsd"
+
+        r$tables$analysis_data$keep <- mapply(all,
+                                              r$tables$analysis_data$rsd_keep,
+                                              r$tables$analysis_data$match_keep,
+                                              r$tables$analysis_data$background_keep)
       },
       ignoreInit = TRUE
     )
@@ -215,6 +228,11 @@ mod_settings_server <- function(id, r){
 
         r$tables$analysis_data$comment[!r$tables$analysis_data$background_keep] <- "high_bg"
         r$tables$analysis_data$comment[!r$tables$analysis_data$rsd_keep] <- "large_rsd"
+
+        r$tables$analysis_data$keep <- mapply(all,
+                                              r$tables$analysis_data$rsd_keep,
+                                              r$tables$analysis_data$match_keep,
+                                              r$tables$analysis_data$background_keep)
       },
       ignoreInit = TRUE
     )
@@ -248,9 +266,33 @@ mod_settings_server <- function(id, r){
     })
 
 
+    shiny::observeEvent(input$settings_select_pools, {
+      shiny::req(input$settings_select_blanks,
+                 input$settings_select_pools,
+                 input$settings_select_samples)
+
+      selected_samples <- c(input$settings_select_blanks,
+                            input$settings_select_pools,
+                            input$settings_select_samples)
+
+      r$index$selected_pools <- input$settings_select_pools
+
+      rsd_res <- calc_rsd(data = r$tables$clean_data,
+                          pools = r$index$selected_pools,
+                          cut_off = r$settings$rsd_cutoff)
+      r$index$keep_rsd <- rsd_res$keep
+      r$tables$qc_data <- rsd_res$qc_data
+
+      print(length(r$index$keep_rsd))
+
+      r$tables$analysis_data <- r$tables$clean_data[
+        r$tables$clean_data$sample_name %in% selected_samples, ]
+    })
+
+
     shiny::observeEvent(
       c(input$settings_select_blanks,
-        input$settings_select_pools,
+        # input$settings_select_pools,
         input$settings_select_samples),
       {
         shiny::req(input$settings_select_blanks,
@@ -262,7 +304,7 @@ mod_settings_server <- function(id, r){
                               input$settings_select_samples)
 
         r$index$selected_blanks <- input$settings_select_blanks
-        r$index$selected_pools <- input$settings_select_pools
+        # r$index$selected_pools <- input$settings_select_pools
         r$index$selected_samples <- input$settings_select_samples
 
         r$tables$analysis_data <- r$tables$clean_data[
