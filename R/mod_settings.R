@@ -250,6 +250,9 @@ mod_settings_server <- function(id, r){
 
     #-------------------------------------------------------------- samples ----
     output$settings_blanks_list <- shiny::renderUI({
+      shiny::req(r$index$blanks,
+                 r$index$selected_blanks)
+
       shiny::tagList(
         checkboxGroupInput(inputId = ns("settings_select_blanks"),
                            label = "(De-)select blanks:",
@@ -259,6 +262,9 @@ mod_settings_server <- function(id, r){
     })
 
     output$settings_pools_list <- shiny::renderUI({
+      shiny::req(r$index$pools,
+                 r$index$selected_pools)
+
       shiny::tagList(
         checkboxGroupInput(inputId = ns("settings_select_pools"),
                            label = "(De-)select pooled samples:",
@@ -268,6 +274,9 @@ mod_settings_server <- function(id, r){
     })
 
     output$settings_samples_list <- shiny::renderUI({
+      shiny::req(r$index$samples,
+                 r$index$selected_samples)
+
       shiny::tagList(
         checkboxGroupInput(inputId = ns("settings_select_samples"),
                            label = "(De-)select samples:",
@@ -287,6 +296,8 @@ mod_settings_server <- function(id, r){
                    input$settings_select_samples)
 
         w$show()
+
+        print("(De-) select samples")
 
         selected_samples <- c(input$settings_select_blanks,
                               input$settings_select_pools,
