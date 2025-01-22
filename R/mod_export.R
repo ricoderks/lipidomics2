@@ -119,8 +119,8 @@ mod_export_server <- function(id, r) {
 
         switch(
           input$export_select_report,
-          "qc" = paste("QC_report", Sys.Date(), ".html", sep = ""),
-          "analysis" = paste("Analysis_report", Sys.Date(), ".html", sep = "")
+          "qc" = paste("QC_report_", Sys.Date(), ".html", sep = ""),
+          "analysis" = paste("Analysis_report_", Sys.Date(), ".html", sep = "")
         )
 
       },
