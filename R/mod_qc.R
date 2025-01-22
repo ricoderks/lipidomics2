@@ -33,6 +33,15 @@ mod_qc_ui <- function(id) {
         )
       ),
       bslib::nav_panel(
+        title = "QC - Trend",
+        value = "qc_trend",
+        bslib::card(
+          shiny::plotOutput(
+            outputId = ns("qc_trend_plot")
+          )
+        )
+      ),
+      bslib::nav_panel(
         title = "QC - correlation ",
         value = "qc_correlation",
         bslib::card(
@@ -69,6 +78,19 @@ mod_qc_server <- function(id, r){
 
       p <- show_class_violin(data = r$tables$qc_data,
                              rsd_cutoff = r$settings$rsd_cutoff)
+
+      return(p)
+    })
+
+
+    output$qc_trend_plot <- shiny::renderPlot({
+      shiny::req(r$tables$analysis_data,
+                 r$index$selected_pools)
+
+      trend_data <- calc_trend(data = r$tables$analysis_data[r$tables$analysis_data$keep == TRUE, ],
+                               idx_pools = r$index$selected_pools)
+
+      p <- show_trend_plot(data = trend_data)
 
       return(p)
     })

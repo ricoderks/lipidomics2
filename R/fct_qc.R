@@ -164,3 +164,77 @@ calc_cor <- function(data = NULL,
 
   return(cormat_long)
 }
+
+
+#' @title Calculate (log2) fold change of the pooled samples
+#'
+#' @description
+#' Calculate (log2) fold change of the pooled samples. The reference is the first
+#' pooled sample.
+#'
+#' @param data data.frame with all the data.
+#' @param idx_pools character(), with all the pooled sample names.
+#'
+#' @return data.frame in long format for `qc_trend_plot()`.
+#'
+#' @export
+#'
+#' @author Rico Derks
+#'
+calc_trend <- function(data = NULL,
+                       idx_pools = NULL) {
+  first_qc <- idx_pools[1]
+
+  ref_data <- data[data$sample_name == first_qc, c("my_id", "area")]
+  colnames(ref_data)[2] <- "ref_area"
+
+  trend_data <- merge(
+    x = data[data$sample_name %in% idx_pools, c("my_id", "sample_name", "polarity", "area")],
+    y = ref_data,
+    by.x = "my_id",
+    by.y = "my_id"
+  )
+
+  trend_data$fc <- trend_data$area / trend_data$ref_area
+  trend_data$log2fc <- log2(trend_data$fc)
+
+  return(trend_data)
+}
+
+
+#' @title Create trend plot
+#'
+#' @description
+#' Create trend plot of the pooled samples to visualize the trend during the
+#' measurements..
+#'
+#' @param data data.frame from `calc_trend()`.
+#'
+#' @return ggplot2 object
+#'
+#' @importFrom ggplot2 ggplot aes geom_hline geom_line theme_minimal labs
+#'     guides guide_legend
+#' @importFrom rlang .data
+#'
+#' @author Rico Derks
+#'
+#' @export
+#'
+show_trend_plot <- function(data = NULL) {
+  p <- data |>
+    ggplot2::ggplot(ggplot2::aes(x = .data$sample_name,
+                                 y = .data$log2fc,
+                                 color = .data$polarity,
+                                 group = .data$my_id)) +
+    ggplot2::geom_hline(yintercept = c(1, 0, -1),
+                        linetype = c(2, 1, 2),
+                        color = c("red", "grey", "red")) +
+    ggplot2::geom_line(alpha = 0.3) +
+    ggplot2::labs(x = "Sample name",
+                  y = "Log2(fold change)") +
+    ggplot2::guides(color = ggplot2::guide_legend(title = "Polarity",
+                                                  override.aes = list(alpha = 1))) +
+    ggplot2::theme_minimal()
+
+  return(p)
+}
