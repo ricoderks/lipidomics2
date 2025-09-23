@@ -148,7 +148,8 @@ mod_export_server <- function(id, r) {
         params <- list(
           analysis_data = r$tables$analysis_data,
           trend_data = r$tables$trend_data,
-          qc_data = r$tables$qc_data,
+          rsd_data_overall = r$tables$rsd_data_overall,
+          rsd_data_batch = r$tables$rsd_data_batch,
           selected_pools = r$index$selected_pools,
           selected_samples = r$index$selected_samples,
           rsd_cutoff = r$settings$rsd_cutoff
