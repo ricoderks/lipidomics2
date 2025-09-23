@@ -14,7 +14,7 @@
 #' @importFrom ggplot2 ggplot aes .data geom_vline geom_histogram labs guides
 #'     guide_legend theme_minimal theme
 #'
-#' @noRd
+#' @export
 #'
 #' @author Rico Derks
 #'
@@ -52,7 +52,7 @@ show_overall_hist <- function(data = NULL,
 #' @importFrom ggplot2 ggplot aes .data geom_violin geom_hline labs guides
 #'     guide_legend theme_minimal theme
 #'
-#' @noRd
+#' @export
 #'
 #' @author Rico Derks
 #'
@@ -93,7 +93,7 @@ show_class_violin <- function(data = NULL,
 #' @importFrom ggplot2 ggplot aes .data geom_tile scale_fill_gradient
 #'     theme_minimal theme element_text element_blank guides guide_colourbar
 #'
-#' @noRd
+#' @export
 #'
 #' @author Rico Derks
 #'
@@ -133,7 +133,7 @@ qc_cor_plot <- function(data = NULL) {
 #' @importFrom tidyr pivot_wider pivot_longer
 #' @importFrom stats cor
 #'
-#' @noRd
+#' @export
 #'
 #' @author Rico Derks
 #'
@@ -181,13 +181,11 @@ calc_cor <- function(data = NULL,
 #'
 #' @author Rico Derks
 #'
-get_trend_data <- function(pool_data = NULL,
-                           meta_data = NULL,
-                           batch_column = NULL,
-                           filename_column = NULL,
-                           order_column = NULL) {
-
-
+calc_trend <- function(pool_data = NULL,
+                       meta_data = NULL,
+                       batch_column = NULL,
+                       filename_column = NULL,
+                       order_column = NULL) {
   # first qcpool overall
   qcpool_all <-
     meta_data[meta_data[, batch_column] == 1 &
@@ -239,7 +237,6 @@ get_trend_data <- function(pool_data = NULL,
 
   return(trend_data)
 }
-
 
 #' @title Create trend plot
 #'
@@ -294,5 +291,4 @@ trend_plot <- function(trend_data = NULL,
                    legend.position = "bottom")
 
   return(p)
-
 }

@@ -1,0 +1,99 @@
+---
+title: "QC report - Untargeted lipidomics"
+author: "R.J.E. Derks"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+params:
+  analysis_data: NA
+  qc_data: NA
+  selected_pools: NA
+  selected_samples: NA
+  rsd_cutoff: NA
+---
+
+```{r setup, include=FALSE}
+# do not add any code
+knitr::opts_chunk$set(echo = FALSE)
+
+library(lipidomics2)
+library(sessioninfo)
+library(ggplot2)
+library(plotly)
+
+# get all the information/data
+analysis_data <- params$analysis_data
+qc_data <- params$qc_data
+selected_pools <- params$selected_pools
+selected_samples <- params$selected_samples
+rsd_cutoff <- params$rsd_cutoff
+```
+
+# Introduction
+
+This report gives an overview of the Quality Control samples measured.
+
+# QC
+
+## Overall RSD
+
+Overall overview RSD values. Lipids above the threshold of **`r rsd_cutoff`** are excluded.
+
+```{r fig.width=10}
+show_overall_hist(data = qc_data,
+                  rsd_cutoff = rsd_cutoff)
+```
+
+## RSD per lipid class
+
+RSD values per lipid class.
+
+```{r fig.width=10, fig.height=7, warning=FALSE, message=FALSE}
+show_class_violin(data = qc_data,
+                  rsd = rsd_cutoff)
+```
+
+## Trend plot
+
+```{r fig.width=10, fig.height=7}
+trend_data <- calc_trend(data = analysis_data[analysis_data$keep == TRUE, ],
+                         idx_pools = selected_pools)
+
+p <- show_trend_plot(data = trend_data)
+p <- p +
+  theme(axis.text.x = element_text(angle = 45,
+                                   hjust = 1))
+p
+```
+
+
+## Correlation
+
+Quick comparison between the samples.
+
+```{r include=FALSE}
+fig_height_cor_heatmap <- ceiling(length(unique(analysis_data$sample_name)) / 7)
+if(fig_height_cor_heatmap < 6) {
+  fig_height_cor_heatmap <- 6
+}
+```
+
+```{r fig.width=10, fig.height=fig_height_cor_heatmap}
+cor_df <- calc_cor(data = analysis_data,
+                   idx_pools = selected_pools,
+                   idx_samples = selected_samples)
+
+p <- qc_cor_plot(data = cor_df)
+
+ply <- plotly::ggplotly(p = p)
+ply
+```
+
+# Session info
+
+```{r session_info}
+session_info()
+```
+

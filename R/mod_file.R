@@ -5,7 +5,7 @@
 #' @param id,input,output,session Internal parameters for {shiny}.
 #' @noRd
 #'
-#' @importFrom shiny NS tagList
+#' @importFrom shiny NS tagList Progress
 #' @importFrom bslib navset_card_tab nav_panel card page_sidebar sidebar tooltip
 #' @importFrom bsicons bs_icon
 #' @importFrom DT dataTableOutput
@@ -31,6 +31,11 @@ mod_file_ui <- function(id) {
                   choices = NULL
                 ),
                 shiny::selectInput(
+                  inputId = ns("metadata_select_sampleid"),
+                  label = "Sample ID",
+                  choices = NULL
+                ),
+                shiny::selectInput(
                   inputId = ns("metadata_select_sampletype"),
                   label = "Sample type",
                   choices = NULL
@@ -43,6 +48,18 @@ mod_file_ui <- function(id) {
                 shiny::selectInput(
                   inputId = ns("metadata_select_batch"),
                   label = "Batch",
+                  choices = NULL
+                ),
+                shiny::selectInput(
+                  inputId = ns("metadata_select_groups"),
+                  label = bslib::tooltip(
+                    trigger = list(
+                      "Groups",
+                      bsicons::bs_icon(name = "info-circle")
+                    ),
+                    "Select \"grouping\" columns which can be later used in the analysis. These columns will also be exported."
+                  ),
+                  multiple = TRUE,
                   choices = NULL
                 ),
                 shiny::h4("Text patterns"),
@@ -82,15 +99,24 @@ mod_file_ui <- function(id) {
                   value = "^sample",
                   width = "100%"
                 ),
-                style = "font-size:85%"
+                style = "font-size:75%"
               )
 
             ),
-            shiny::fileInput(
-              inputId = ns("metadata_file"),
-              label = "Data file:",
-              multiple = FALSE,
-              accept = c(".csv", ".tsv", ".txt", ".xlsx")
+            shiny::div(
+              bslib::card_body(
+                shiny::fileInput(
+                  inputId = ns("metadata_file"),
+                  label = "Data file:",
+                  multiple = FALSE,
+                  accept = c(".csv", ".tsv", ".txt", ".xlsx")
+                ),
+                min_height = "125px",
+                height = "125px",
+                fill = FALSE,
+                gap = 0
+              ),
+              style = "font-size:75%"
             ),
             bslib::card_body(
               shiny::div(
@@ -356,6 +382,18 @@ mod_file_server <- function(id, r){
                             column_names[1])
         )
         shiny::updateSelectInput(
+          inputId = "metadata_select_sampleid",
+          choices = sort(column_names),
+          selected = ifelse(any(grepl(x = column_names,
+                                      pattern = ".*sampleid*",
+                                      ignore.case = TRUE)),
+                            grep(x = column_names,
+                                 pattern = ".*sampleid*",
+                                 ignore.case = TRUE,
+                                 value = TRUE)[1],
+                            column_names[1])
+        )
+        shiny::updateSelectInput(
           inputId = "metadata_select_sampletype",
           choices = sort(column_names),
           selected = ifelse(any(grepl(x = column_names,
@@ -391,6 +429,10 @@ mod_file_server <- function(id, r){
                                  value = TRUE)[1],
                             column_names[1])
         )
+        shiny::updateSelectInput(
+          inputId = "metadata_select_groups",
+          choices = sort(column_names)
+        )
 
         # r$bc_applied <- "none"
         # r$tables$bc_data <- NULL
@@ -416,7 +458,7 @@ mod_file_server <- function(id, r){
         input$metadata_select_sampletype,
         input$metadata_select_acqorder),
       {
-        # r$columns$sampleid <- input$metadata_select_sampleid
+        r$columns$sampleid <- input$metadata_select_sampleid
         r$columns$filename <- input$metadata_select_filename
         r$columns$sampletype <- input$metadata_select_sampletype
         r$columns$acqorder <- input$metadata_select_acqorder
@@ -506,20 +548,37 @@ mod_file_server <- function(id, r){
         }
 
         if(!is.null(r$tables$raw_data)) {
+          progress <- shiny::Progress$new(session = session,
+                                          min = 0,
+                                          max = 100)
+          on.exit(progress$close())
+
           print("Clean up")
           clean_data_wide <- clean_up(raw_data = r$tables$raw_data,
                                       blanks = r$index$blanks,
                                       pools = r$index$pools,
                                       samples = r$index$samples)
 
+          progress$set(value = 15,
+                       message = "Processing...",
+                       detail = NULL)
+
           r$tables$clean_data_wide <- select_identified(data = clean_data_wide,
                                                         omics = r$omics)
+
+          progress$set(value = 30,
+                       message = "Processing...",
+                       detail = NULL)
 
           r$tables$clean_data <- make_tidy(data = r$tables$clean_data_wide,
                                            blanks = r$index$blanks,
                                            pools = r$index$pools,
                                            samples = r$index$samples,
                                            omics = r$omics)
+
+          progress$set(value = 45,
+                       message = "Processing...",
+                       detail = NULL)
 
           r$settings$feature_class <- sort(unique(r$tables$clean_data$class_ion))
 
@@ -530,6 +589,10 @@ mod_file_server <- function(id, r){
                               cut_off = r$settings$rsd_cutoff)
           r$index$keep_rsd <- rsd_res$keep
           r$tables$qc_data <- rsd_res$qc_data
+
+          progress$set(value = 60,
+                       message = "Processing...",
+                       detail = NULL)
 
           # ID filtering
           r$index$keep_id <- filter_id(data = r$tables$clean_data,
@@ -542,6 +605,10 @@ mod_file_server <- function(id, r){
                                                       ratio = r$settings$blanksample_ratio,
                                                       threshold = r$settings$blanksample_threshold)
 
+          progress$set(value = 75,
+                       message = "Processing...",
+                       detail = NULL)
+
           # what to keep
           r$tables$analysis_data <- r$tables$clean_data
           r$tables$analysis_data$class_keep <- switch(
@@ -549,7 +616,6 @@ mod_file_server <- function(id, r){
             "lip" = r$tables$analysis_data$class_ion %in% r$defaults$lipidclass_ion,
             "met" = r$tables$analysis_data$class_ion %in% r$defaults$metclass_ion
           )
-          r$tables$analysis_data$class_ion %in% r$defaults$lipidclass_ion
           r$tables$analysis_data$rsd_keep <- r$tables$analysis_data$my_id %in%
             r$index$keep_rsd
           r$tables$analysis_data$match_keep <- r$tables$analysis_data$my_id %in%
@@ -572,6 +638,10 @@ mod_file_server <- function(id, r){
                                  length(r$index$pools),
                                  length(r$index$samples)),
                                na.rm = TRUE)
+
+          progress$set(value = 100,
+                       message = "Processing...",
+                       detail = NULL)
 
           shinyWidgets::updateProgressBar(
             session = session,

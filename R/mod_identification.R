@@ -40,6 +40,14 @@ mod_identification_server <- function(id, r) {
   shiny::moduleServer(id, function(input, output, session){
     ns <- session$ns
 
+    w <- waiter::Waiter$new(
+      html = shiny::tagList(
+        waiter::spin_loaders(id = 8,
+                             color = "black")
+      ),
+      color = "rgba(255, 255, 255, 0.5)"
+    )
+
     output$id_sidebar_ui <- shiny::renderUI({
       shiny::req(r$omics)
 
@@ -94,6 +102,7 @@ mod_identification_server <- function(id, r) {
       shiny::req(r$tables$analysis_data,
                  r$index$selected_pools,
                  input$id_select_class != "None")
+      w$show()
 
       class_pattern <- get_class_pattern(classes = r$defaults$lipid_classes,
                                          class_name = input$id_select_class)
@@ -145,11 +154,17 @@ mod_identification_server <- function(id, r) {
         ply <- plotly::ggplotly(p = p,
                                 source = "bubbleplot_click",
                                 height = plot_height) |>
+          plotly::config(modeBarButtonsToRemove = c("toImage", "select2d",
+                                                    "lasso2d",
+                                                    "hoverClosestCartesian",
+                                                    "hoverCompareCartesian")) |>
           plotly::event_register(event = "plotly_click")
       } else {
         print("Nothing to show")
         ply <- NULL
       }
+
+      w$hide()
 
       return(ply)
     })

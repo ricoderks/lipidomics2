@@ -13,6 +13,7 @@
 #' @importFrom DT dataTableOutput
 #' @importFrom shinyWidgets progressBar
 #' @importFrom shinyjs disabled disable enable
+#' @importFrom waiter Waiter spin_loaders
 #'
 mod_settings_ui <- function(id) {
   ns <- shiny::NS(id)
@@ -81,6 +82,7 @@ mod_settings_ui <- function(id) {
         title = "Samples",
         value = "samples",
         bslib::card(
+          shiny::p(shiny::strong("NOTE:"), "Removing a file or selecting a file will cause everything to be recalculated!"),
           bslib::layout_column_wrap(
             width = 1 / 3,
             shiny::uiOutput(outputId = ns("settings_blanks_list")),
@@ -100,6 +102,15 @@ mod_settings_server <- function(id, r){
   shiny::moduleServer(id, function(input, output, session){
     ns <- session$ns
 
+    w <- waiter::Waiter$new(
+      html = shiny::tagList(
+        waiter::spin_loaders(id = 8,
+                             color = "black"),
+        # shiny::h3("Rendering report....", style = "color:black")
+      ),
+      color = "rgba(255, 255, 255, 0.5)"
+    )
+
     #----------------------------------------------------- general settings ----
     output$settings_qc_ui <- shiny::renderUI({
       shiny::tagList(
@@ -109,7 +120,7 @@ mod_settings_server <- function(id, r){
           value = r$settings$rsd_cutoff,
           min = 0,
           max = 1,
-          step = 0.01
+          step = 0.05
         )
       )
     })
@@ -144,7 +155,7 @@ mod_settings_server <- function(id, r){
           label = "Sample / average blank ratio",
           value = r$settings$blanksample_ratio,
           min = 0,
-          step = 0.01
+          step = 0.1
         ),
         shiny::sliderInput(
           inputId = ns("settings_threshold"),
@@ -152,7 +163,7 @@ mod_settings_server <- function(id, r){
           value = r$settings$blanksample_threshold,
           min = 0,
           max = 1,
-          step = 0.01
+          step = 0.1
         )
       )
     })
@@ -164,13 +175,21 @@ mod_settings_server <- function(id, r){
 
         r$settings$rsd_cutoff <- input$settings_rsd_cutoff
 
-        r$index$keep_rsd <- calc_rsd(data = shiny::isolate(r$tables$analysis_data),
-                                     pools = r$index$selected_pools,
-                                     cut_off = input$settings_rsd_cutoff)
+        rsd_res <- calc_rsd(data = shiny::isolate(r$tables$analysis_data),
+                            pools = r$index$selected_pools,
+                            cut_off = input$settings_rsd_cutoff)
+
+        r$index$keep_rsd <- rsd_res$keep
+        r$tables$qc_data <- rsd_res$qc_data
 
         r$tables$analysis_data$rsd_keep <- r$tables$analysis_data$my_id %in% r$index$keep_rsd
 
         r$tables$analysis_data$comment[!r$tables$analysis_data$rsd_keep] <- "large_rsd"
+
+        r$tables$analysis_data$keep <- mapply(all,
+                                              r$tables$analysis_data$rsd_keep,
+                                              r$tables$analysis_data$match_keep,
+                                              r$tables$analysis_data$background_keep)
       },
       ignoreInit = TRUE
     )
@@ -192,6 +211,11 @@ mod_settings_server <- function(id, r){
 
         r$tables$analysis_data$comment[!r$tables$analysis_data$match_keep] <- "no_match"
         r$tables$analysis_data$comment[!r$tables$analysis_data$rsd_keep] <- "large_rsd"
+
+        r$tables$analysis_data$keep <- mapply(all,
+                                              r$tables$analysis_data$rsd_keep,
+                                              r$tables$analysis_data$match_keep,
+                                              r$tables$analysis_data$background_keep)
       },
       ignoreInit = TRUE
     )
@@ -215,12 +239,20 @@ mod_settings_server <- function(id, r){
 
         r$tables$analysis_data$comment[!r$tables$analysis_data$background_keep] <- "high_bg"
         r$tables$analysis_data$comment[!r$tables$analysis_data$rsd_keep] <- "large_rsd"
+
+        r$tables$analysis_data$keep <- mapply(all,
+                                              r$tables$analysis_data$rsd_keep,
+                                              r$tables$analysis_data$match_keep,
+                                              r$tables$analysis_data$background_keep)
       },
       ignoreInit = TRUE
     )
 
     #-------------------------------------------------------------- samples ----
     output$settings_blanks_list <- shiny::renderUI({
+      shiny::req(r$index$blanks,
+                 r$index$selected_blanks)
+
       shiny::tagList(
         checkboxGroupInput(inputId = ns("settings_select_blanks"),
                            label = "(De-)select blanks:",
@@ -230,6 +262,9 @@ mod_settings_server <- function(id, r){
     })
 
     output$settings_pools_list <- shiny::renderUI({
+      shiny::req(r$index$pools,
+                 r$index$selected_pools)
+
       shiny::tagList(
         checkboxGroupInput(inputId = ns("settings_select_pools"),
                            label = "(De-)select pooled samples:",
@@ -239,6 +274,9 @@ mod_settings_server <- function(id, r){
     })
 
     output$settings_samples_list <- shiny::renderUI({
+      shiny::req(r$index$samples,
+                 r$index$selected_samples)
+
       shiny::tagList(
         checkboxGroupInput(inputId = ns("settings_select_samples"),
                            label = "(De-)select samples:",
@@ -257,6 +295,10 @@ mod_settings_server <- function(id, r){
                    input$settings_select_pools,
                    input$settings_select_samples)
 
+        w$show()
+
+        print("(De-) select samples")
+
         selected_samples <- c(input$settings_select_blanks,
                               input$settings_select_pools,
                               input$settings_select_samples)
@@ -267,7 +309,45 @@ mod_settings_server <- function(id, r){
 
         r$tables$analysis_data <- r$tables$clean_data[
           r$tables$clean_data$sample_name %in% selected_samples, ]
-      }
+
+        # RSD filtering
+        rsd_res <- calc_rsd(data = r$tables$clean_data,
+                            pools = r$index$selected_pools,
+                            cut_off = r$settings$rsd_cutoff)
+        r$index$keep_rsd <- rsd_res$keep
+        r$tables$qc_data <- rsd_res$qc_data
+
+        # ID filtering
+        r$index$keep_id <- filter_id(data = r$tables$clean_data,
+                                     dot_cutoff = r$settings$dot_cutoff,
+                                     revdot_cutoff = r$settings$revdot_cutoff)
+        # Blank filtering
+        r$index$keep_blankratio <- calc_blank_ratio(data = r$tables$clean_data,
+                                                    blanks = r$index$selected_blanks,
+                                                    samples = r$index$selected_samples,
+                                                    ratio = r$settings$blanksample_ratio,
+                                                    threshold = r$settings$blanksample_threshold)
+
+        r$tables$analysis_data$rsd_keep <- r$tables$analysis_data$my_id %in%
+          r$index$keep_rsd
+        r$tables$analysis_data$match_keep <- r$tables$analysis_data$my_id %in%
+          r$index$keep_id
+        r$tables$analysis_data$background_keep <- r$tables$analysis_data$my_id %in%
+          r$index$keep_blankratio
+        r$tables$analysis_data$keep <- mapply(all,
+                                              r$tables$analysis_data$rsd_keep,
+                                              r$tables$analysis_data$match_keep,
+                                              r$tables$analysis_data$background_keep)
+
+        r$tables$analysis_data$comment <- "keep"
+        r$tables$analysis_data$comment[!r$tables$analysis_data$background_keep] <- "high_bg"
+        r$tables$analysis_data$comment[!r$tables$analysis_data$match_keep] <- "no_match"
+        r$tables$analysis_data$comment[!r$tables$analysis_data$rsd_keep] <- "large_rsd"
+
+        w$hide()
+      },
+      # everything is still recalculated the first time you visit Settings - Samples
+      ignoreInit = TRUE
     )
 
 

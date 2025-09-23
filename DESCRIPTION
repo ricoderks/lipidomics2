@@ -24,6 +24,7 @@ Imports:
     readr,
     readxl,
     rlang,
+    rmarkdown,
     sessioninfo,
     shiny,
     shinyjs,
@@ -32,7 +33,8 @@ Imports:
     stringr,
     tidyr,
     tidyselect,
-    utils
+    utils,
+    waiter
 Suggests: 
     spelling,
     testthat (>= 3.0.0)
