@@ -45,8 +45,18 @@ mod_qc_ui <- function(id) {
         title = "QC - Trend",
         value = "qc_trend",
         bslib::card(
-          shiny::plotOutput(
-            outputId = ns("qc_trend_plot")
+          bslib::page_sidebar(
+            sidebar = bslib::sidebar(
+              shiny::selectInput(
+                inputId = ns("qc_select_trend_type"),
+                label = "Trend plot",
+                choices = c("Overall" = "overal",
+                            "Per batch" = "batch")
+              )
+            ),
+            shiny::plotOutput(
+              outputId = ns("qc_trend_plot")
+            )
           )
         )
       )
@@ -100,10 +110,9 @@ mod_qc_server <- function(id, r){
 
     output$qc_trend_plot <- shiny::renderPlot({
       shiny::req(r$tables$analysis_data,
-                 r$tables$meta_data)
+                 r$tables$meta_data,
+                 input$qc_select_trend_type)
 
-      # get the trend data
-      # first get the qcpool samples
       qcpool_data <- r$tables$analysis_data[r$tables$analysis_data$sample_name %in% r$index$pools, ]
       qcpool_meta <- r$tables$meta_data[r$tables$meta_data[, r$columns$filename] %in% r$index$pools, ]
 
@@ -114,7 +123,7 @@ mod_qc_server <- function(id, r){
                                    order_column = r$columns$acqorder)
 
       p <- trend_plot(trend_data = trend_data,
-                      type = "overall")
+                      type = input$qc_select_trend_type)
 
       return(p)
     })
