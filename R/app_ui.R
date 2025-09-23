@@ -5,7 +5,7 @@
 #'
 #' @rawNamespace import(shiny, except = c(dataTableOutput, renderDataTable))
 #' @importFrom utils packageVersion
-#' @importFrom bslib page_navbar nav_panel nav_spacer nav_menu
+#' @importFrom bslib page_navbar nav_panel nav_spacer nav_menu navbar_options
 #' @importFrom shinyjs useShinyjs
 #'
 #' @noRd
@@ -17,7 +17,7 @@ app_ui <- function(request) {
 
     bslib::page_navbar(
       title = paste0("CPM - Lipidomics | v", utils::packageVersion("lipidomics2")),
-      underline = TRUE,
+      navbar_options = bslib::navbar_options(underline = TRUE),
       bslib::nav_panel(
         title = "Files",
         mod_file_ui(id = "file")
