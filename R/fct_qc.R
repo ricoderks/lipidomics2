@@ -164,3 +164,132 @@ calc_cor <- function(data = NULL,
 
   return(cormat_long)
 }
+
+
+#' @title Get trend data
+#'
+#' @description
+#' Get the trend data for the trend plot.
+#'
+#' @param pool_data data.frame with the pooled data.
+#' @param meta_data data.frame with the meta data.
+#' @param batch_column character(1) column name of the batch column.
+#' @param filename_column character(1) column name of the filename column.
+#' @param order_column character(1) column name of the acquisition order column.
+#'
+#' @returns data.frame with the data for the trend plot
+#'
+#' @author Rico Derks
+#'
+get_trend_data <- function(pool_data = NULL,
+                           meta_data = NULL,
+                           batch_column = NULL,
+                           filename_column = NULL,
+                           order_column = NULL) {
+
+
+  # first qcpool overall
+  qcpool_all <-
+    meta_data[meta_data[, batch_column] == 1 &
+                meta_data[, order_column] == min(meta_data[, order_column], na.rm = TRUE), filename_column]
+
+  # get the first qcpool of each batch
+  batch <- unique(meta_data[, batch_column])
+  qcpool_batch <- sapply(batch, function(x) {
+    tmp <- meta_data[meta_data[, batch_column] == x, ]
+    res <- tmp[tmp[, order_column] == min(tmp[, order_column]), filename_column]
+    return(res)
+  })
+
+  # merge data and meta data
+  pool_data <- merge(
+    x = pool_data,
+    y = meta_data,
+    by.x = "sample_name",
+    by.y = filename_column
+  )
+  pool_data[, batch_column] <- factor(pool_data[, batch_column])
+
+  # get ref data
+  ref_all <- pool_data[pool_data[, "sample_name"] == qcpool_all, c("my_id", "area")]
+  colnames(ref_all)[2] <- "refAreaOverall"
+
+  ref_batch <- pool_data[pool_data[, "sample_name"] %in% qcpool_batch, c("my_id", "area", batch_column)]
+  colnames(ref_batch)[2] <- "refAreaBatch"
+
+  # merge
+  trend_data <- merge(
+    x = pool_data,
+    y = ref_all,
+    by = "my_id"
+  )
+
+  trend_data <- merge(
+    x = trend_data,
+    y = ref_batch,
+    by = c("my_id", batch_column)
+  )
+
+  trend_data$batch <- trend_data[, batch_column]
+
+  # calculate log2(fold change)
+  trend_data <- trend_data[, c("my_id", "sample_name", "area", "refAreaOverall", "refAreaBatch", "batch", "polarity")]
+  trend_data$log2fc_overall <- log2(trend_data$area / trend_data$refAreaOverall)
+  trend_data$log2fc_batch <- log2(trend_data$area / trend_data$refAreaBatch)
+
+  return(trend_data)
+}
+
+
+#' @title Create trend plot
+#'
+#' @description
+#' Create a trend plot based on the pooled samples in the data.
+#'
+#' @param trend_data data.frame containing all trend related data.
+#' @param type character(1) do you want the overall trend plot or per batch.
+#'
+#' @returns trend plot as ggplot2 object.
+#'
+#' @importFrom ggplot2 ggplot aes geom_line labs facet_wrap theme_minimal
+#'     theme element_text .data
+#'
+#' @author Rico Derks
+#'
+trend_plot <- function(trend_data = NULL,
+                       type = c("batch", "overall")) {
+  type <- match.arg(arg = type,
+                    choices = c("batch", "overall"))
+
+  p <- switch(
+    type,
+    "batch" = {
+      trend_data |>
+        ggplot2::ggplot(ggplot2::aes(x = .data$sample_name,
+                                     y = .data$log2fc_batch,
+                                     colour = .data$batch,
+                                     group = .data$my_id))
+    },
+    "overall" = {
+      trend_data |>
+        ggplot2::ggplot(ggplot2::aes(x = .data$sample_name,
+                                     y = .data$log2fc_overall,
+                                     colour = .data$batch,
+                                     group = .data$my_id))
+    }
+  )
+
+  p <- p  +
+    ggplot2::geom_line(alpha = 0.5) +
+    ggplot2::labs(x = "Sample name",
+                  y = "log2(fold change)") +
+    ggplot2::facet_wrap(. ~ .data$polarity,
+                        ncol = 1) +
+    ggplot2::theme_minimal() +
+    ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45,
+                                                       hjust = 1),
+                   legend.position = "bottom")
+
+  return(p)
+
+}

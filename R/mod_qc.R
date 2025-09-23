@@ -15,7 +15,7 @@ mod_qc_ui <- function(id) {
     bslib::navset_card_tab(
       #--------------------------------------------------- general settings ----
       bslib::nav_panel(
-        title = "QC - overall",
+        title = "QC - RSD Overall",
         value = "qc_overall",
         bslib::card(
           shiny::plotOutput(
@@ -24,7 +24,7 @@ mod_qc_ui <- function(id) {
         )
       ),
       bslib::nav_panel(
-        title = "QC - Class",
+        title = "QC - RSD Class",
         value = "qc_class",
         bslib::card(
           shiny::plotOutput(
@@ -33,11 +33,20 @@ mod_qc_ui <- function(id) {
         )
       ),
       bslib::nav_panel(
-        title = "QC - correlation ",
+        title = "QC - Correlation",
         value = "qc_correlation",
         bslib::card(
           plotly::plotlyOutput(
             outputId = ns("qc_correlation_plot")
+          )
+        )
+      ),
+      bslib::nav_panel(
+        title = "QC - Trend",
+        value = "qc_trend",
+        bslib::card(
+          shiny::plotOutput(
+            outputId = ns("qc_trend_plot")
           )
         )
       )
@@ -86,6 +95,28 @@ mod_qc_server <- function(id, r){
       ply <- plotly::ggplotly(p = p)
 
       return(ply)
+    })
+
+
+    output$qc_trend_plot <- shiny::renderPlot({
+      shiny::req(r$tables$analysis_data,
+                 r$tables$meta_data)
+
+      # get the trend data
+      # first get the qcpool samples
+      qcpool_data <- r$tables$analysis_data[r$tables$analysis_data$sample_name %in% r$index$pools, ]
+      qcpool_meta <- r$tables$meta_data[r$tables$meta_data[, r$columns$filename] %in% r$index$pools, ]
+
+      trend_data <- get_trend_data(pool_data = qcpool_data,
+                                   meta_data = qcpool_meta,
+                                   batch_column = r$columns$batch,
+                                   filename_column = r$columns$filename,
+                                   order_column = r$columns$acqorder)
+
+      p <- trend_plot(trend_data = trend_data,
+                      type = "overall")
+
+      return(p)
     })
 
   })
