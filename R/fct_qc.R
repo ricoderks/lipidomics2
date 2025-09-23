@@ -252,7 +252,7 @@ get_trend_data <- function(pool_data = NULL,
 #' @returns trend plot as ggplot2 object.
 #'
 #' @importFrom ggplot2 ggplot aes geom_line labs facet_wrap theme_minimal
-#'     theme element_text .data
+#'     theme element_text .data geom_hline
 #'
 #' @author Rico Derks
 #'
@@ -280,6 +280,9 @@ trend_plot <- function(trend_data = NULL,
   )
 
   p <- p  +
+    ggplot2::geom_hline(yintercept = c(-0.5, 0, 0.5),
+                        linetype = c(2, 1, 2),
+                        colour = "black") +
     ggplot2::geom_line(alpha = 0.5) +
     ggplot2::labs(x = "Sample name",
                   y = "log2(fold change)") +
