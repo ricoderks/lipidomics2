@@ -38,6 +38,45 @@ show_overall_hist <- function(data = NULL,
 }
 
 
+#' @title Create RSD histogram per batch
+#'
+#' @description Create RSD histogram per batch.
+#'
+#' @param data data.frame with the RSD data.
+#' @param rsd_cutoff numeric(1), the RSD cut off value.
+#'
+#' @details data should contain the columns RSD and polarity.
+#'
+#' @return ggplot2 object, histogram of the RSD values.
+#'
+#' @importFrom ggplot2 ggplot aes .data geom_vline geom_histogram labs guides
+#'     guide_legend theme_minimal theme
+#'
+#' @export
+#'
+#' @author Rico Derks
+#'
+show_batch_hist <- function(data = NULL,
+                              rsd_cutoff = 0.3) {
+  p <- data |>
+    ggplot2::ggplot(ggplot2::aes(x = .data$rsd,
+                                 fill = .data$polarity)) +
+    ggplot2::geom_vline(xintercept = rsd_cutoff,
+                        colour = "red",
+                        linetype = 2) +
+    ggplot2::geom_histogram(binwidth = 0.005,
+                            alpha = 0.4) +
+    ggplot2::labs(x = "Relative standard deviation") +
+    ggplot2::guides(fill = ggplot2::guide_legend(title = "Polarity",
+                                                 override.aes = list(alpha = 1))) +
+    ggplot2::facet_wrap(. ~ batch) +
+    ggplot2::theme_minimal() +
+    ggplot2::theme(legend.position = "bottom")
+
+  return(p)
+}
+
+
 #' @title Create RSD violin plot
 #'
 #' @description Create RSD violin plot per class.
@@ -172,9 +211,6 @@ calc_cor <- function(data = NULL,
 #' Get the trend data for the trend plot.
 #'
 #' @param pool_data data.frame with the pooled data.
-#' @param meta_data data.frame with the meta data.
-#' @param batch_column character(1) column name of the batch column.
-#' @param filename_column character(1) column name of the filename column.
 #' @param order_column character(1) column name of the acquisition order column.
 #'
 #' @returns data.frame with the data for the trend plot
@@ -182,37 +218,27 @@ calc_cor <- function(data = NULL,
 #' @author Rico Derks
 #'
 calc_trend <- function(pool_data = NULL,
-                       meta_data = NULL,
-                       batch_column = NULL,
-                       filename_column = NULL,
                        order_column = NULL) {
   # first qcpool overall
   qcpool_all <-
-    meta_data[meta_data[, batch_column] == 1 &
-                meta_data[, order_column] == min(meta_data[, order_column], na.rm = TRUE), filename_column]
+    pool_data[pool_data[, "batch"] == 1 &
+                pool_data[, order_column] == min(pool_data[, order_column], na.rm = TRUE), "sample_name"]
 
   # get the first qcpool of each batch
-  batch <- unique(meta_data[, batch_column])
+  batch <- unique(pool_data[, "batch"])
   qcpool_batch <- sapply(batch, function(x) {
-    tmp <- meta_data[meta_data[, batch_column] == x, ]
-    res <- tmp[tmp[, order_column] == min(tmp[, order_column]), filename_column]
+    tmp <- pool_data[pool_data[, "batch"] == x, ]
+    res <- tmp[tmp[, order_column] == min(tmp[, order_column]), "sample_name"]
     return(res)
   })
 
-  # merge data and meta data
-  pool_data <- merge(
-    x = pool_data,
-    y = meta_data,
-    by.x = "sample_name",
-    by.y = filename_column
-  )
-  pool_data[, batch_column] <- factor(pool_data[, batch_column])
+  pool_data[, "batch"] <- factor(pool_data[, "batch"])
 
   # get ref data
   ref_all <- pool_data[pool_data[, "sample_name"] == qcpool_all, c("my_id", "area")]
   colnames(ref_all)[2] <- "refAreaOverall"
 
-  ref_batch <- pool_data[pool_data[, "sample_name"] %in% qcpool_batch, c("my_id", "area", batch_column)]
+  ref_batch <- pool_data[pool_data[, "sample_name"] %in% qcpool_batch, c("my_id", "area", "batch")]
   colnames(ref_batch)[2] <- "refAreaBatch"
 
   # merge
@@ -225,10 +251,8 @@ calc_trend <- function(pool_data = NULL,
   trend_data <- merge(
     x = trend_data,
     y = ref_batch,
-    by = c("my_id", batch_column)
+    by = c("my_id", "batch")
   )
-
-  trend_data$batch <- trend_data[, batch_column]
 
   # calculate log2(fold change)
   trend_data <- trend_data[, c("my_id", "sample_name", "area", "refAreaOverall", "refAreaBatch", "batch", "polarity")]

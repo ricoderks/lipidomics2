@@ -192,6 +192,7 @@ app_server <- function(input, output, session) {
       clean_data_wide = NULL,
       blank_data = NULL,
       qc_data = NULL,
+      rsd_data_overall = NULL,
       analysis_data = NULL,
       trend_data = NULL
     )

@@ -543,7 +543,8 @@ calc_rsd <- function(data = NULL,
   qc_df <- data[data$sample_name %in% pools, ]
 
   if(nrow(qc_df) > 0) {
-    res <- tapply(qc_df, list(qc_df$my_id), function(x) {
+    # overall
+    res_overall <- tapply(qc_df, list(qc_df$my_id), function(x) {
       rsd <- stats::sd(x$area, na.rm = TRUE) / mean(x$area, na.rm = TRUE)
       res <- data.frame(
         my_id = x$my_id[1],
@@ -555,10 +556,26 @@ calc_rsd <- function(data = NULL,
       return(res)
     },
     simplify = FALSE)
+    res_overall <- do.call("rbind", res_overall)
 
-    res <- do.call("rbind", res)
+    # batch
+    res_batch <- tapply(qc_df, list(qc_df$my_id, qc_df$batch), function(x) {
+      rsd <- stats::sd(x$area, na.rm = TRUE) / mean(x$area, na.rm = TRUE)
+      res <- data.frame(
+        my_id = x$my_id[1],
+        class = x$Class[1],
+        polarity = x$polarity[1],
+        batch = x$batch[1],
+        rsd = rsd
+      )
+
+      return(res)
+    },
+    simplify = FALSE)
+    res_batch <- do.call("rbind", res_batch)
+
   } else {
-    res <- tapply(data, list(data$my_id), function(x) {
+    res_overall <- tapply(data, list(data$my_id), function(x) {
       res <- data.frame(
         my_id = x$my_id[1],
         rsd = 0
@@ -571,10 +588,11 @@ calc_rsd <- function(data = NULL,
     res <- do.call("rbind", res)
   }
 
-  keep <- res$my_id[res$rsd <= cut_off]
+  keep <- res_overall$my_id[res_overall$rsd <= cut_off]
 
   return(list(keep = keep,
-              qc_data = res))
+              rsd_data_overall = res_overall,
+              rsd_data_batch = res_batch))
 }
 
 

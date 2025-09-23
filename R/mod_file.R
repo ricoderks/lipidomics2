@@ -580,6 +580,19 @@ mod_file_server <- function(id, r){
                        message = "Processing...",
                        detail = NULL)
 
+          # merge with meta data
+          r$tables$clean_data <- merge(
+            x = r$tables$clean_data,
+            y = r$tables$meta_data,
+            by.x = "sample_name",
+            by.y = r$columns$filename
+          )
+          r$tables$clean_data$batch <- r$tables$clean_data[, r$columns$batch]
+
+          progress$set(value = 55,
+                       message = "Processing...",
+                       detail = NULL)
+
           r$settings$feature_class <- sort(unique(r$tables$clean_data$class_ion))
 
           # apply all filtering here (rsd, id, blank/sample, etc.)
@@ -588,9 +601,10 @@ mod_file_server <- function(id, r){
                               pools = r$index$selected_pools,
                               cut_off = r$settings$rsd_cutoff)
           r$index$keep_rsd <- rsd_res$keep
-          r$tables$qc_data <- rsd_res$qc_data
+          r$tables$rsd_data_overall <- rsd_res$rsd_data_overall
+          r$tables$rsd_data_batch <- rsd_res$rsd_data_batch
 
-          progress$set(value = 60,
+          progress$set(value = 65,
                        message = "Processing...",
                        detail = NULL)
 
@@ -787,7 +801,10 @@ mod_file_server <- function(id, r){
       r$tables$clean_data_wide <- import_env$r$tables$clean_data_wide
       r$tables$blank_data <- import_env$r$tables$blank_data
       r$tables$qc_data <- import_env$r$tables$qc_data
+      r$tables$rsd_data_overall <- import_env$r$tables$rsd_data_overall
+      r$tables$rsd_data_batch <- import_env$r$tables$rsd_data_batch
       r$tables$analysis_data <- import_env$r$tables$analysis_data
+      r$tables$trend_data <- import_env$r$tables$trend_data
 
       #---------------------------------------------------- class selection ----
       r$defaults$patterns$PL <- import_env$r$defaults$patterns$PL

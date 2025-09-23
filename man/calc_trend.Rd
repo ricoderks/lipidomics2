@@ -4,22 +4,10 @@
 \alias{calc_trend}
 \title{Get trend data}
 \usage{
-calc_trend(
-  pool_data = NULL,
-  meta_data = NULL,
-  batch_column = NULL,
-  filename_column = NULL,
-  order_column = NULL
-)
+calc_trend(pool_data = NULL, order_column = NULL)
 }
 \arguments{
 \item{pool_data}{data.frame with the pooled data.}
-
-\item{meta_data}{data.frame with the meta data.}
-
-\item{batch_column}{character(1) column name of the batch column.}
-
-\item{filename_column}{character(1) column name of the filename column.}
 
 \item{order_column}{character(1) column name of the acquisition order column.}
 }
