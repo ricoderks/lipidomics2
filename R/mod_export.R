@@ -147,6 +147,7 @@ mod_export_server <- function(id, r) {
         # param stuff
         params <- list(
           analysis_data = r$tables$analysis_data,
+          trend_data = r$tables$trend_data,
           qc_data = r$tables$qc_data,
           selected_pools = r$index$selected_pools,
           selected_samples = r$index$selected_samples,

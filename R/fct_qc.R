@@ -251,6 +251,8 @@ calc_trend <- function(pool_data = NULL,
 #' @importFrom ggplot2 ggplot aes geom_line labs facet_wrap theme_minimal
 #'     theme element_text .data geom_hline
 #'
+#' @export
+#'
 #' @author Rico Derks
 #'
 trend_plot <- function(trend_data = NULL,

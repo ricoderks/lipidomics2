@@ -93,19 +93,6 @@ mod_qc_server <- function(id, r){
     })
 
 
-    output$qc_trend_plot <- shiny::renderPlot({
-      shiny::req(r$tables$analysis_data,
-                 r$index$selected_pools)
-
-      trend_data <- calc_trend(data = r$tables$analysis_data[r$tables$analysis_data$keep == TRUE, ],
-                               idx_pools = r$index$selected_pools)
-
-      p <- show_trend_plot(data = trend_data)
-
-      return(p)
-    })
-
-
     output$qc_correlation_plot <- plotly::renderPlotly({
       shiny::req(r$tables$analysis_data)
 
@@ -126,14 +113,16 @@ mod_qc_server <- function(id, r){
                  r$tables$meta_data,
                  input$qc_select_trend_type)
 
-      qcpool_data <- r$tables$analysis_data[r$tables$analysis_data$sample_name %in% r$index$pools, ]
-      qcpool_meta <- r$tables$meta_data[r$tables$meta_data[, r$columns$filename] %in% r$index$pools, ]
+      qcpool_data <- r$tables$analysis_data[r$tables$analysis_data$sample_name %in% r$index$selected_pools, ]
+      qcpool_meta <- r$tables$meta_data[r$tables$meta_data[, r$columns$filename] %in% r$index$selected_pools, ]
 
       trend_data <- calc_trend(pool_data = qcpool_data,
                                meta_data = qcpool_meta,
                                batch_column = r$columns$batch,
                                filename_column = r$columns$filename,
                                order_column = r$columns$acqorder)
+
+      r$tables$trend_data <- trend_data
 
       p <- trend_plot(trend_data = trend_data,
                       type = input$qc_select_trend_type)

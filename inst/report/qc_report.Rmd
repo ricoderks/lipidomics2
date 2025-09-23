@@ -8,6 +8,7 @@ output:
     toc_float: true
 params:
   analysis_data: NA
+  trend_data: NA
   qc_data: NA
   selected_pools: NA
   selected_samples: NA
@@ -25,6 +26,7 @@ library(plotly)
 
 # get all the information/data
 analysis_data <- params$analysis_data
+trend_data <- params$trend_data
 qc_data <- params$qc_data
 selected_pools <- params$selected_pools
 selected_samples <- params$selected_samples
@@ -55,19 +57,21 @@ show_class_violin(data = qc_data,
                   rsd = rsd_cutoff)
 ```
 
-## Trend plot
+## Trend plot {.tabset}
+
+### Overall
 
 ```{r fig.width=10, fig.height=7}
-trend_data <- calc_trend(data = analysis_data[analysis_data$keep == TRUE, ],
-                         idx_pools = selected_pools)
-
-p <- show_trend_plot(data = trend_data)
-p <- p +
-  theme(axis.text.x = element_text(angle = 45,
-                                   hjust = 1))
-p
+trend_plot(trend_data = trend_data,
+           type = "overall")
 ```
 
+### Per batch
+
+```{r fig.width=10, fig.height=7}
+trend_plot(trend_data = trend_data,
+           type = "batch")
+```
 
 ## Correlation
 
