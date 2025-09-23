@@ -595,6 +595,13 @@ mod_file_server <- function(id, r){
 
           r$settings$feature_class <- sort(unique(r$tables$clean_data$class_ion))
 
+          # trend calculation
+          qcpool_data <- r$tables$clean_data[r$tables$clean_data$sample_name %in% r$index$selected_pools, ]
+          qcpool_meta <- r$tables$meta_data[r$tables$meta_data[, r$columns$filename] %in% r$index$selected_pools, ]
+
+          r$tables$trend_data <- calc_trend(pool_data = qcpool_data,
+                                            order_column = r$columns$acqorder)
+
           # apply all filtering here (rsd, id, blank/sample, etc.)
           # RSD filtering
           rsd_res <- calc_rsd(data = r$tables$clean_data,

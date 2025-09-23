@@ -151,19 +151,10 @@ mod_qc_server <- function(id, r){
 
 
     output$qc_trend_plot <- shiny::renderPlot({
-      shiny::req(r$tables$analysis_data,
-                 r$tables$meta_data,
+      shiny::req(r$tables$trend_data,
                  input$qc_select_trend_type)
 
-      qcpool_data <- r$tables$analysis_data[r$tables$analysis_data$sample_name %in% r$index$selected_pools, ]
-      qcpool_meta <- r$tables$meta_data[r$tables$meta_data[, r$columns$filename] %in% r$index$selected_pools, ]
-
-      trend_data <- calc_trend(pool_data = qcpool_data,
-                               order_column = r$columns$acqorder)
-
-      r$tables$trend_data <- trend_data
-
-      p <- trend_plot(trend_data = trend_data,
+      p <- trend_plot(trend_data = r$tables$trend_data,
                       type = input$qc_select_trend_type)
 
       return(p)
