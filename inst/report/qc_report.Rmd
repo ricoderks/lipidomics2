@@ -60,13 +60,22 @@ show_batch_hist(data = rsd_data_batch,
                 rsd_cutoff = rsd_cutoff)
 ```
 
-## RSD per lipid class
+## RSD per lipid class {.tabset}
 
 RSD values per lipid class.
 
+### Overall
+
 ```{r fig.width=10, fig.height=7, warning=FALSE, message=FALSE}
-show_class_violin(data = rsd_data_overall,
-                  rsd = rsd_cutoff)
+show_class_overall_violin(data = rsd_data_overall,
+                          rsd = rsd_cutoff)
+```
+
+### Batch
+
+```{r fig.width=10, fig.height=7, warning=FALSE, message=FALSE}
+show_class_batch_violin(data = rsd_data_batch,
+                        rsd = rsd_cutoff)
 ```
 
 ## Trend plot {.tabset}

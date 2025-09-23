@@ -37,8 +37,18 @@ mod_qc_ui <- function(id) {
         title = "QC - RSD Class",
         value = "qc_class",
         bslib::card(
-          shiny::plotOutput(
-            outputId = ns("qc_class_plot")
+          bslib::page_sidebar(
+            sidebar = bslib::sidebar(
+              shiny::selectInput(
+                inputId = ns("qc_select_rsd_class_type"),
+                label = "RSD Class plot",
+                choices = c("Overall" = "overall",
+                            "Per batch" = "batch")
+              )
+            ),
+            shiny::plotOutput(
+              outputId = ns("qc_class_plot")
+            )
           )
         )
       ),
@@ -105,10 +115,21 @@ mod_qc_server <- function(id, r){
 
     output$qc_class_plot <- shiny::renderPlot({
       shiny::req(r$tables$rsd_data_overall,
-                 r$settings$rsd_cutoff)
+                 r$tables$rsd_data_batch,
+                 r$settings$rsd_cutoff,
+                 input$qc_select_rsd_class_type)
 
-      p <- show_class_violin(data = r$tables$rsd_data_overall,
-                             rsd_cutoff = r$settings$rsd_cutoff)
+      p <- switch(
+        input$qc_select_rsd_class_type,
+        "batch" = {
+          show_class_batch_violin(data = r$tables$rsd_data_batch,
+                                  rsd_cutoff = r$settings$rsd_cutoff)
+        },
+        "overall" = {
+          show_class_overall_violin(data = r$tables$rsd_data_overall,
+                                    rsd_cutoff = r$settings$rsd_cutoff)
+        }
+      )
 
       return(p)
     })

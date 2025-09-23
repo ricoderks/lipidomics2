@@ -19,7 +19,7 @@
 #' @author Rico Derks
 #'
 show_overall_hist <- function(data = NULL,
-                              rsd_cutoff = 0.3) {
+                                      rsd_cutoff = 0.3) {
   p <- data |>
     ggplot2::ggplot(ggplot2::aes(x = .data$rsd,
                                  fill = .data$polarity)) +
@@ -95,7 +95,7 @@ show_batch_hist <- function(data = NULL,
 #'
 #' @author Rico Derks
 #'
-show_class_violin <- function(data = NULL,
+show_class_overall_violin <- function(data = NULL,
                               rsd_cutoff = 0.3) {
   p <- data |>
     ggplot2::ggplot(ggplot2::aes(x = .data$class,
@@ -112,6 +112,52 @@ show_class_violin <- function(data = NULL,
     ggplot2::labs(y = "Relative standard deviation",
                   x = "Lipid class",
                   title = "RSD per lipidclass") +
+    ggplot2::theme_minimal() +
+    ggplot2::theme(legend.position = "bottom",
+                   axis.text.x = ggplot2::element_text(angle = 90,
+                                                       hjust = 1))
+
+  return(p)
+}
+
+
+#' @title Create RSD violin per batch plot
+#'
+#' @description Create RSD violin plot per class per batch.
+#'
+#' @param data data.frame with the RSD data.
+#' @param rsd_cutoff numeric(1), the RSD cut off value.
+#'
+#' @details data should contain the columns RSD, class and polarity.
+#'
+#' @return ggplot2 object, violin plot of the RSD values per class.
+#'
+#' @importFrom ggplot2 ggplot aes .data geom_violin geom_hline labs guides
+#'     guide_legend theme_minimal theme facet_wrap
+#'
+#' @export
+#'
+#' @author Rico Derks
+#'
+show_class_batch_violin <- function(data = NULL,
+                                    rsd_cutoff = 0.3) {
+  p <- data |>
+    ggplot2::ggplot(ggplot2::aes(x = .data$class,
+                                 y = .data$rsd)) +
+    ggplot2::geom_violin(scale = "width") +
+    ggplot2::geom_jitter(ggplot2::aes(colour = .data$polarity),
+                         alpha = 0.7) +
+    ggplot2::geom_hline(yintercept = rsd_cutoff,
+                        colour = "red",
+                        linetype = 2) +
+    ggplot2::guides(colour = ggplot2::guide_legend(title = "Polarity",
+                                                   override.aes = list(alpha = 1,
+                                                                       size = 3))) +
+    ggplot2::labs(y = "Relative standard deviation",
+                  x = "Lipid class",
+                  title = "RSD per lipidclass") +
+    ggplot2::facet_wrap(. ~ .data$batch,
+                        ncol = 2) +
     ggplot2::theme_minimal() +
     ggplot2::theme(legend.position = "bottom",
                    axis.text.x = ggplot2::element_text(angle = 90,
