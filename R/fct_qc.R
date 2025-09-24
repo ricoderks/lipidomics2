@@ -330,8 +330,6 @@ trend_plot <- function(trend_data = NULL,
   type <- match.arg(arg = type,
                     choices = c("batch", "overall"))
 
-  print(colnames(trend_data))
-
   p <- switch(
     type,
     "batch" = {
