@@ -713,15 +713,32 @@ mod_file_server <- function(id, r){
     shiny::observeEvent(input$load_rdata, {
       print("Loading Rdata file.")
 
+      progress <- shiny::Progress$new(session = session,
+                                      min = 0,
+                                      max = 100)
+      on.exit(progress$close())
+
+      progress$set(value = 5,
+                   message = "Processing...",
+                   detail = NULL)
+
       import_env <- load_to_env(RData = input$load_rdata$datapath)
       #---------------------------------------------------------- Settings -----
       r$name <- import_env$r$name
       r$omics <- import_env$r$omics
+      shiny::updateRadioButtons(
+        inputId = "raw_select_omics",
+        selected = r$omics
+      )
       print(r$omics)
 
       r$defaults$lipidclass_ion <- import_env$r$defaults$lipidclass_ion
       r$defaults$metclass_ion <- import_env$r$defaults$metclass_ion
       r$defaults$lipid_classes <- import_env$r$defaults$lipid_classes
+
+      progress$set(value = 10,
+                   message = "Processing...",
+                   detail = NULL)
 
       r$settings$rsd_cutoff <- import_env$r$settings$rsd_cutoff
       r$settings$dot_cutoff <- import_env$r$settings$dot_cutoff
@@ -751,26 +768,52 @@ mod_file_server <- function(id, r){
         value = r$settings$blanksample_threshold
       )
 
+      progress$set(value = 20,
+                   message = "Processing...",
+                   detail = NULL)
       #------------------------------------------------------------- Files -----
       r$files$meta_file <- import_env$r$files$meta_file
       r$files$data_file_pos <- import_env$r$files$data_file_pos
       r$files$data_file_neg <- import_env$r$files$data_file_neg
       r$files$rda_file <- input$load_rdata$datapath
+      selected_files <- ""
+      if(!is.null(r$files$data_file_pos)) {
+        selected_files <- c(selected_files, "pos")
+      }
+      if(!is.null(r$files$data_file_neg)) {
+        selected_files <- c(selected_files, "neg")
+      }
+      shiny::updateCheckboxGroupInput(
+        inputId = "raw_which_files",
+        selected = selected_files
+      )
+
+      progress$set(value = 30,
+                   message = "Processing...",
+                   detail = NULL)
 
       #--------------------------------------------------------- Meta data -----
       r$tables$meta_data <- import_env$r$tables$meta_data
       r$columns$filename <- import_env$r$columns$filename
+      r$columns$sampleid <- import_env$r$columns$sampleid
       r$columns$sampletype <- import_env$r$columns$sampletype
       r$columns$acqorder <- import_env$r$columns$acqorder
       r$columns$batch <- import_env$r$columns$batch
+      r$columns$groups <- import_env$r$columns$groups
       r$text_patterns$blanks <- import_env$r$text_patterns$blanks
       r$text_patterns$pools <- import_env$r$text_patterns$pools
       r$text_patterns$samples <- import_env$r$text_patterns$samples
+
       column_names <- colnames(r$tables$meta_data)
       shiny::updateSelectInput(
         inputId = "metadata_select_filename",
         choices = sort(column_names),
         selected = r$columns$filename
+      )
+      shiny::updateSelectInput(
+        inputId = "metadata_select_sampleid",
+        choices = sort(column_names),
+        selected = r$columns$sampleid
       )
       shiny::updateSelectInput(
         inputId = "metadata_select_sampletype",
@@ -787,6 +830,11 @@ mod_file_server <- function(id, r){
         choices = sort(column_names),
         selected = r$columns$batch
       )
+      shiny::updateSelectInput(
+        inputId = "metadata_select_groups",
+        choices = sort(column_names),
+        selected = r$columns$groups
+      )
       shiny::updateTextInput(
         inputId = "metadata_blank_pattern",
         value = r$text_patterns$blanks
@@ -799,6 +847,23 @@ mod_file_server <- function(id, r){
         inputId = "metadata_samples_pattern",
         value = r$text_patterns$samples
       )
+      progress$set(value = 50,
+                   message = "Processing...",
+                   detail = NULL)
+      #------------------------------------------------------------ Indexes ----
+      r$index$blanks <- import_env$r$index$blanks
+      r$index$pools <- import_env$r$index$pools
+      r$index$samples <- import_env$r$index$samples
+      r$index$selected_blanks <- import_env$r$index$selected_blanks
+      r$index$selected_pools <- import_env$r$index$selected_pools
+      r$index$selected_samples <- import_env$r$index$selected_samples
+      r$index$keep_rsd <- import_env$r$index$keep_rsd
+      r$index$keep_blankratio <- import_env$r$index$keep_blankratio
+      r$index$keep_id <- import_env$r$index$keep_id
+
+      progress$set(value = 55,
+                   message = "Processing...",
+                   detail = NULL)
 
       #---------------------------------------------------------- Raw data -----
       r$tables$raw_data_pos <- import_env$r$tables$raw_data_pos
@@ -812,6 +877,33 @@ mod_file_server <- function(id, r){
       r$tables$rsd_data_batch <- import_env$r$tables$rsd_data_batch
       r$tables$analysis_data <- import_env$r$tables$analysis_data
       r$tables$trend_data <- import_env$r$tables$trend_data
+
+      total_features <- sum(c(length(unique(r$tables$raw_data_pos$`Alignment ID`)),
+                              length(unique(r$tables$raw_data_neg$`Alignment ID`))), na.rm = TRUE)
+      total_samples <- sum(c(length(r$index$blanks),
+                             length(r$index$pools),
+                             length(r$index$samples)),
+                           na.rm = TRUE)
+
+      shinyWidgets::updateProgressBar(
+        session = session,
+        id = "feature_count_bar",
+        title = "Feature count",
+        value = length(unique(r$tables$clean_data$my_id)),
+        total = total_features
+      )
+
+      shinyWidgets::updateProgressBar(
+        session = session,
+        id = "sample_count_bar",
+        title = "Sample count",
+        value = length(unique(r$tables$clean_data$sample_name)),
+        total = total_samples
+      )
+
+      progress$set(value = 85,
+                   message = "Processing...",
+                   detail = NULL)
 
       #---------------------------------------------------- class selection ----
       r$defaults$patterns$PL <- import_env$r$defaults$patterns$PL
@@ -875,16 +967,10 @@ mod_file_server <- function(id, r){
         selected = r$defaults$patterns$PRL
       )
 
-      #------------------------------------------------------------ Indexes ----
-      r$index$blanks <- import_env$r$index$blanks
-      r$index$pools <- import_env$r$index$pools
-      r$index$samples <- import_env$r$index$samples
-      r$index$selected_blanks <- import_env$r$index$selected_blanks
-      r$index$selected_pools <- import_env$r$index$selected_pools
-      r$index$selected_samples <- import_env$r$index$selected_samples
-      r$index$keep_rsd <- import_env$r$index$keep_rsd
-      r$index$keep_blankratio <- import_env$r$index$keep_blankratio
-      r$index$keep_id <- import_env$r$index$keep_id
+      progress$set(value = 100,
+                   message = "Processing...",
+                   detail = NULL)
+
     })
 
   })

@@ -8,7 +8,7 @@
 #' @noRd
 app_server <- function(input, output, session) {
   # increase upload limit
-  options(shiny.maxRequestSize = 30 * 1024^2)
+  options(shiny.maxRequestSize = 100 * 1024^2)
 
   # for communication between modules
   r <- shiny::reactiveValues(
