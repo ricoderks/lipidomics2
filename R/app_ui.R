@@ -41,6 +41,10 @@ app_ui <- function(request) {
         mod_issues_ui(id = "issues")
       ),
       bslib::nav_panel(
+        title = "Analysis",
+        mod_analysis_ui(id = "analysis")
+      ),
+      bslib::nav_panel(
         title = "Export",
         mod_export_ui(id = "export")
       ),
