@@ -15,29 +15,40 @@ mod_qc_ui <- function(id) {
     bslib::navset_card_tab(
       #--------------------------------------------------- general settings ----
       bslib::nav_panel(
-        title = "QC - overall",
-        value = "qc_overall",
+        title = "QC - RSD",
+        value = "qc_rsd",
         bslib::card(
-          shiny::plotOutput(
-            outputId = ns("qc_overall_plot")
+          bslib::page_sidebar(
+            sidebar = bslib::sidebar(
+              shiny::selectInput(
+                inputId = ns("qc_select_rsd_type"),
+                label = "RSD plot",
+                choices = c("Overall" = "overall",
+                            "Per batch" = "batch")
+              )
+            ),
+            shiny::plotOutput(
+              outputId = ns("qc_rsd_plot")
+            )
           )
         )
       ),
       bslib::nav_panel(
-        title = "QC - Class",
+        title = "QC - RSD Class",
         value = "qc_class",
         bslib::card(
-          shiny::plotOutput(
-            outputId = ns("qc_class_plot")
-          )
-        )
-      ),
-      bslib::nav_panel(
-        title = "QC - Trend",
-        value = "qc_trend",
-        bslib::card(
-          shiny::plotOutput(
-            outputId = ns("qc_trend_plot")
+          bslib::page_sidebar(
+            sidebar = bslib::sidebar(
+              shiny::selectInput(
+                inputId = ns("qc_select_rsd_class_type"),
+                label = "RSD Class plot",
+                choices = c("Overall" = "overall",
+                            "Per batch" = "batch")
+              )
+            ),
+            shiny::plotOutput(
+              outputId = ns("qc_class_plot")
+            )
           )
         )
       ),
@@ -47,6 +58,25 @@ mod_qc_ui <- function(id) {
         bslib::card(
           plotly::plotlyOutput(
             outputId = ns("qc_correlation_plot")
+          )
+        )
+      ),
+      bslib::nav_panel(
+        title = "QC - Trend",
+        value = "qc_trend",
+        bslib::card(
+          bslib::page_sidebar(
+            sidebar = bslib::sidebar(
+              shiny::selectInput(
+                inputId = ns("qc_select_trend_type"),
+                label = "Trend plot",
+                choices = c("Overall" = "overall",
+                            "Per batch" = "batch")
+              )
+            ),
+            shiny::plotOutput(
+              outputId = ns("qc_trend_plot")
+            )
           )
         )
       )
@@ -61,36 +91,45 @@ mod_qc_server <- function(id, r){
   shiny::moduleServer(id, function(input, output, session){
     ns <- session$ns
 
-    output$qc_overall_plot <- shiny::renderPlot({
-      shiny::req(r$tables$qc_data,
-                 r$settings$rsd_cutoff)
+    output$qc_rsd_plot <- shiny::renderPlot({
+      shiny::req(r$tables$rsd_data_overall,
+                 r$tables$rsd_data_batch,
+                 r$settings$rsd_cutoff,
+                 input$qc_select_rsd_type)
 
-      p <- show_overall_hist(data = r$tables$qc_data,
-                             rsd_cutoff = r$settings$rsd_cutoff)
+      p <- switch(
+        input$qc_select_rsd_type,
+        "batch" = {
+          show_batch_hist(data = r$tables$rsd_data_batch,
+                          rsd_cutoff = r$settings$rsd_cutoff)
+        },
+        "overall" = {
+          show_overall_hist(data = r$tables$rsd_data_overall,
+                            rsd_cutoff = r$settings$rsd_cutoff)
+        }
+      )
 
       return(p)
     })
 
 
     output$qc_class_plot <- shiny::renderPlot({
-      shiny::req(r$tables$qc_data,
-                 r$settings$rsd_cutoff)
+      shiny::req(r$tables$rsd_data_overall,
+                 r$tables$rsd_data_batch,
+                 r$settings$rsd_cutoff,
+                 input$qc_select_rsd_class_type)
 
-      p <- show_class_violin(data = r$tables$qc_data,
-                             rsd_cutoff = r$settings$rsd_cutoff)
-
-      return(p)
-    })
-
-
-    output$qc_trend_plot <- shiny::renderPlot({
-      shiny::req(r$tables$analysis_data,
-                 r$index$selected_pools)
-
-      trend_data <- calc_trend(data = r$tables$analysis_data[r$tables$analysis_data$keep == TRUE, ],
-                               idx_pools = r$index$selected_pools)
-
-      p <- show_trend_plot(data = trend_data)
+      p <- switch(
+        input$qc_select_rsd_class_type,
+        "batch" = {
+          show_class_batch_violin(data = r$tables$rsd_data_batch,
+                                  rsd_cutoff = r$settings$rsd_cutoff)
+        },
+        "overall" = {
+          show_class_overall_violin(data = r$tables$rsd_data_overall,
+                                    rsd_cutoff = r$settings$rsd_cutoff)
+        }
+      )
 
       return(p)
     })
@@ -108,6 +147,17 @@ mod_qc_server <- function(id, r){
       ply <- plotly::ggplotly(p = p)
 
       return(ply)
+    })
+
+
+    output$qc_trend_plot <- shiny::renderPlot({
+      shiny::req(r$tables$trend_data,
+                 input$qc_select_trend_type)
+
+      p <- trend_plot(trend_data = r$tables$trend_data,
+                      type = input$qc_select_trend_type)
+
+      return(p)
     })
 
   })

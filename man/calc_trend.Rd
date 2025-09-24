@@ -2,21 +2,20 @@
 % Please edit documentation in R/fct_qc.R
 \name{calc_trend}
 \alias{calc_trend}
-\title{Calculate (log2) fold change of the pooled samples}
+\title{Get trend data}
 \usage{
-calc_trend(data = NULL, idx_pools = NULL)
+calc_trend(pool_data = NULL, order_column = NULL)
 }
 \arguments{
-\item{data}{data.frame with all the data.}
+\item{pool_data}{data.frame with the pooled data.}
 
-\item{idx_pools}{character(), with all the pooled sample names.}
+\item{order_column}{character(1) column name of the acquisition order column.}
 }
 \value{
-data.frame in long format for `qc_trend_plot()`.
+data.frame with the data for the trend plot
 }
 \description{
-Calculate (log2) fold change of the pooled samples. The reference is the first
-pooled sample.
+Get the trend data for the trend plot.
 }
 \author{
 Rico Derks

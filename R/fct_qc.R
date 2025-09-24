@@ -19,6 +19,44 @@
 #' @author Rico Derks
 #'
 show_overall_hist <- function(data = NULL,
+                                      rsd_cutoff = 0.3) {
+  p <- data |>
+    ggplot2::ggplot(ggplot2::aes(x = .data$rsd,
+                                 fill = .data$polarity)) +
+    ggplot2::geom_vline(xintercept = rsd_cutoff,
+                        colour = "red",
+                        linetype = 2) +
+    ggplot2::geom_histogram(binwidth = 0.005,
+                            alpha = 0.4) +
+    ggplot2::labs(x = "Relative standard deviation") +
+    ggplot2::guides(fill = ggplot2::guide_legend(title = "Polarity",
+                                                 override.aes = list(alpha = 1))) +
+    ggplot2::theme_minimal() +
+    ggplot2::theme(legend.position = "bottom")
+
+  return(p)
+}
+
+
+#' @title Create RSD histogram per batch
+#'
+#' @description Create RSD histogram per batch.
+#'
+#' @param data data.frame with the RSD data.
+#' @param rsd_cutoff numeric(1), the RSD cut off value.
+#'
+#' @details data should contain the columns RSD and polarity.
+#'
+#' @return ggplot2 object, histogram of the RSD values.
+#'
+#' @importFrom ggplot2 ggplot aes .data geom_vline geom_histogram labs guides
+#'     guide_legend theme_minimal theme
+#'
+#' @export
+#'
+#' @author Rico Derks
+#'
+show_batch_hist <- function(data = NULL,
                               rsd_cutoff = 0.3) {
   p <- data |>
     ggplot2::ggplot(ggplot2::aes(x = .data$rsd,
@@ -31,6 +69,7 @@ show_overall_hist <- function(data = NULL,
     ggplot2::labs(x = "Relative standard deviation") +
     ggplot2::guides(fill = ggplot2::guide_legend(title = "Polarity",
                                                  override.aes = list(alpha = 1))) +
+    ggplot2::facet_wrap(. ~ batch) +
     ggplot2::theme_minimal() +
     ggplot2::theme(legend.position = "bottom")
 
@@ -56,7 +95,7 @@ show_overall_hist <- function(data = NULL,
 #'
 #' @author Rico Derks
 #'
-show_class_violin <- function(data = NULL,
+show_class_overall_violin <- function(data = NULL,
                               rsd_cutoff = 0.3) {
   p <- data |>
     ggplot2::ggplot(ggplot2::aes(x = .data$class,
@@ -73,6 +112,52 @@ show_class_violin <- function(data = NULL,
     ggplot2::labs(y = "Relative standard deviation",
                   x = "Lipid class",
                   title = "RSD per lipidclass") +
+    ggplot2::theme_minimal() +
+    ggplot2::theme(legend.position = "bottom",
+                   axis.text.x = ggplot2::element_text(angle = 90,
+                                                       hjust = 1))
+
+  return(p)
+}
+
+
+#' @title Create RSD violin per batch plot
+#'
+#' @description Create RSD violin plot per class per batch.
+#'
+#' @param data data.frame with the RSD data.
+#' @param rsd_cutoff numeric(1), the RSD cut off value.
+#'
+#' @details data should contain the columns RSD, class and polarity.
+#'
+#' @return ggplot2 object, violin plot of the RSD values per class.
+#'
+#' @importFrom ggplot2 ggplot aes .data geom_violin geom_hline labs guides
+#'     guide_legend theme_minimal theme facet_wrap
+#'
+#' @export
+#'
+#' @author Rico Derks
+#'
+show_class_batch_violin <- function(data = NULL,
+                                    rsd_cutoff = 0.3) {
+  p <- data |>
+    ggplot2::ggplot(ggplot2::aes(x = .data$class,
+                                 y = .data$rsd)) +
+    ggplot2::geom_violin(scale = "width") +
+    ggplot2::geom_jitter(ggplot2::aes(colour = .data$polarity),
+                         alpha = 0.7) +
+    ggplot2::geom_hline(yintercept = rsd_cutoff,
+                        colour = "red",
+                        linetype = 2) +
+    ggplot2::guides(colour = ggplot2::guide_legend(title = "Polarity",
+                                                   override.aes = list(alpha = 1,
+                                                                       size = 3))) +
+    ggplot2::labs(y = "Relative standard deviation",
+                  x = "Lipid class",
+                  title = "RSD per lipidclass") +
+    ggplot2::facet_wrap(. ~ .data$batch,
+                        ncol = 2) +
     ggplot2::theme_minimal() +
     ggplot2::theme(legend.position = "bottom",
                    axis.text.x = ggplot2::element_text(angle = 90,
@@ -166,75 +251,118 @@ calc_cor <- function(data = NULL,
 }
 
 
-#' @title Calculate (log2) fold change of the pooled samples
+#' @title Get trend data
 #'
 #' @description
-#' Calculate (log2) fold change of the pooled samples. The reference is the first
-#' pooled sample.
+#' Get the trend data for the trend plot.
 #'
-#' @param data data.frame with all the data.
-#' @param idx_pools character(), with all the pooled sample names.
+#' @param pool_data data.frame with the pooled data.
+#' @param order_column character(1) column name of the acquisition order column.
 #'
-#' @return data.frame in long format for `qc_trend_plot()`.
-#'
-#' @export
+#' @returns data.frame with the data for the trend plot
 #'
 #' @author Rico Derks
 #'
-calc_trend <- function(data = NULL,
-                       idx_pools = NULL) {
-  first_qc <- idx_pools[1]
+calc_trend <- function(pool_data = NULL,
+                       order_column = NULL) {
+  # first qcpool overall
+  qcpool_all <-
+    pool_data[pool_data[, "batch"] == 1 &
+                pool_data[, order_column] == min(pool_data[, order_column], na.rm = TRUE), "sample_name"]
 
-  ref_data <- data[data$sample_name == first_qc, c("my_id", "area")]
-  colnames(ref_data)[2] <- "ref_area"
+  # get the first qcpool of each batch
+  batch <- unique(pool_data[, "batch"])
+  qcpool_batch <- sapply(batch, function(x) {
+    tmp <- pool_data[pool_data[, "batch"] == x, ]
+    res <- tmp[tmp[, order_column] == min(tmp[, order_column]), "sample_name"]
+    return(res)
+  })
 
+  pool_data[, "batch"] <- factor(pool_data[, "batch"])
+
+  # get ref data
+  ref_all <- pool_data[pool_data[, "sample_name"] == qcpool_all, c("my_id", "area")]
+  colnames(ref_all)[2] <- "refAreaOverall"
+
+  ref_batch <- pool_data[pool_data[, "sample_name"] %in% qcpool_batch, c("my_id", "area", "batch")]
+  colnames(ref_batch)[2] <- "refAreaBatch"
+
+  # merge
   trend_data <- merge(
-    x = data[data$sample_name %in% idx_pools, c("my_id", "sample_name", "polarity", "area")],
-    y = ref_data,
-    by.x = "my_id",
-    by.y = "my_id"
+    x = pool_data,
+    y = ref_all,
+    by = "my_id"
   )
 
-  trend_data$fc <- trend_data$area / trend_data$ref_area
-  trend_data$log2fc <- log2(trend_data$fc)
+  trend_data <- merge(
+    x = trend_data,
+    y = ref_batch,
+    by = c("my_id", "batch")
+  )
+
+  # calculate log2(fold change)
+  trend_data <- trend_data[, c("my_id", "sample_name", "area", "refAreaOverall", "refAreaBatch", "batch", "polarity")]
+  trend_data$log2fc_overall <- log2(trend_data$area / trend_data$refAreaOverall)
+  trend_data$log2fc_batch <- log2(trend_data$area / trend_data$refAreaBatch)
 
   return(trend_data)
 }
 
-
 #' @title Create trend plot
 #'
 #' @description
-#' Create trend plot of the pooled samples to visualize the trend during the
-#' measurements..
+#' Create a trend plot based on the pooled samples in the data.
 #'
-#' @param data data.frame from `calc_trend()`.
+#' @param trend_data data.frame containing all trend related data.
+#' @param type character(1) do you want the overall trend plot or per batch.
 #'
-#' @return ggplot2 object
+#' @returns trend plot as ggplot2 object.
 #'
-#' @importFrom ggplot2 ggplot aes geom_hline geom_line theme_minimal labs
-#'     guides guide_legend
-#' @importFrom rlang .data
-#'
-#' @author Rico Derks
+#' @importFrom ggplot2 ggplot aes geom_line labs facet_wrap theme_minimal
+#'     theme element_text .data geom_hline
 #'
 #' @export
 #'
-show_trend_plot <- function(data = NULL) {
-  p <- data |>
-    ggplot2::ggplot(ggplot2::aes(x = .data$sample_name,
-                                 y = .data$log2fc,
-                                 color = .data$polarity,
-                                 group = .data$my_id)) +
-    ggplot2::geom_hline(yintercept = c(1, 0, -1),
+#' @author Rico Derks
+#'
+trend_plot <- function(trend_data = NULL,
+                       type = c("batch", "overall")) {
+  type <- match.arg(arg = type,
+                    choices = c("batch", "overall"))
+
+  print(colnames(trend_data))
+
+  p <- switch(
+    type,
+    "batch" = {
+      trend_data |>
+        ggplot2::ggplot(ggplot2::aes(x = .data$sample_name,
+                                     y = .data$log2fc_batch,
+                                     colour = .data$batch,
+                                     group = .data$my_id))
+    },
+    "overall" = {
+      trend_data |>
+        ggplot2::ggplot(ggplot2::aes(x = .data$sample_name,
+                                     y = .data$log2fc_overall,
+                                     colour = .data$batch,
+                                     group = .data$my_id))
+    }
+  )
+
+  p <- p  +
+    ggplot2::geom_hline(yintercept = c(-0.5, 0, 0.5),
                         linetype = c(2, 1, 2),
-                        color = c("red", "grey", "red")) +
-    ggplot2::geom_line(alpha = 0.3) +
+                        colour = "black") +
+    ggplot2::geom_line(alpha = 0.5) +
     ggplot2::labs(x = "Sample name",
-                  y = "Log2(fold change)") +
-    ggplot2::guides(color = ggplot2::guide_legend(title = "Polarity",
-                                                  override.aes = list(alpha = 1))) +
-    ggplot2::theme_minimal()
+                  y = "log2(fold change)") +
+    ggplot2::facet_wrap(. ~ .data$polarity,
+                        ncol = 1) +
+    ggplot2::theme_minimal() +
+    ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45,
+                                                       hjust = 1),
+                   legend.position = "bottom")
 
   return(p)
 }

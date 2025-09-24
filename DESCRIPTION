@@ -1,6 +1,6 @@
 Package: lipidomics2
 Title: Lipidomics workflow Shiny app
-Version: 0.0.0.9001
+Version: 0.0.0.9005
 Authors@R: 
     person("Rico", "Derks", , "r.j.e.derks@lumc.nl", role = c("aut", "cre"))
 Description: A lipidomics workflow app, build on the Shiny framework.  It
@@ -8,6 +8,8 @@ Description: A lipidomics workflow app, build on the Shiny framework.  It
 License: GPL (>= 3)
 URL: https://github.com/ricoderks/lipidomics2
 BugReports: https://github.com/ricoderks/lipidomics2/issues
+Depends:
+    R (>= 4.1.0)
 Imports: 
     bsicons,
     bslib,
@@ -40,4 +42,4 @@ Config/testthat/edition: 3
 Encoding: UTF-8
 Language: en-US
 LazyData: true
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3
