@@ -71,7 +71,7 @@ mod_export_server <- function(id, r) {
       html = shiny::tagList(
         waiter::spin_loaders(id = 8,
                              color = "black"),
-        shiny::h3("Rendering report....", style = "color:black")
+        shiny::h3("Preparing download ....", style = "color:black")
       ),
       color = "rgba(255, 255, 255, 0.5)"
     )
