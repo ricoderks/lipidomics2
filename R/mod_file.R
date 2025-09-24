@@ -718,7 +718,7 @@ mod_file_server <- function(id, r){
                                       max = 100)
       on.exit(progress$close())
 
-      progress$set(value = 5,
+      progress$set(value = 50,
                    message = "Processing...",
                    detail = NULL)
 
@@ -736,7 +736,7 @@ mod_file_server <- function(id, r){
       r$defaults$metclass_ion <- import_env$r$defaults$metclass_ion
       r$defaults$lipid_classes <- import_env$r$defaults$lipid_classes
 
-      progress$set(value = 10,
+      progress$set(value = 60,
                    message = "Processing...",
                    detail = NULL)
 
@@ -768,7 +768,7 @@ mod_file_server <- function(id, r){
         value = r$settings$blanksample_threshold
       )
 
-      progress$set(value = 20,
+      progress$set(value = 70,
                    message = "Processing...",
                    detail = NULL)
       #------------------------------------------------------------- Files -----
@@ -788,7 +788,7 @@ mod_file_server <- function(id, r){
         selected = selected_files
       )
 
-      progress$set(value = 30,
+      progress$set(value = 75,
                    message = "Processing...",
                    detail = NULL)
 
@@ -847,7 +847,7 @@ mod_file_server <- function(id, r){
         inputId = "metadata_samples_pattern",
         value = r$text_patterns$samples
       )
-      progress$set(value = 50,
+      progress$set(value = 80,
                    message = "Processing...",
                    detail = NULL)
       #------------------------------------------------------------ Indexes ----
@@ -861,7 +861,7 @@ mod_file_server <- function(id, r){
       r$index$keep_blankratio <- import_env$r$index$keep_blankratio
       r$index$keep_id <- import_env$r$index$keep_id
 
-      progress$set(value = 55,
+      progress$set(value = 85,
                    message = "Processing...",
                    detail = NULL)
 
@@ -901,7 +901,7 @@ mod_file_server <- function(id, r){
         total = total_samples
       )
 
-      progress$set(value = 85,
+      progress$set(value = 90,
                    message = "Processing...",
                    detail = NULL)
 
