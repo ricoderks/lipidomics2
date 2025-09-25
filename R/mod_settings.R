@@ -32,9 +32,13 @@ mod_settings_ui <- function(id) {
             ),
             "Features are immediately tagged with `large_rsd` and will not show up in the bubble plots (identification tab) or in the analysis part."
           )),
-          shiny::uiOutput(
-            outputId = ns("settings_qc_ui")
+          shiny::div(
+            shiny::uiOutput(
+              outputId = ns("settings_qc_ui")
+            ),
+            style = "font-size:75%;"
           )
+
         ),
         bslib::card(
           bslib::card_header(
@@ -46,8 +50,11 @@ mod_settings_ui <- function(id) {
               "Features are immediately tagged with `no_match`. They will show up in the bubble plots (identification tab), but not in the analysis part. Individual features can be added back via the bubble plots (identification part). Keep in mind that when the value of this filter is changed they might be removed again!!"
             )
           ),
-          shiny::uiOutput(
-            outputId = ns("settings_id_ui")
+          shiny::div(
+            shiny::uiOutput(
+              outputId = ns("settings_id_ui")
+            ),
+            style = "font-size:75%;"
           )
         ),
         bslib::card(
@@ -60,8 +67,11 @@ mod_settings_ui <- function(id) {
               "For all samples are sample / blank ratio is calculated. In 80% (default threshold) of the samples this value should be higher than the sample / blank ratio cut off. If it is not the feature is removed from the data set (set as high background)."
             )
           ),
-          shiny::uiOutput(
-            outputId = ns("settings_blanksample_ui")
+          shiny::div(
+            shiny::uiOutput(
+              outputId = ns("settings_blanksample_ui")
+            ),
+            style = "font-size:75%;"
           )
         )
       ),
@@ -111,16 +121,28 @@ mod_settings_server <- function(id, r){
       color = "rgba(255, 255, 255, 0.5)"
     )
 
+
     #----------------------------------------------------- general settings ----
     output$settings_qc_ui <- shiny::renderUI({
       shiny::tagList(
-        shiny::numericInput(
-          inputId = ns("settings_rsd_cutoff"),
-          label = "RSD cut off value :",
-          value = r$settings$rsd_cutoff,
-          min = 0,
-          max = 1,
-          step = 0.05
+        bslib::layout_sidebar(
+          fillable = TRUE,
+          sidebar = bslib::sidebar(
+            shiny::checkboxInput(
+              inputId = ns("settings_apply_rsd_cutoff"),
+              label = "Apply RSD filtering",
+              value = r$settings$apply_rsd_cutoff
+            ),
+            open = "always"
+          ),
+          shiny::numericInput(
+            inputId = ns("settings_rsd_cutoff"),
+            label = "RSD cut off value :",
+            value = r$settings$rsd_cutoff,
+            min = 0,
+            max = 1,
+            step = 0.05
+          )
         )
       )
     })
@@ -128,21 +150,37 @@ mod_settings_server <- function(id, r){
 
     output$settings_id_ui <- shiny::renderUI({
       shiny::tagList(
-        shiny::numericInput(
-          inputId = ns("settings_dot_cutoff"),
-          label = "Dot product cut off value :",
-          value = r$settings$dot_cutoff,
-          min = 0,
-          max = 100,
-          step = 1
-        ),
-        shiny::numericInput(
-          inputId = ns("settings_revdot_cutoff"),
-          label = "Reverse dot product cut off value :",
-          value = r$settings$revdot_cutoff,
-          min = 0,
-          max = 100,
-          step = 1
+        bslib::layout_sidebar(
+          fillable = TRUE,
+          sidebar = bslib::sidebar(
+            shiny::checkboxInput(
+              inputId = ns("settings_apply_id_filtering"),
+              label = "Apply ID filtering",
+              value = r$settings$apply_id_filtering
+            ),
+            open = "always"
+          ),
+          bslib::layout_column_wrap(
+            width = 1 / 2,
+            shiny::numericInput(
+              inputId = ns("settings_dot_cutoff"),
+              label = "Dot product cut off value :",
+              value = r$settings$dot_cutoff,
+              min = 0,
+              max = 100,
+              step = 1
+            ),
+            shiny::numericInput(
+              inputId = ns("settings_revdot_cutoff"),
+              label = "Reverse dot product cut off value :",
+              value = r$settings$revdot_cutoff,
+              min = 0,
+              max = 100,
+              step = 1
+            ),
+            fill = FALSE,
+            fillable = FALSE
+          )
         )
       )
     })
@@ -150,107 +188,154 @@ mod_settings_server <- function(id, r){
 
     output$settings_blanksample_ui <- shiny::renderUI({
       shiny::tagList(
-        shiny::numericInput(
-          inputId = ns("settings_ratio"),
-          label = "Sample / average blank ratio",
-          value = r$settings$blanksample_ratio,
-          min = 0,
-          step = 0.1
-        ),
-        shiny::sliderInput(
-          inputId = ns("settings_threshold"),
-          label = "Threshold",
-          value = r$settings$blanksample_threshold,
-          min = 0,
-          max = 1,
-          step = 0.1
+        bslib::layout_sidebar(
+          fillable = TRUE,
+          sidebar = bslib::sidebar(
+            shiny::checkboxInput(
+              inputId = ns("settings_apply_blank_filtering"),
+              label = "Apply blank filtering",
+              value = r$settings$apply_blank_filtering
+            ),
+            open = "always"
+          ),
+          bslib::layout_column_wrap(
+            width = 1 / 2,
+            shiny::numericInput(
+              inputId = ns("settings_ratio"),
+              label = "Sample / average blank ratio",
+              value = r$settings$blanksample_ratio,
+              min = 0,
+              step = 0.1
+            ),
+            shiny::sliderInput(
+              inputId = ns("settings_threshold"),
+              label = "Threshold",
+              value = r$settings$blanksample_threshold,
+              min = 0,
+              max = 1,
+              step = 0.1
+            )
+          )
         )
       )
     })
 
 
+    #----------------------------------------------------------------- rsd -----
     shiny::observeEvent(
-      shiny::req(!is.null(input$settings_rsd_cutoff)), {
-        print("Changed RSD cutoff.")
+      shiny::req(!is.null(input$settings_rsd_cutoff),
+                 !is.null(input$settings_apply_rsd_cutoff)), {
 
-        r$settings$rsd_cutoff <- input$settings_rsd_cutoff
+                   r$settings$apply_rsd_cutoff <- input$settings_apply_rsd_cutoff
 
-        rsd_res <- calc_rsd(data = shiny::isolate(r$tables$analysis_data),
-                            pools = r$index$selected_pools,
-                            cut_off = input$settings_rsd_cutoff)
+                   if(r$settings$apply_rsd_cutoff) {
+                     print("Changed RSD cutoff.")
 
-        r$index$keep_rsd <- rsd_res$keep
+                     r$settings$rsd_cutoff <- input$settings_rsd_cutoff
 
-        r$tables$analysis_data$rsd_keep <- r$tables$analysis_data$my_id %in% r$index$keep_rsd
+                     rsd_res <- calc_rsd(data = shiny::isolate(r$tables$analysis_data),
+                                         pools = r$index$selected_pools,
+                                         cut_off = input$settings_rsd_cutoff)
 
-        r$tables$analysis_data$keep <- mapply(all,
-                                              r$tables$analysis_data$rsd_keep,
-                                              r$tables$analysis_data$match_keep,
-                                              r$tables$analysis_data$background_keep)
+                     r$index$keep_rsd <- rsd_res$keep
+                     r$tables$analysis_data$rsd_keep <- r$tables$analysis_data$my_id %in% r$index$keep_rsd
+                   } else {
+                     print("Disabled RSD cutoff filtering!")
+                     r$index$keep_rsd <- unique(r$tables$analysis_data$my_id)
+                     r$tables$analysis_data$rsd_keep <- TRUE
+                   }
+                   r$tables$analysis_data$keep <- mapply(all,
+                                                         r$tables$analysis_data$rsd_keep,
+                                                         r$tables$analysis_data$match_keep,
+                                                         r$tables$analysis_data$background_keep)
 
-        r$tables$analysis_data$comment <- "keep"
-        r$tables$analysis_data$comment[!r$tables$analysis_data$background_keep] <- "high_bg"
-        r$tables$analysis_data$comment[!r$tables$analysis_data$match_keep] <- "no_match"
-        r$tables$analysis_data$comment[!r$tables$analysis_data$rsd_keep] <- "large_rsd"
-      },
+                   r$tables$analysis_data$comment <- "keep"
+                   r$tables$analysis_data$comment[!r$tables$analysis_data$background_keep] <- "high_bg"
+                   r$tables$analysis_data$comment[!r$tables$analysis_data$match_keep] <- "no_match"
+                   r$tables$analysis_data$comment[!r$tables$analysis_data$rsd_keep] <- "large_rsd"
+                 },
       ignoreInit = TRUE
     )
 
 
+    #------------------------------------------------------------------ id -----
     shiny::observeEvent(
-      shiny::req(!is.null(input$settings_dot_cutoff), !is.null(input$settings_revdot_cutoff)), {
-        print("Changed ID cut off.")
+      shiny::req(!is.null(input$settings_dot_cutoff),
+                 !is.null(input$settings_revdot_cutoff),
+                 !is.null(input$settings_apply_id_filtering)), {
 
-        r$settings$dot_cutoff <- input$settings_dot_cutoff
-        r$settings$revdot_cutoff <- input$settings_revdot_cutoff
+                   r$settings$apply_id_filtering <- input$settings_apply_id_filtering
 
-        r$index$keep_id <- filter_id(data = shiny::isolate(r$tables$analysis_data),
-                                     dot_cutoff = input$settings_dot_cutoff,
-                                     revdot_cutoff = input$settings_revdot_cutoff)
+                   if(r$settings$apply_id_filtering){
+                     print("Changed ID cut off.")
 
-        r$tables$analysis_data$match_keep <- r$tables$analysis_data$my_id %in%
-          r$index$keep_id
+                     r$settings$dot_cutoff <- input$settings_dot_cutoff
+                     r$settings$revdot_cutoff <- input$settings_revdot_cutoff
 
-        r$tables$analysis_data$keep <- mapply(all,
-                                              r$tables$analysis_data$rsd_keep,
-                                              r$tables$analysis_data$match_keep,
-                                              r$tables$analysis_data$background_keep)
-        r$tables$analysis_data$comment <- "keep"
-        r$tables$analysis_data$comment[!r$tables$analysis_data$background_keep] <- "high_bg"
-        r$tables$analysis_data$comment[!r$tables$analysis_data$match_keep] <- "no_match"
-        r$tables$analysis_data$comment[!r$tables$analysis_data$rsd_keep] <- "large_rsd"
-      },
+                     r$index$keep_id <- filter_id(data = shiny::isolate(r$tables$analysis_data),
+                                                  dot_cutoff = input$settings_dot_cutoff,
+                                                  revdot_cutoff = input$settings_revdot_cutoff)
+
+                     r$tables$analysis_data$match_keep <- r$tables$analysis_data$my_id %in%
+                       r$index$keep_id
+                   } else {
+                     print("Disabled ID filtering!")
+                     r$index$keep_id <- unique(r$tables$analysis_data$my_id)
+                     r$tables$analysis_data$match_keep <- TRUE
+                   }
+                   r$tables$analysis_data$keep <- mapply(all,
+                                                         r$tables$analysis_data$rsd_keep,
+                                                         r$tables$analysis_data$match_keep,
+                                                         r$tables$analysis_data$background_keep)
+                   r$tables$analysis_data$comment <- "keep"
+                   r$tables$analysis_data$comment[!r$tables$analysis_data$background_keep] <- "high_bg"
+                   r$tables$analysis_data$comment[!r$tables$analysis_data$match_keep] <- "no_match"
+                   r$tables$analysis_data$comment[!r$tables$analysis_data$rsd_keep] <- "large_rsd"
+                 },
       ignoreInit = TRUE
     )
 
 
+    #--------------------------------------------------------------- blank -----
     shiny::observeEvent(
-      shiny::req(!is.null(input$settings_ratio), !is.null(input$settings_threshold)), {
-        print("Changed blank / sample ratio.")
+      shiny::req(!is.null(input$settings_ratio),
+                 !is.null(input$settings_threshold),
+                 !is.null(input$settings_apply_blank_filtering)), {
 
-        r$settings$blanksample_ratio <- input$settings_ratio
-        r$settings$blanksample_threshold <- input$settings_threshold
+                   r$settings$apply_blank_filtering <- input$settings_apply_blank_filtering
 
-        r$index$keep_blankratio <- calc_blank_ratio(data = shiny::isolate(r$tables$clean_data),
-                                                    blanks = r$index$selected_blanks,
-                                                    samples = r$index$selected_samples,
-                                                    ratio = r$settings$blanksample_ratio,
-                                                    threshold = r$settings$blanksample_threshold)
+                   if(r$settings$apply_blank_filtering) {
+                     print("Changed blank / sample ratio.")
 
-        r$tables$analysis_data$background_keep <- r$tables$analysis_data$my_id %in%
-          r$index$keep_blankratio
+                     r$settings$blanksample_ratio <- input$settings_ratio
+                     r$settings$blanksample_threshold <- input$settings_threshold
 
-        r$tables$analysis_data$keep <- mapply(all,
-                                              r$tables$analysis_data$rsd_keep,
-                                              r$tables$analysis_data$match_keep,
-                                              r$tables$analysis_data$background_keep)
-        r$tables$analysis_data$comment <- "keep"
-        r$tables$analysis_data$comment[!r$tables$analysis_data$background_keep] <- "high_bg"
-        r$tables$analysis_data$comment[!r$tables$analysis_data$match_keep] <- "no_match"
-        r$tables$analysis_data$comment[!r$tables$analysis_data$rsd_keep] <- "large_rsd"
-      },
+                     r$index$keep_blankratio <- calc_blank_ratio(data = shiny::isolate(r$tables$clean_data),
+                                                                 blanks = r$index$selected_blanks,
+                                                                 samples = r$index$selected_samples,
+                                                                 ratio = r$settings$blanksample_ratio,
+                                                                 threshold = r$settings$blanksample_threshold)
+
+                     r$tables$analysis_data$background_keep <- r$tables$analysis_data$my_id %in%
+                       r$index$keep_blankratio
+                   } else {
+                     print("Disabled blank filtering!")
+                     r$index$keep_blankratio <- unique(r$tables$analysis_data$my_id)
+                     r$tables$analysis_data$background_keep <- TRUE
+                   }
+
+                   r$tables$analysis_data$keep <- mapply(all,
+                                                         r$tables$analysis_data$rsd_keep,
+                                                         r$tables$analysis_data$match_keep,
+                                                         r$tables$analysis_data$background_keep)
+                   r$tables$analysis_data$comment <- "keep"
+                   r$tables$analysis_data$comment[!r$tables$analysis_data$background_keep] <- "high_bg"
+                   r$tables$analysis_data$comment[!r$tables$analysis_data$match_keep] <- "no_match"
+                   r$tables$analysis_data$comment[!r$tables$analysis_data$rsd_keep] <- "large_rsd"
+                 },
       ignoreInit = TRUE
     )
+
 
     #-------------------------------------------------------------- samples ----
     output$settings_blanks_list <- shiny::renderUI({

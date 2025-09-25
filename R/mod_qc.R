@@ -101,11 +101,15 @@ mod_qc_server <- function(id, r){
         input$qc_select_rsd_type,
         "batch" = {
           show_batch_hist(data = r$tables$rsd_data_batch,
-                          rsd_cutoff = r$settings$rsd_cutoff)
+                          rsd_cutoff = ifelse(r$settings$apply_rsd_cutoff,
+                                              r$settings$rsd_cutoff,
+                                              NA))
         },
         "overall" = {
           show_overall_hist(data = r$tables$rsd_data_overall,
-                            rsd_cutoff = r$settings$rsd_cutoff)
+                            rsd_cutoff = ifelse(r$settings$apply_rsd_cutoff,
+                                                r$settings$rsd_cutoff,
+                                                NA))
         }
       )
 
@@ -123,11 +127,15 @@ mod_qc_server <- function(id, r){
         input$qc_select_rsd_class_type,
         "batch" = {
           show_class_batch_violin(data = r$tables$rsd_data_batch,
-                                  rsd_cutoff = r$settings$rsd_cutoff)
+                                  rsd_cutoff = ifelse(r$settings$apply_rsd_cutoff,
+                                                      r$settings$rsd_cutoff,
+                                                      NA))
         },
         "overall" = {
           show_class_overall_violin(data = r$tables$rsd_data_overall,
-                                    rsd_cutoff = r$settings$rsd_cutoff)
+                                    rsd_cutoff = ifelse(r$settings$apply_rsd_cutoff,
+                                                        r$settings$rsd_cutoff,
+                                                        NA))
         }
       )
 

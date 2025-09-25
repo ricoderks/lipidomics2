@@ -58,17 +58,20 @@ mod_issues_server <- function(id, r) {
 
       table_data <- unique(r$tables$analysis_data[r$tables$analysis_data$keep == FALSE &
                                                     r$tables$analysis_data$class_keep == TRUE, c("my_id", "ion", "FeatureName", "Class", "comment")])
-
-      table_data <- t(apply(table_data, 1, function(x) {
-        x["comment"] <- switch(
+      if(nrow(table_data) > 0) {
+        table_data <- t(apply(table_data, 1, function(x) {
+          x["comment"] <- switch(
             x["comment"],
             "no_match" = "Not a convicing match",
             "large_rsd" = "High RSD value",
             "wrong_rt" = "Wrong retention time",
             "high_bg" = "High background"
           )
-        return(x)
-      }))
+          return(x)
+        }))
+      } else {
+        NULL
+      }
     },
     options = list(pageLength = 10,
                    lengthChange = FALSE,

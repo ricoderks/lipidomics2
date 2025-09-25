@@ -607,7 +607,11 @@ mod_file_server <- function(id, r){
           rsd_res <- calc_rsd(data = r$tables$clean_data,
                               pools = r$index$selected_pools,
                               cut_off = r$settings$rsd_cutoff)
-          r$index$keep_rsd <- rsd_res$keep
+          if(r$settings$apply_rsd_cutoff) {
+            r$index$keep_rsd <- rsd_res$keep
+          } else {
+            r$index$keep_rsd <- unique(r$tables$clean_data$my_id)
+          }
           r$tables$rsd_data_overall <- rsd_res$rsd_data_overall
           r$tables$rsd_data_batch <- rsd_res$rsd_data_batch
 
@@ -751,6 +755,9 @@ mod_file_server <- function(id, r){
       r$settings$rsd_cutoff <- import_env$r$settings$rsd_cutoff
       r$settings$dot_cutoff <- import_env$r$settings$dot_cutoff
       r$settings$revdot_cutoff <- import_env$r$settings$revdot_cutoff
+      r$settings$apply_rsd_cutoff <- import_env$r$settings$apply_rsd_cutoff
+      r$settings$apply_id_filtering <- import_env$r$settings$apply_id_filtering
+      r$settings$apply_blank_filtering <- import_env$r$settings$apply_blank_filtering
       r$settings$blanksample_ratio <- import_env$r$settings$blanksample_ratio
       r$settings$blanksample_threshold <- import_env$r$settings$blanksample_threshold
       r$settings$feature_class <- import_env$r$settings$feature_class
