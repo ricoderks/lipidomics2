@@ -684,7 +684,6 @@ mod_file_server <- function(id, r){
           r$index$blanks <- r$index$blanks[r$index$blanks %in% r$tables$analysis_data$sample_name]
           r$index$pools <- r$index$pools[r$index$pools %in% r$tables$analysis_data$sample_name]
           r$index$samples <- r$index$samples[r$index$samples %in% r$tables$analysis_data$sample_name]
-          print(r$index$blanks)
           r$index$selected_blanks <- r$index$blanks
           r$index$selected_pools <- r$index$pools
           r$index$selected_samples <- r$index$samples
