@@ -18,6 +18,7 @@
 mod_settings_ui <- function(id) {
   ns <- shiny::NS(id)
   tagList(
+    # shinyjs::useShinyjs(),
     bslib::navset_card_tab(
       id = "Settings",
       #--------------------------------------------------- general settings ----
@@ -228,8 +229,12 @@ mod_settings_server <- function(id, r){
 
                    r$settings$apply_rsd_cutoff <- input$settings_apply_rsd_cutoff
 
+                   shinyjs::toggleState(id = "settings_rsd_cutoff",
+                                        condition = r$settings$apply_rsd_cutoff)
+
                    if(r$settings$apply_rsd_cutoff) {
                      print("Changed RSD cutoff.")
+                     # shinyjs::enable(id = "settings_rsd_cutoff")
 
                      r$settings$rsd_cutoff <- input$settings_rsd_cutoff
 
@@ -241,6 +246,8 @@ mod_settings_server <- function(id, r){
                      r$tables$analysis_data$rsd_keep <- r$tables$analysis_data$my_id %in% r$index$keep_rsd
                    } else {
                      print("Disabled RSD cutoff filtering!")
+                     # shinyjs::disable(id = "settings_rsd_cutoff")
+
                      r$index$keep_rsd <- unique(r$tables$analysis_data$my_id)
                      r$tables$analysis_data$rsd_keep <- TRUE
                    }
@@ -268,6 +275,8 @@ mod_settings_server <- function(id, r){
 
                    if(r$settings$apply_id_filtering){
                      print("Changed ID cut off.")
+                     shinyjs::enable(id = "settings_dot_cutoff")
+                     shinyjs::enable(id = "settings_revdot_cutoff")
 
                      r$settings$dot_cutoff <- input$settings_dot_cutoff
                      r$settings$revdot_cutoff <- input$settings_revdot_cutoff
@@ -280,6 +289,9 @@ mod_settings_server <- function(id, r){
                        r$index$keep_id
                    } else {
                      print("Disabled ID filtering!")
+                     shinyjs::disable(id = "settings_dot_cutoff")
+                     shinyjs::disable(id = "settings_revdot_cutoff")
+
                      r$index$keep_id <- unique(r$tables$analysis_data$my_id)
                      r$tables$analysis_data$match_keep <- TRUE
                    }
@@ -306,6 +318,8 @@ mod_settings_server <- function(id, r){
 
                    if(r$settings$apply_blank_filtering) {
                      print("Changed blank / sample ratio.")
+                     shinyjs::enable(id = "settings_ratio")
+                     shinyjs::enable(id = "settings_threshold")
 
                      r$settings$blanksample_ratio <- input$settings_ratio
                      r$settings$blanksample_threshold <- input$settings_threshold
@@ -320,6 +334,9 @@ mod_settings_server <- function(id, r){
                        r$index$keep_blankratio
                    } else {
                      print("Disabled blank filtering!")
+                     shinyjs::disable(id = "settings_ratio")
+                     shinyjs::disable(id = "settings_threshold")
+
                      r$index$keep_blankratio <- unique(r$tables$analysis_data$my_id)
                      r$tables$analysis_data$background_keep <- TRUE
                    }
