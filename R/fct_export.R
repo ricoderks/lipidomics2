@@ -37,6 +37,7 @@ prepare_export_data <- function(meta_data = NULL,
                        values_from = "value")
 
   meta_cols <- colnames(export_meta)
+  print(meta_cols)
 
   export_meta <- data.frame(export_meta[, meta_cols[1]],
                             "ShortLipidName" = NA,
@@ -46,6 +47,8 @@ prepare_export_data <- function(meta_data = NULL,
                             export_meta[, meta_cols[-1]],
                             check.names = FALSE)
   colnames(export_meta)[1] <- "my_id"
+
+  print(export_meta)
 
   # analysis data
   export_data <- analysis_data[analysis_data$keep == TRUE &
