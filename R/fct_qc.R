@@ -19,7 +19,7 @@
 #' @author Rico Derks
 #'
 show_overall_hist <- function(data = NULL,
-                                      rsd_cutoff = 0.3) {
+                              rsd_cutoff = 0.3) {
   p <- data |>
     ggplot2::ggplot(ggplot2::aes(x = .data$rsd,
                                  fill = .data$polarity)) +
@@ -57,7 +57,7 @@ show_overall_hist <- function(data = NULL,
 #' @author Rico Derks
 #'
 show_batch_hist <- function(data = NULL,
-                              rsd_cutoff = 0.3) {
+                            rsd_cutoff = 0.3) {
   p <- data |>
     ggplot2::ggplot(ggplot2::aes(x = .data$rsd,
                                  fill = .data$polarity)) +
@@ -96,7 +96,7 @@ show_batch_hist <- function(data = NULL,
 #' @author Rico Derks
 #'
 show_class_overall_violin <- function(data = NULL,
-                              rsd_cutoff = 0.3) {
+                                      rsd_cutoff = 0.3) {
   p <- data |>
     ggplot2::ggplot(ggplot2::aes(x = .data$class,
                                  y = .data$rsd)) +
