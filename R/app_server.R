@@ -14,6 +14,7 @@ app_server <- function(input, output, session) {
   r <- shiny::reactiveValues(
     name = NULL,
     omics = NULL,
+    rdata = FALSE,
     defaults = list(
       lipidclass_ion = c("ADGGA - [M-H]-", "AHexBRS - [M+HCOO]-", "AHexCAS - [M+HCOO]-", "AHexCS - [M+HCOO]-", "AHexSIS - [M+HCOO]-", "ASM - [M+H]+", "BASulfate - [M-H]-",
                          "BileAcid - [M-H]-", "BMP - [M+NH4]+", "CAR - [M+H]+", "CE - [M+NH4]+", "Cer_ADS - [M+HCOO]-", "Cer_AP - [M+HCOO]-",

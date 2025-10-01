@@ -736,6 +736,9 @@ mod_file_server <- function(id, r){
 
       import_env <- load_to_env(RData = input$load_rdata$datapath)
       #---------------------------------------------------------- Settings -----
+      # set that data is coming from a rdata file
+      r$rdata <- TRUE
+      print(paste("Rdata loaded", r$rdata))
       r$name <- import_env$r$name
       r$omics <- import_env$r$omics
       shiny::updateRadioButtons(
@@ -762,26 +765,6 @@ mod_file_server <- function(id, r){
       r$settings$blanksample_threshold <- import_env$r$settings$blanksample_threshold
       r$settings$feature_class <- import_env$r$settings$feature_class
       r$settings$selected_feature_class <- import_env$r$settings$selected_feature_class
-      shiny::updateNumericInput(
-        inputId = "settings_rsd_cutoff",
-        value = r$settings$rsd_cutoff
-      )
-      shiny::updateNumericInput(
-        inputId = "settings_dot_cutoff",
-        value = r$settings$dot_cutoff
-      )
-      shiny::updateNumericInput(
-        inputId = "settings_revdot_cutoff",
-        value = r$settings$revdot_cutoff
-      )
-      shiny::updateNumericInput(
-        inputId = "settings_ratio",
-        value = r$settings$blanksample_ratio
-      )
-      shiny::updateSliderInput(
-        inputId = "settings_threshold",
-        value = r$settings$blanksample_threshold
-      )
 
       progress$set(value = 70,
                    message = "Processing...",
@@ -933,54 +916,6 @@ mod_file_server <- function(id, r){
       r$defaults$patterns$ACPIM <- import_env$r$defaults$patterns$ACPIM
       r$defaults$patterns$STL <- import_env$r$defaults$patterns$STL
       r$defaults$patterns$PRL <- import_env$r$defaults$patterns$PRL
-      shiny::updateCheckboxGroupInput(
-        inputId = "select_PL_class",
-        selected = r$defaults$patterns$PL
-      )
-      shiny::updateCheckboxGroupInput(
-        inputId = "select_Cer_class",
-        selected = r$defaults$patterns$Cer
-      )
-      shiny::updateCheckboxGroupInput(
-        inputId = "select_HexCer_class",
-        selected = r$defaults$patterns$HexCer
-      )
-      shiny::updateCheckboxGroupInput(
-        inputId = "select_FA_class",
-        selected = r$defaults$patterns$FA
-      )
-      shiny::updateCheckboxGroupInput(
-        inputId = "select_PSL_class",
-        selected = r$defaults$patterns$PSL
-      )
-      shiny::updateCheckboxGroupInput(
-        inputId = "select_SB_class",
-        selected = r$defaults$patterns$SB
-      )
-      shiny::updateCheckboxGroupInput(
-        inputId = "select_SA_class",
-        selected = r$defaults$patterns$SA
-      )
-      shiny::updateCheckboxGroupInput(
-        inputId = "select_GL_class",
-        selected = r$defaults$patterns$GL
-      )
-      shiny::updateCheckboxGroupInput(
-        inputId = "select_CL_class",
-        selected = r$defaults$patterns$CL
-      )
-      shiny::updateCheckboxGroupInput(
-        inputId = "select_STL_class",
-        selected = r$defaults$patterns$STL
-      )
-      shiny::updateCheckboxGroupInput(
-        inputId = "select_ACPIM_class",
-        selected = r$defaults$patterns$ACPIM
-      )
-      shiny::updateCheckboxGroupInput(
-        inputId = "select_PRL_class",
-        selected = r$defaults$patterns$PRL
-      )
 
       progress$set(value = 100,
                    message = "Processing...",
