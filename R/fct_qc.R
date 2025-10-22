@@ -348,9 +348,15 @@ trend_plot <- function(trend_data = NULL,
     }
   )
 
-  p <- p  +
-    ggplot2::geom_hline(yintercept = c(-0.5, 0, 0.5),
-                        linetype = c(2, 1, 2),
+  p <- p +
+    ggplot2::geom_hline(yintercept = -0.5,
+                        linetype = 2,
+                        colour = "black") +
+    ggplot2::geom_hline(yintercept = 0.5,
+                        linetype = 2,
+                        colour = "black") +
+    ggplot2::geom_hline(yintercept = 0,
+                        linetype = 1,
                         colour = "black") +
     ggplot2::geom_line(alpha = 0.5) +
     ggplot2::labs(x = "Sample name",
