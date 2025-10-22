@@ -21,6 +21,7 @@ params:
 knitr::opts_chunk$set(echo = FALSE)
 
 library(lipidomics2)
+library(DT)
 library(sessioninfo)
 library(ggplot2)
 library(plotly)
@@ -114,6 +115,54 @@ p <- qc_cor_plot(data = cor_df)
 
 ply <- plotly::ggplotly(p = p)
 ply
+```
+
+# Identification
+
+## Issues
+
+Below an overview of the lipid classes ***included*** in the analysis.
+
+```{r}
+unique(analysis_data[analysis_data$class_keep == TRUE, c("Class", "ion")]) |> 
+  datatable(caption = "Table 1: Overview of lipid classes included in the data analysis.",
+            options = list(pageLength = 10,
+                           lengthChange = FALSE,
+                           dom = "pt",
+                           ordering = TRUE),
+            rownames = FALSE,
+            colnames = c("Lipid class", "Ion"))
+```
+
+Below an overview of all lipids ***excluded*** from the analysis.
+
+```{r}
+table_data <- unique(analysis_data[analysis_data$class_keep == TRUE &
+                       analysis_data$keep == FALSE, c("my_id", "ion", "FeatureName", "Class", "comment")]) 
+
+if(nrow(table_data) > 0) {
+  table_data <- t(apply(table_data, 1, function(x) {
+    x["comment"] <- switch(
+      x["comment"],
+      "no_match" = "Not a convicing match",
+      "large_rsd" = "High RSD value",
+      "wrong_rt" = "Wrong retention time",
+      "high_bg" = "High background"
+    )
+    return(x)
+  }))
+} else {
+  NULL
+}
+
+table_data |> 
+  datatable(caption = "Table 2: Overview of lipids excluded from further analysis.",
+            options = list(pageLength = 10,
+                           lengthChange = FALSE,
+                           dom = "pt",
+                           ordering = TRUE),
+            rownames = FALSE,
+            colnames = c("ID", "Ion", "Feature name", "Class", "Reason"))
 ```
 
 # Session info
