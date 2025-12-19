@@ -344,9 +344,8 @@ mod_settings_server <- function(id, r){
       shiny::req(!is.null(input$settings_rsd_cutoff),
                  !is.null(input$settings_apply_rsd_cutoff)), {
 
+                   r$settings$apply_rsd_cutoff <- input$settings_apply_rsd_cutoff
                    if(!is.null(r$tables$analysis_data) & isFALSE(r$rdata)) {
-                     r$settings$apply_rsd_cutoff <- input$settings_apply_rsd_cutoff
-
                      if(r$settings$apply_rsd_cutoff) {
                        print("Changed RSD cutoff.")
                        shinyjs::enable(id = "settings_rsd_cutoff")

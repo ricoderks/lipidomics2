@@ -12,6 +12,7 @@
 #' @importFrom plotly event_data event_register plotlyOutput ggplotly renderPlotly
 #' @importFrom ggplot2 ggplot aes theme_minimal theme geom_point geom_line
 #'     geom_text facet_grid labs guides element_rect element_text
+#' @importFrom rlang is_empty
 #'
 mod_identification_ui <- function(id) {
   ns <- shiny::NS(id)
@@ -100,15 +101,20 @@ mod_identification_server <- function(id, r) {
 
     output$bubble_plot <- plotly::renderPlotly({
       shiny::req(r$tables$analysis_data,
-                 r$index$selected_pools,
                  input$id_select_class != "None")
       w$show()
+
+      # if there are no qcpools in the data select the first sample
+      if(rlang::is_empty(r$index$selected_pools)) {
+        selected_sample <- r$index$selected_samples[1]
+      } else {
+        selected_sample <- r$index$selected_pools[1]
+      }
 
       class_pattern <- get_class_pattern(classes = r$defaults$lipid_classes,
                                          class_name = input$id_select_class)
 
-      plot_data <- r$tables$analysis_data[r$tables$analysis_data$sample_name == r$index$selected_pools[1], ]
-
+      plot_data <- r$tables$analysis_data[r$tables$analysis_data$sample_name == selected_sample, ]
       plot_data <- plot_data[grepl(x = plot_data$Class,
                                    pattern = class_pattern) &
                                plot_data$class_keep == TRUE &
@@ -172,7 +178,6 @@ mod_identification_server <- function(id, r) {
 
     output$id_info <- shiny::renderText({
       shiny::req(r$tables$analysis_data,
-                 r$index$selected_pools,
                  input$id_select_class != "None")
 
       # if there is no plot this will give a warning, is there a way to check this
@@ -209,7 +214,6 @@ mod_identification_server <- function(id, r) {
 
     output$reason <- shiny::renderUI({
       shiny::req(r$tables$analysis_data,
-                 r$index$selected_pools,
                  input$id_select_class != "None")
 
       # if there is no plot this will give a warning, is there a way to check this

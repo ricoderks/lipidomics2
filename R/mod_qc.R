@@ -162,9 +162,12 @@ mod_qc_server <- function(id, r){
       shiny::req(r$tables$trend_data,
                  input$qc_select_trend_type)
 
-      p <- trend_plot(trend_data = r$tables$trend_data,
-                      type = input$qc_select_trend_type)
-
+      if(!is.null(r$tables$trend_data)) {
+        p <- trend_plot(trend_data = r$tables$trend_data,
+                        type = input$qc_select_trend_type)
+      } else {
+        p <- NULL
+      }
       return(p)
     })
 

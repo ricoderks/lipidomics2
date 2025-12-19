@@ -12,6 +12,7 @@
 #' @importFrom shinyWidgets progressBar
 #' @importFrom shinyjs disabled disable enable
 #' @importFrom utils head
+#' @importFrom rlang is_empty
 #'
 mod_file_ui <- function(id) {
   ns <- NS(id)
@@ -527,8 +528,8 @@ mod_file_server <- function(id, r){
         input$rawdata_neg_file),
       {
         shiny::req(r$columns$filename, #r$columns$sampleid,
-                   r$index$blanks,
-                   r$index$pools,
+                   # r$index$blanks,
+                   # r$index$pools,
                    r$index$samples,
                    r$omics)
 
@@ -596,25 +597,27 @@ mod_file_server <- function(id, r){
           r$settings$feature_class <- sort(unique(r$tables$clean_data$class_ion))
 
           # trend calculation
-          qcpool_data <- r$tables$clean_data[r$tables$clean_data$sample_name %in% r$index$selected_pools, ]
-          qcpool_meta <- r$tables$meta_data[r$tables$meta_data[, r$columns$filename] %in% r$index$selected_pools, ]
+          if(!rlang::is_empty(r$index$selected_pools)) {
+            qcpool_data <- r$tables$clean_data[r$tables$clean_data$sample_name %in% r$index$selected_pools, ]
+            qcpool_meta <- r$tables$meta_data[r$tables$meta_data[, r$columns$filename] %in% r$index$selected_pools, ]
 
-          r$tables$trend_data <- calc_trend(pool_data = qcpool_data,
-                                            order_column = r$columns$acqorder)
+            r$tables$trend_data <- calc_trend(pool_data = qcpool_data,
+                                              order_column = r$columns$acqorder)
+          }
 
           # apply all filtering here (rsd, id, blank/sample, etc.)
           # RSD filtering
-          rsd_res <- calc_rsd(data = r$tables$clean_data,
-                              pools = r$index$selected_pools,
-                              cut_off = r$settings$rsd_cutoff)
-          if(r$settings$apply_rsd_cutoff) {
+          if(!rlang::is_empty(r$index$selected_pools)) {
+            rsd_res <- calc_rsd(data = r$tables$clean_data,
+                                pools = r$index$selected_pools,
+                                cut_off = r$settings$rsd_cutoff)
             r$index$keep_rsd <- rsd_res$keep
+
+            r$tables$rsd_data_overall <- rsd_res$rsd_data_overall
+            r$tables$rsd_data_batch <- rsd_res$rsd_data_batch
           } else {
             r$index$keep_rsd <- unique(r$tables$clean_data$my_id)
           }
-          r$tables$rsd_data_overall <- rsd_res$rsd_data_overall
-          r$tables$rsd_data_batch <- rsd_res$rsd_data_batch
-
           progress$set(value = 65,
                        message = "Processing...",
                        detail = NULL)
