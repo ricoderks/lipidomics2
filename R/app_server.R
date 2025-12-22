@@ -131,7 +131,7 @@ app_server <- function(input, output, session) {
         )
       ),
       patterns = list(
-        PL = "^((Ether)?(Ox)?(L)?(LNA)?(MM)?P[ACEGISM]|HBMP|BMP)",
+        PL = "^(?:(Ether)?(Ox)?(L)?(LNA)?(MM)?P[ACEGISM]|HBMP|BMP)(?!_Cer)",
         GL = "^(Ox|Ether|SQ|EtherS|L|A)?[DMT]G",
         Cer = "^Cer[P_]",
         HexCer = "^A?Hex[23]?Cer",

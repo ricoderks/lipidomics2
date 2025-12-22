@@ -605,8 +605,8 @@ mod_settings_server <- function(id, r){
       shiny::tagList(
         checkboxGroupInput(inputId = ns("select_PL_class"),
                            label = "Glycerophospholipids:",
-                           choices = r$settings$feature_class[grepl(x = r$settings$feature_class, pattern = r$defaults$patterns$PL)],
-                           selected = r$settings$selected_feature_class[grepl(x = r$settings$selected_feature_class, pattern = r$defaults$patterns$PL)])
+                           choices = r$settings$feature_class[grepl(x = r$settings$feature_class, pattern = r$defaults$patterns$PL, perl = TRUE)],
+                           selected = r$settings$selected_feature_class[grepl(x = r$settings$selected_feature_class, pattern = r$defaults$patterns$PL, perl = TRUE)])
       )
     })
 
