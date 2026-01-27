@@ -123,7 +123,8 @@ app_server <- function(input, output, session) {
                        pattern = "^SSulfate$",
                        name = "Steroid conjugates"),
           "ST" = list(id = "ST",
-                      pattern = "^((BR|CA|SI|ST)?[CS]E|Cholesterol|SHex)$",
+                      # cholesterol changed to ST in MSDIAL
+                      pattern = "^((BR|CA|SI|ST)?[CS]E|Cholesterol|ST|SHex)$",
                       name = "Sterols"),
           "OST" = list(id = "OST",
                        pattern = "^AHex(CAS|CS|SIS|BRS|STS)$",
