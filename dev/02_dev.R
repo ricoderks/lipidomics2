@@ -30,6 +30,9 @@ golem::add_module(name = "analysis", with_test = TRUE)
 golem::add_module(name = "export", with_test = TRUE)
 golem::add_module(name = "help", with_test = FALSE)
 golem::add_module(name = "about", with_test = FALSE)
+golem::add_module(name = "heatmap", with_test = FALSE)
+golem::add_module(name = "pca", with_test = FALSE)
+golem::add_module(name = "volcano", with_test = FALSE)
 
 ## Add helper functions ----
 ## Creates fct_* and utils_*

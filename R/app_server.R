@@ -224,7 +224,7 @@ app_server <- function(input, output, session) {
   mod_export_server(id = "export",
                     r = r)
 
-  #--------------------------------------------------------------------- help ----
+  #------------------------------------------------------------------- help ----
   mod_help_server(id = "help")
 
   mod_about_server(id = "about")
