@@ -26,12 +26,5 @@ mod_heatmap_ui <- function(id) {
 mod_heatmap_server <- function(id, r){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
-
-
-    remove_requested <- shiny::eventReactive(input$remove, {
-      return(TRUE)
-    })
-
-    return(list(remove_requested = remove_requested))
   })
 }

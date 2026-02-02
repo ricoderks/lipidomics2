@@ -22,10 +22,6 @@ mod_analysis_ui <- function(id) {
       bslib::navset_tab(
         id = ns("analysisTabs")
       )
-      # shiny::uiOutput(
-      #   outputId = ns("analysis_main_ui")
-      # )
-      # mod_bubbleplot_ui(id = ns("bubble"))
     )
   )
 }
@@ -46,6 +42,8 @@ mod_analysis_server <- function(id, r) {
     )
 
     add_analysis_tab <- function(type = NULL) {
+      ns <- session$ns
+
       rv$next_id <- rv$next_id + 1L
       rv$type_counts[[type]] <- rv$type_counts[[type]] + 1L
       tabId <- paste0(tolower(gsub("[^a-zA-Z0-9]+", "_", type)), "_", rv$next_id)
@@ -53,9 +51,9 @@ mod_analysis_server <- function(id, r) {
 
       ui_content <- switch(
         type,
-        "heatmap" = mod_heatmap_ui(id = tabId),
-        "pca"     = mod_pca_ui(id = tabId),
-        "volcano"  = mod_volcano_ui(id = tabId),
+        "heatmap" = mod_heatmap_ui(id = ns(tabId)),
+        "pca"     = mod_pca_ui(id = ns(tabId)),
+        "volcano"  = mod_volcano_ui(id = ns(tabId)),
         div("Unknown analysis type.")
       )
 
@@ -72,27 +70,19 @@ mod_analysis_server <- function(id, r) {
 
       mod <- switch(
         type,
-        "heatmap" = mod_heatmap_server(id = id, r = r),
-        "pca"     = mod_pca_server(id = id, r = r),
-        "volcano"  = mod_volcano_server(id = id, r = r),
+        "heatmap" = mod_heatmap_server(id = ns(tabId), r = r),
+        "pca"     = mod_pca_server(id = ns(tabId), r = r),
+        "volcano"  = mod_volcano_server(id = ns(tabId), r = r),
         NULL
       )
 
       rv$modules[[tabId]] <- list(type = type, label = label, export = NA)
       rv$labels[[tabId]]  <- label
 
-      print(tabId)
-      print(names(input))
-      print(mod$remove_requested())
-
-      shiny::observeEvent(mod$remove_requested, {
-        # clicking the button is not observed
-        print("Debugging: remove tab")
-
+      shiny::observeEvent(input[[paste0(tabId, "-remove")]], {
         bslib::nav_remove(
           id = "analysisTabs",
-          target = tabId,
-          session = session
+          target = tabId
         )
         rv$modules[[tabId]] <- NULL
         rv$labels[[tabId]]  <- NULL
