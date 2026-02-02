@@ -19,7 +19,7 @@ mod_analysis_ui <- function(id) {
         ),
         width = 325
       ),
-      bslib::navset_tab(
+      bslib::navset_card_tab(
         id = ns("analysisTabs")
       )
     )
@@ -37,7 +37,7 @@ mod_analysis_server <- function(id, r) {
     rv <- reactiveValues(
       next_id = 0L,
       type_counts = setNames(as.list(rep(0L, 3L)), c("heatmap", "pca", "volcano")),
-      modules = list(),   # id -> list(type, label, remove_requested, export)
+      modules = list(),   # id -> list(type, label, export)
       labels  = list()    # id -> label
     )
 
@@ -57,6 +57,7 @@ mod_analysis_server <- function(id, r) {
         div("Unknown analysis type.")
       )
 
+      # do not put anything else in between ui_content and mod!
       bslib::nav_insert(
         id = "analysisTabs",
         nav = bslib::nav_panel(
@@ -97,10 +98,9 @@ mod_analysis_server <- function(id, r) {
       # on if it is metabolomics or lipidomics project.
 
       shiny::tagList(
-        shiny::p("This is the sidebar."),
         shiny::selectInput(
           inputId = ns("selectAnalysisMethod"),
-          label = "Select analysis",
+          label = "Select an analysis:",
           choices = list(
             "Heatmap" = "heatmap",
             "PCA" = "pca",
@@ -109,7 +109,7 @@ mod_analysis_server <- function(id, r) {
         ),
         shiny::actionButton(
           inputId = ns("addAnalysisTab"),
-          label = "Add tab"
+          label = "Add analysis"
         )
       )
     })

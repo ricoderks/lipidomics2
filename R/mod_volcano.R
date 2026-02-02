@@ -6,16 +6,26 @@
 #'
 #' @noRd
 #'
-#' @importFrom shiny NS tagList
+#' @importFrom shiny NS tagList p
+#' @importFrom bslib card layout_sidebar
+#'
 mod_volcano_ui <- function(id) {
-  ns <- NS(id)
-  tagList(
-    shiny::p("This will show Volcano plot"),
-    shiny::actionButton(
-      inputId = ns("remove"),
-      label = "Remove this analysis",
-      icon = icon("trash"),
-      class = "btn-danger"
+  ns <- shiny::NS(id)
+
+  shiny::tagList(
+    bslib::card(
+      bslib::page_sidebar(
+        sidebar = bslib::sidebar(
+          shiny::actionButton(
+            inputId = ns("remove"),
+            label = "",
+            icon = icon("trash"),
+            class = "btn-danger",
+            width = "50%"
+          )
+        ),
+        shiny::p("This will show the volcano plot.")
+      )
     )
   )
 }
