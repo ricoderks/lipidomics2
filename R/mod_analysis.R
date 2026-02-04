@@ -42,7 +42,7 @@ mod_analysis_server <- function(id, r) {
     )
 
     add_analysis_tab <- function(type = NULL) {
-      ns <- session$ns
+      # ns <- session$ns
 
       rv$next_id <- rv$next_id + 1L
       rv$type_counts[[type]] <- rv$type_counts[[type]] + 1L
@@ -71,9 +71,9 @@ mod_analysis_server <- function(id, r) {
 
       mod <- switch(
         type,
-        "heatmap" = mod_heatmap_server(id = ns(tabId), r = r),
-        "pca"     = mod_pca_server(id = ns(tabId), r = r),
-        "volcano"  = mod_volcano_server(id = ns(tabId), r = r),
+        "heatmap" = mod_heatmap_server(id = tabId, r = r),
+        "pca"     = mod_pca_server(id = tabId, r = r),
+        "volcano"  = mod_volcano_server(id = tabId, r = r),
         NULL
       )
 

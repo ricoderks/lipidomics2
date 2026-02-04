@@ -26,9 +26,6 @@ mod_heatmap_ui <- function(id) {
         ),
         plotly::plotlyOutput(
           outputId = ns("heatmap")
-        ),
-        shiny::plotOutput(
-          outputId = ns("testplot")
         )
       )
     )
@@ -47,24 +44,10 @@ mod_heatmap_server <- function(id, r){
     output$heatmap <- plotly::renderPlotly({
       # shiny::req(r$tables$analysis_data)
       print("Show heatmap here")
-      print(head(r$tables$clean_data))
+      print(head(r$tables$analysis_data))
 
-      # return(NULL)
+      return(NULL)
     })
 
-    output$testplot <- shiny::renderPlot({
-      plot_data <- data.frame(
-        x = 1:100,
-        y = rnorm(n = 100)
-      )
-
-      p <- plot_data |>
-        ggplot2::ggplot(ggplot2::aes(x = x,
-                                     y = y)) +
-        ggplot2::geom_point() +
-        ggplot2::theme_minimal()
-
-      return(p)
-    })
   })
 }
