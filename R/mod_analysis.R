@@ -98,6 +98,11 @@ mod_analysis_server <- function(id, r) {
       # on if it is metabolomics or lipidomics project.
 
       shiny::tagList(
+        shiny::h4("Trend correction"),
+        shiny::hr(),
+        shiny::h4("Normalization"),
+        shiny::hr(),
+        shiny::h4("Analysis"),
         shiny::selectInput(
           inputId = ns("selectAnalysisMethod"),
           label = "Select an analysis:",
@@ -109,7 +114,8 @@ mod_analysis_server <- function(id, r) {
         ),
         shiny::actionButton(
           inputId = ns("addAnalysisTab"),
-          label = "Add analysis"
+          label = "Add analysis",
+          width = "75%"
         )
       )
     })
