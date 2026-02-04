@@ -225,10 +225,11 @@ mod_file_ui <- function(id) {
           )
         )
       ), # end navpanel raw data
+      #-------------------------------------------------------------- rdata ----
       bslib::nav_panel(
         title = "Rdata",
         bslib::card(
-          p("Load a .Rdata file here. NOT working yet!"),
+          p("Load a .Rdata file here."),
           shiny::fileInput(inputId = ns("load_rdata"),
                            label = "Load Rdata file",
                            multiple = FALSE,
