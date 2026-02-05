@@ -64,9 +64,21 @@ mod_heatmap_server <- function(id, r){
       shiny::tagList(
         shiny::selectInput(
           inputId = ns("hmSelectTable"),
-          label = "Select data table",
+          label = "Select data table:",
           choices = selection[selection %in% selected],
           selected = "raw"
+        ),
+        shiny::checkboxGroupInput(
+          inputId = ns("hmClustering"),
+          label = "Select clustering:",
+          choices = c("Features" = "rows",
+                      "Samples" = "columns")
+        ),
+        shiny::selectInput(
+          inputId = ns("hmSampleAnnotation"),
+          label = "Sample annotation:",
+          choices = r$columns$groups,
+          multiple = TRUE
         )
       )
     })
@@ -83,12 +95,20 @@ mod_heatmap_server <- function(id, r){
         "pqnNorm" = "pqnNormArea"
       )
 
+      group_columns <- input$hmSampleAnnotation
+
+      row_clustering <- "rows" %in% input$hmClustering
+      col_clustering <- "columns" %in% input$hmClustering
+
       plot_data <- r$tables$analysis_data[r$tables$analysis$keep == TRUE &
                                             r$tables$analysis$class_keep == TRUE &
                                             r$tables$analysis$sample_name %in% r$index$selected_samples, ]
 
       hmPlot(show_heatmap(data = plot_data,
-                          area_column = area_column))
+                          area_column = area_column,
+                          group_columns = group_columns,
+                          row_clustering = row_clustering,
+                          col_clustering = col_clustering))
     })
 
 
