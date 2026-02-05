@@ -20,7 +20,16 @@ mod_analysis_ui <- function(id) {
         width = 325
       ),
       bslib::navset_card_tab(
-        id = ns("analysisTabs")
+        id = ns("analysisTabs"),
+        bslib::nav_panel(
+          title = "Settings",
+          value = "analysisSettingsPanel",
+          bslib::card(
+            shiny::uiOutput(
+              outputId = ns("analysisSettings")
+            )
+          )
+        )
       )
     )
   )
@@ -42,8 +51,6 @@ mod_analysis_server <- function(id, r) {
     )
 
     add_analysis_tab <- function(type = NULL) {
-      # ns <- session$ns
-
       rv$next_id <- rv$next_id + 1L
       rv$type_counts[[type]] <- rv$type_counts[[type]] + 1L
       tabId <- paste0(tolower(gsub("[^a-zA-Z0-9]+", "_", type)), "_", rv$next_id)
@@ -98,10 +105,6 @@ mod_analysis_server <- function(id, r) {
       # on if it is metabolomics or lipidomics project.
 
       shiny::tagList(
-        shiny::h4("Trend correction"),
-        shiny::hr(),
-        shiny::h4("Normalization"),
-        shiny::hr(),
         shiny::h4("Analysis"),
         shiny::selectInput(
           inputId = ns("selectAnalysisMethod"),
@@ -127,6 +130,83 @@ mod_analysis_server <- function(id, r) {
       add_analysis_tab(type = input$selectAnalysisMethod)
     })
 
+
+    output$analysisSettings <- shiny::renderUI({
+      shiny::req(!is.null(r$analysis$normalization))
+
+      normSelected <- names(unlist(r$analysis$normalization)[unlist(r$analysis$normalization)])
+
+      shiny::tagList(
+        shiny::h4("Trend correction"),
+        shiny::hr(),
+        shiny::h4("Normalization"),
+        shiny::checkboxGroupInput(
+          inputId = ns("selectNormalization"),
+          label = "Select normalization",
+          choices = c(
+            "Total area normalization" = "totNorm",
+            "PQN normalization" = "pqnNorm"
+          ),
+          selected = normSelected
+        ),
+        shiny::htmlOutput(
+          outputId = ns("statusNormalization")
+        ),
+        shiny::actionButton(
+          inputId = ns("applyNormalization"),
+          label = "Apply normalization",
+          width = "225px"
+        ),
+        shiny::hr()
+      )
+    })
+
+
+    shiny::observeEvent(input$applyNormalization, {
+      # shiny::req(r$tables$analysis_data)
+      shiny::req(!is.null(r$analysis$normalization))
+
+      # write.csv(x = r$tables$analysis_data,
+      #           file = "test.csv")
+
+      print("Apply normalization.")
+      selection <- input$selectNormalization
+      r$analysis$normalization[names(r$analysis$normalization)] <-
+        ifelse(names(r$analysis$normalization) %in% selection, TRUE, FALSE)
+
+      res <- switch(
+        selection,
+        "totNorm" = total_area_norm(data = r$tables$analysis_data)
+      )
+
+      # write.csv(x = res,
+      #           file = "test_norm.csv")
+      r$tables$analysis_data <- res
+
+    })
+
+
+    output$statusNormalization <- shiny::renderUI({
+      shiny::req(!is.null(r$analysis$normalization))
+      print("Update status normalization")
+
+      if(sum(unlist(r$analysis$normalization)) == 0) {
+        statusText <- "No normalization applied"
+      } else {
+        statusText <- c()
+        selection <- names(unlist(r$analysis$normalization)[unlist(r$analysis$normalization)])
+        for(selected in selection) {
+          tmp <- switch(
+            selected,
+            "totNorm" = "Total area normalization",
+            "pqnNorm" = "PQN normalization"
+          )
+          statusText <- c(statusText, tmp)
+        }
+        statusText <- paste(statusText, collapse = ", ")
+      }
+      shiny::p(statusText)
+    })
 
   })
 }

@@ -200,6 +200,12 @@ app_server <- function(input, output, session) {
       rsd_data_overall = NULL,
       analysis_data = NULL,
       trend_data = NULL
+    ),
+    analysis = list(
+      normalization = list(
+        totNorm = FALSE,
+        pqnNorm = FALSE
+      )
     )
   )
 

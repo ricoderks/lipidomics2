@@ -16,6 +16,14 @@ mod_heatmap_ui <- function(id) {
     bslib::card(
       bslib::page_sidebar(
         sidebar = bslib::sidebar(
+          shiny::uiOutput(
+            outputId = ns("settingsHeatmap")
+          ),
+          shiny::actionButton(
+            inputId = ns("hmGenerate"),
+            label = "Generate heatmap"
+          ),
+          shiny::hr(),
           shiny::actionButton(
             inputId = ns("remove"),
             label = "",
@@ -41,12 +49,55 @@ mod_heatmap_server <- function(id, r){
 
     print("Heatmap server started")
 
-    output$heatmap <- plotly::renderPlotly({
-      # shiny::req(r$tables$analysis_data)
-      print("Show heatmap here")
-      print(head(r$tables$analysis_data))
+    hmPlot <- reactiveVal()
 
-      return(NULL)
+    output$settingsHeatmap <- shiny::renderUI({
+      selection <- c(
+        "Raw data" = "raw",
+        "Total area normalization" = "totNorm",
+        "PQN normalization" = "pqnNorm"
+      )
+
+      selected <- names(unlist(r$analysis$normalization)[unlist(r$analysis$normalization)])
+      selected <- c("raw", selected)
+
+      shiny::tagList(
+        shiny::selectInput(
+          inputId = ns("hmSelectTable"),
+          label = "Select data table",
+          choices = selection[selection %in% selected],
+          selected = "raw"
+        )
+      )
+    })
+
+
+    shiny::observeEvent(input$hmGenerate, {
+      shiny::req(r$tables$analysis_data,
+                 input$hmSelectTable)
+
+      area_column <- switch(
+        input$hmSelectTable,
+        "raw" = "area",
+        "totNorm" = "totNormArea",
+        "pqnNorm" = "pqnNormArea"
+      )
+
+      plot_data <- r$tables$analysis_data[r$tables$analysis$keep == TRUE &
+                                            r$tables$analysis$class_keep == TRUE &
+                                            r$tables$analysis$sample_name %in% r$index$selected_samples, ]
+
+      hmPlot(show_heatmap(data = plot_data,
+                          area_column = area_column))
+    })
+
+
+    output$heatmap <- plotly::renderPlotly({
+      shiny::req(hmPlot())
+
+      print("Show heatmap here")
+
+      return(hmPlot())
     })
 
   })
