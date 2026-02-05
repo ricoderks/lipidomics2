@@ -465,8 +465,25 @@ mod_file_server <- function(id, r){
         r$columns$sampletype <- input$metadata_select_sampletype
         r$columns$acqorder <- input$metadata_select_acqorder
         r$columns$batch <- input$metadata_select_batch
+        r$columns$groups <- input$metadata_select_groups
       }
     )
+
+    shiny::observeEvent(c(
+      input$metadata_select_sampleid,
+      input$metadata_select_filename,
+      input$metadata_select_sampletype,
+      input$metadata_select_acqorder,
+      input$metadata_select_batch,
+      input$metadata_select_groups
+    ), {
+      r$columns$sampleid <- input$metadata_select_sampleid
+      r$columns$filename <- input$metadata_select_filename
+      r$columns$sampletype <- input$metadata_select_sampletype
+      r$columns$acqorder <- input$metadata_select_acqorder
+      r$columns$batch <- input$metadata_select_batch
+      r$columns$groups <- input$metadata_select_groups
+    })
 
 
     output$metadata_sampletype_plot <- shiny::renderPlot({
