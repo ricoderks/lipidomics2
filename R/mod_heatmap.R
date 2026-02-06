@@ -79,6 +79,12 @@ mod_heatmap_server <- function(id, r){
           label = "Sample annotation:",
           choices = r$columns$groups,
           multiple = TRUE
+        ),
+        shiny::selectInput(
+          inputId = ns("hmFeatureAnnotation"),
+          label = "Feature annotation:",
+          choices = c("Lipid class" = "Class"),
+          multiple = TRUE
         )
       )
     })
@@ -95,7 +101,8 @@ mod_heatmap_server <- function(id, r){
         "pqnNorm" = "pqnNormArea"
       )
 
-      group_columns <- input$hmSampleAnnotation
+      sample_annotation <- input$hmSampleAnnotation
+      feature_annotation <- input$hmFeatureAnnotation
 
       row_clustering <- "rows" %in% input$hmClustering
       col_clustering <- "columns" %in% input$hmClustering
@@ -106,7 +113,8 @@ mod_heatmap_server <- function(id, r){
 
       hmPlot(show_heatmap(data = plot_data,
                           area_column = area_column,
-                          group_columns = group_columns,
+                          column_annotation = sample_annotation,
+                          row_annotation = feature_annotation,
                           row_clustering = row_clustering,
                           col_clustering = col_clustering))
     })
