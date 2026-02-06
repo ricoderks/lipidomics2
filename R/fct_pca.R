@@ -5,9 +5,13 @@
 #' @description Do a PCA analysis.
 #'
 #' @param data data.frame.
+#' @param nPcs integer(1) maximum number of PC to calculate.
 #' @param area_column character(1), which column contains the peak area information.
+#' @param scaling character(1), what scaling to use.
+#' @param group_columns character(), column(s) with extra sample information.
+#' @param feature_annotation character(1), column with extra feature information.
 #'
-#' @return pcaRes object
+#' @returns list with 3 data.frames: summary of fit, scores and loadings.
 #'
 #' @author Rico Derks
 #'
@@ -15,17 +19,204 @@
 #'
 #' @noRd
 do_pca <- function(data = NULL,
-                   area_column = "area") {
-  columns <- c("my_id", "sample_name", "LongLipidName",
-               "ShortLipidName", "Class")
+                   nPcs = 2,
+                   area_column = "area",
+                   scaling = c("none", "uv", "pareto"),
+                   group_columns = NULL,
+                   feature_annotation = NULL) {
+  scaling <- match.arg(arg = scaling,
+                       choices = c("none", "uv", "pareto"),
+                       several.ok = FALSE)
 
-  data <- data[order(data$Class, data$LongLipidName), ]
+  if(group_columns == "none") {
+    group_columns <- NULL
+  }
+  if(feature_annotation == "none") {
+    feature_annotation <- NULL
+  }
+
+  columns <- c("my_id", "sample_name")
 
   data_wide <- data[, c(columns, area_column)] |>
     tidyr::pivot_wider(
-      names_from = .data[["sample_name"]],
+      names_from = .data[["my_id"]],
       values_from = .data[[area_column]]
     ) |>
     as.data.frame()
-  rownames(data_wide) <- data_wide$my_id
+  rownames(data_wide) <- data_wide$sample_name
+  data_wide$sample_name <- NULL
+  pca_data <- data_wide[, !(colnames(data_wide) %in% columns)]
+
+  m <- pcaMethods::pca(
+    object = pca_data,
+    nPcs = nPcs,
+    center = TRUE,
+    scale = scaling,
+    cv = "q2"
+  )
+
+  summary_fit <- data.frame(
+    "PC" = 1:m@nPcs,
+    "R2cum" = m@R2cum,
+    "Q2cum" = m@cvstat
+  )
+
+  # scores data
+  scores <- data.frame(
+    "sample_name" = rownames(pca_data),
+    m@scores
+  )
+  if(!is.null(group_columns)) {
+    scores <- merge(
+      x = scores,
+      y = unique(data[, c("sample_name", group_columns)]),
+      by = "sample_name"
+    )
+  }
+
+  # loadings data
+  loadings <- data.frame(
+    "my_id" = colnames(pca_data),
+    m@loadings
+  )
+  if(!is.null(feature_annotation)) {
+    loadings <- merge(
+      x = loadings,
+      y = unique(data[, c("my_id", feature_annotation)]),
+      by = "my_id"
+    )
+  }
+
+  res <- list(
+    "summary_fit" = summary_fit,
+    "scores" = scores,
+    "loadings" = loadings
+  )
+
+  return(res)
+}
+
+
+#' @title Show a plot of PCA analysis
+#'
+#' @description
+#' Show a plot of the PCA analysis.
+#'
+#' @param data list with 3 data.frames summary of fit, scores and loadings.
+#' @param plot character(1) which plot to show.
+#' @param x character(1), what to show on the x-axis.
+#' @param y character(1), what to show on the y-axis.
+#' @param sample_annotation character(1), what to color in the scores plot.
+#' @param feature_annotation character(1), what to color in the loadings plot.
+#'
+#' @returns The selected plot as a plotly object.
+#'
+#' @author Rico Derks
+#'
+#' @noRd
+#'
+show_pca <- function(data = NULL,
+                     x = "PC1",
+                     y = "PC2",
+                     plot = c("scores", "loadings", "sumfit"),
+                     sample_annotation = NULL,
+                     feature_annotation = NULL) {
+
+  plot_data <- data[[plot]]
+
+  ply <- switch(
+    plot,
+    "scores" = scores_plot(data = plot_data,
+                           sample_annotation = sample_annotation,
+                           x = x,
+                           y = y),
+    "loadings" = loadings_plot(data = plot_data,
+                               feature_annotation = feature_annotation,
+                               x = x,
+                               y = y)
+  )
+
+  return(ply)
+}
+
+
+#' @title PCA scores plot
+#'
+#' @description
+#' PCA scores plot.
+#'
+#' @param data data.frame.
+#' @param x character(1), what to show on the x-axis.
+#' @param y character(1), what to show on the y-axis.
+#' @param sample_annotation character(1), what to color in the plot.
+#'
+#' @returns Scores plot as plotly object.
+#'
+#' @author Rico Derks
+#'
+#' @importFrom plotly plot_ly
+#'
+#' @noRd
+#'
+scores_plot <- function(data = NULL,
+                        x = "PC1",
+                        y = "PC2",
+                        sample_annotation = NULL) {
+  if(sample_annotation == "none") {
+    color_arg <- NULL
+  } else {
+    color_arg <- as.formula(paste0("~", sample_annotation))
+  }
+
+  ply <- plot_ly(
+    data = data,
+    x = ~.data[[x]],
+    y = ~.data[[y]],
+    color = color_arg,
+    type = "scatter",
+    mode = "markers"
+  )
+
+  return(ply)
+}
+
+
+#' @title PCA loadings plot
+#'
+#' @description
+#' PCA loadings plot.
+#'
+#' @param data data.frame.
+#' @param x character(1), what to show on the x-axis.
+#' @param y character(1), what to show on the y-axis.
+#' @param feature_annotation character(1), what to color in the plot.
+#'
+#' @returns Scores plot as plotly object.
+#'
+#' @author Rico Derks
+#'
+#' @importFrom plotly plot_ly
+#'
+#' @noRd
+#'
+loadings_plot <- function(data = NULL,
+                          x = "PC1",
+                          y = "PC2",
+                          feature_annotation = NULL) {
+  if(feature_annotation == "none") {
+    color_arg <- NULL
+  } else {
+    color_arg <- as.formula(paste0("~", feature_annotation))
+  }
+
+  ply <- plot_ly(
+    data = data,
+    x = ~.data[[x]],
+    y = ~.data[[y]],
+    color = color_arg,
+    type = "scatter",
+    mode = "markers"
+  )
+
+  return(ply)
 }
