@@ -17,7 +17,7 @@
 #'
 #' @importFrom heatmaply heatmaply
 #' @importFrom plotly plotly_build
-#' @importFrom tidyr pivot_wider all_of
+#' @importFrom tidyr pivot_wider
 #'
 #' @noRd
 show_heatmap <- function(data = NULL,
