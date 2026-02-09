@@ -8,6 +8,7 @@
 #' @param nPcs integer(1) maximum number of PC to calculate.
 #' @param area_column character(1), which column contains the peak area information.
 #' @param scaling character(1), what scaling to use.
+#' @param transformation character(1), what transformation to use.
 #' @param group_columns character(), column(s) with extra sample information.
 #' @param feature_annotation character(1), column with extra feature information.
 #'
@@ -22,11 +23,16 @@ do_pca <- function(data = NULL,
                    nPcs = 2,
                    area_column = "area",
                    scaling = c("none", "uv", "pareto"),
+                   transformation = c("none", "log10"),
                    group_columns = NULL,
                    feature_annotation = NULL) {
   scaling <- match.arg(arg = scaling,
                        choices = c("none", "uv", "pareto"),
                        several.ok = FALSE)
+  transformation <- match.arg(arg = transformation,
+                              choices = c("none", "log10", "log1p"),
+                              several.ok = FALSE)
+
 
   if(group_columns == "none") {
     group_columns <- NULL
@@ -45,6 +51,13 @@ do_pca <- function(data = NULL,
     as.data.frame()
   rownames(data_wide) <- data_wide$sample_name
   pca_data <- data_wide[, !(colnames(data_wide) %in% columns)]
+
+  pca_data <- switch(
+    transformation,
+    "none" = pca_data,
+    "log10" = log10(pca_data),
+    "log1p" = log1p(pca_data)
+  )
 
   m <- pcaMethods::pca(
     object = pca_data,

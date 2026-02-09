@@ -52,6 +52,7 @@ mod_pca_server <- function(id, r){
         nPcs = 4,
         plot = "scores",
         scaling = "uv",
+        transformation = "log",
         sample_annotation = "none",
         feature_annotation = "none",
         table = "raw"
@@ -82,6 +83,14 @@ mod_pca_server <- function(id, r){
             min = 2,
             max = 10,
             step = 1
+          ),
+          shiny::selectInput(
+            inputId = ns("pcaTransformation"),
+            label = "Transformation:",
+            choices = c("None" = "none",
+                        "Log10" = "log10",
+                        "Log1p" = "log1p"),
+            selected = analysis_settings$pca$transformation
           ),
           shiny::selectInput(
             inputId = ns("pcaScaling"),
@@ -135,6 +144,7 @@ mod_pca_server <- function(id, r){
         input$pcaX,
         input$pcaY,
         input$pcaSelectPlot,
+        input$pcaTransformation,
         input$pcaScaling,
         input$pcaSampleAnnotation,
         input$pcaFeatureAnnotation),
@@ -144,6 +154,7 @@ mod_pca_server <- function(id, r){
         analysis_settings$pca$x <- input$pcaX
         analysis_settings$pca$y <- input$pcaY
         analysis_settings$pca$plot <- input$pcaSelectPlot
+        analysis_settings$pca$transformation <- input$pcaTransformation
         analysis_settings$pca$scaling <- input$pcaScaling
         analysis_settings$pca$sample_annotation <- input$pcaSampleAnnotation
         analysis_settings$pca$feature_annotation <- input$pcaFeatureAnnotation
@@ -152,6 +163,7 @@ mod_pca_server <- function(id, r){
     output$pcaPlot <- plotly::renderPlotly({
       shiny::req(r$tables$analysis_data,
                  input$pcaSelectTable,
+                 input$pcaTransformation,
                  input$pcaScaling,
                  input$pcaNumberPcs,
                  input$pcaSelectPlot)
@@ -172,7 +184,8 @@ mod_pca_server <- function(id, r){
                           area_column = area_column,
                           group_columns = input$pcaSampleAnnotation,
                           feature_annotation = input$pcaFeatureAnnotation,
-                          scaling = input$pcaScaling)
+                          scaling = input$pcaScaling,
+                          transformation = input$pcaTransformation)
 
       ply <- show_pca(data = plot_data,
                       plot = input$pcaSelectPlot,
