@@ -16,6 +16,10 @@ mod_volcano_ui <- function(id) {
     bslib::card(
       bslib::page_sidebar(
         sidebar = bslib::sidebar(
+          shiny::uiOutput(
+            outputId = ns("settingsVolcano")
+          ),
+          shiny::hr(),
           shiny::actionButton(
             inputId = ns("remove"),
             label = "",
@@ -36,6 +40,46 @@ mod_volcano_ui <- function(id) {
 mod_volcano_server <- function(id, r){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
+
+    print("Volcano plot server started")
+
+    analysis_settings <- shiny::reactiveValues(
+      volcano = list(
+        table = "raw"
+      )
+    )
+
+    output$settingsVolcano <- shiny::renderUI({
+      selection <- c(
+        "Raw data" = "raw",
+        "Total area normalization" = "totNorm",
+        "PQN normalization" = "pqnNorm"
+      )
+
+      selected <- names(unlist(r$analysis$normalization)[unlist(r$analysis$normalization)])
+      selected <- c("raw", selected)
+
+      shiny::tagList(
+        shiny::div(
+          shiny::selectInput(
+            inputId = ns("volcanoSelectTable"),
+            label = "Select data table:",
+            choices = selection[selection %in% selected],
+            selected = analysis_settings$volcano$table
+          ),
+          style = "font-size:75%"
+        )
+      )
+    })
+
+
+    shiny::observeEvent(
+      c(
+        input$volcanoSelectTable
+      ), {
+        analysis_settings$volcano$table <- input$volcanoSelectTable
+      }
+    )
 
   })
 }
