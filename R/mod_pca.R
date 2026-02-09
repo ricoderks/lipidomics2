@@ -45,6 +45,14 @@ mod_pca_server <- function(id, r){
 
     print("PCA server started")
 
+    analysis_settings <- shiny::reactiveValues(
+      pca = list(
+        x = "PC1",
+        y = "PC2",
+        nPcs = 4
+      )
+    )
+
     output$settingsPca <- shiny::renderUI({
       selection <- c(
         "Raw data" = "raw",
@@ -65,7 +73,7 @@ mod_pca_server <- function(id, r){
           shiny::sliderInput(
             inputId = ns("pcaNumberPcs"),
             label = "Maximum number of PCs:",
-            value = r$analysis$pca$nPcs,
+            value = analysis_settings$pca$nPcs,
             min = 2,
             max = 10,
             step = 1
@@ -100,27 +108,29 @@ mod_pca_server <- function(id, r){
           shiny::selectInput(
             inputId = ns("pcaX"),
             label = "x-axis:",
-            choices = paste0("PC", 1:r$analysis$pca$nPcs),
-            selected = r$analysis$pca$x
+            choices = paste0("PC", 1:analysis_settings$pca$nPcs),
+            selected = analysis_settings$pca$x
           ),
           shiny::selectInput(
             inputId = ns("pcaY"),
             label = "y-axis:",
-            choices = paste0("PC", 1:r$analysis$pca$nPcs),
-            selected = r$analysis$pca$y
+            choices = paste0("PC", 1:analysis_settings$pca$nPcs),
+            selected = analysis_settings$pca$y
           ),
           style = "font-size:75%"
         )
       )
     })
 
-    shiny::observeEvent(c(input$pcaNumberPcs,
-                          input$pcaX,
-                          input$pcaY), {
-      r$analysis$pca$nPcs <- input$pcaNumberPcs
-      r$analysis$pca$x <- input$pcaX
-      r$analysis$pca$y <- input$pcaY
-    })
+    shiny::observeEvent(
+      c(input$pcaNumberPcs,
+        input$pcaX,
+        input$pcaY),
+      {
+        analysis_settings$pca$nPcs <- input$pcaNumberPcs
+        analysis_settings$pca$x <- input$pcaX
+        analysis_settings$pca$y <- input$pcaY
+      })
 
     output$pcaPlot <- plotly::renderPlotly({
       shiny::req(r$tables$analysis_data,

@@ -155,6 +155,7 @@ show_pca <- function(data = NULL,
 #' @author Rico Derks
 #'
 #' @importFrom plotly plot_ly
+#' @importFrom stats as.formula
 #'
 #' @noRd
 #'
@@ -165,7 +166,7 @@ scores_plot <- function(data = NULL,
   if(sample_annotation == "none") {
     color_arg <- NULL
   } else {
-    color_arg <- as.formula(paste0("~", sample_annotation))
+    color_arg <- stats::as.formula(paste0("~", sample_annotation))
   }
 
   ply <- plot_ly(
@@ -196,6 +197,7 @@ scores_plot <- function(data = NULL,
 #' @author Rico Derks
 #'
 #' @importFrom plotly plot_ly
+#' @importFrom stats as.formula
 #'
 #' @noRd
 #'
@@ -206,7 +208,7 @@ loadings_plot <- function(data = NULL,
   if(feature_annotation == "none") {
     color_arg <- NULL
   } else {
-    color_arg <- as.formula(paste0("~", feature_annotation))
+    color_arg <- stats::as.formula(paste0("~", feature_annotation))
   }
 
   ply <- plot_ly(

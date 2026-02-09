@@ -43,7 +43,7 @@ mod_analysis_server <- function(id, r) {
   shiny::moduleServer(id, function(input, output, session){
     ns <- session$ns
 
-    rv <- reactiveValues(
+    rv <- shiny::reactiveValues(
       next_id = 0L,
       type_counts = setNames(as.list(rep(0L, 3L)), c("heatmap", "pca", "volcano")),
       modules = list(),   # id -> list(type, label, export)
