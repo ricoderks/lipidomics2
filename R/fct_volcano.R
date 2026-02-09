@@ -6,6 +6,7 @@
 #'
 #' @param data data.frame with the data.
 #' @param area_column character(1), which column contains the peak area information.
+#' @param transformation character(1), what transformation to use.
 #' @param test character(1) which test to do.
 #' @param group character(1) name of the grouping column.
 #' @param group1 character(1) what value of the group is x.
@@ -18,12 +19,16 @@
 #' @noRd
 do_test <- function(data = NULL,
                     area_column = c("area", "totNormArea", "pqnNormArea"),
+                    transformation = c("none", "log10", "log1p"),
                     test = c("ttest", "mw"),
                     group = NULL,
                     group1 = NULL,
                     group2 = NULL) {
   area_column <- match.arg(arg = area_column,
                            choices = c("area", "totNormArea", "pqnNormArea"))
+  transformation <- match.arg(arg = transformation,
+                              choices = c("none", "log10", "log1p"),
+                              several.ok = FALSE)
   test <- match.arg(arg = test,
                     choices = c("ttest", "mw"))
 
@@ -33,6 +38,7 @@ do_test <- function(data = NULL,
     test,
     "ttest" = do_test.ttest(data = data,
                             area_column = area_column,
+                            transformation = transformation,
                             group = group,
                             group1 = group1,
                             group2 = group2),
@@ -59,6 +65,7 @@ do_test <- function(data = NULL,
 #'
 #' @param data data.frame with the data.
 #' @param area_column character(1), which column contains the peak area information.
+#' @param transformation character(1), what transformation to use.
 #' @param group character(1) name of the grouping column.
 #' @param group1 character(1) what value of the group is x.
 #' @param group2 character(1) what value of the group is y.
@@ -70,21 +77,89 @@ do_test <- function(data = NULL,
 #' @noRd
 do_test.ttest <- function(data = NULL,
                           area_column = c("area", "totNormArea", "pqnNormArea"),
+                          transformation = c("none", "log10", "log1p"),
                           group = NULL,
                           group1 = NULL,
                           group2 = NULL) {
   area_column <- match.arg(arg = area_column,
                            choices = c("area", "totNormArea", "pqnNormArea"))
+  transformation <- match.arg(arg = transformation,
+                              choices = c("none", "log10", "log1p"),
+                              several.ok = FALSE)
 
   columns <- c("my_id", "sample_name")
 
   test_data <- data[, c(columns, group, area_column)]
+  test_data[[area_column]] <- switch(
+    transformation,
+    "none" = test_data[[area_column]],
+    "log10" = log10(test_data[[area_column]]),
+    "log1p" = log1p(test_data[[area_column]])
+  )
+
   res <- tapply(test_data, list(test_data$my_id), function(x) {
     res <- t.test(x = x[x[[group]] == group1, area_column],
                   y = x[x[[group]] == group2, area_column])
     data.frame("pvalue" = res$p.value,
                # y / x = group2 / group1
                "fold_change" = res$estimate[2] / res$estimate[1])
+  })
+  res <- do.call("rbind", res)
+  res$my_id <- rownames(res)
+  res$log10p <- -log10(res$pvalue)
+  res$log2fc <- log2(res$fold_change)
+
+  return(res)
+}
+
+
+#' @title Do a Mann-Whitney test
+#'
+#' @description Do a Mann-Whitney test.
+#'
+#' @param data data.frame with the data.
+#' @param area_column character(1), which column contains the peak area information.
+#' @param transformation character(1), what transformation to use.
+#' @param group character(1) name of the grouping column.
+#' @param group1 character(1) what value of the group is x.
+#' @param group2 character(1) what value of the group is y.
+#'
+#' @returns list with several data.frames with data.
+#'
+#' @author Rico Derks
+#'
+#' @noRd
+do_test.mw <- function(data = NULL,
+                       area_column = c("area", "totNormArea", "pqnNormArea"),
+                       transformation = c("none", "log10", "log1p"),
+                       group = NULL,
+                       group1 = NULL,
+                       group2 = NULL) {
+  area_column <- match.arg(arg = area_column,
+                           choices = c("area", "totNormArea", "pqnNormArea"))
+  transformation <- match.arg(arg = transformation,
+                              choices = c("none", "log10", "log1p"),
+                              several.ok = FALSE)
+
+  columns <- c("my_id", "sample_name")
+
+  test_data <- data[, c(columns, group, area_column)]
+  test_data[[area_column]] <- switch(
+    transformation,
+    "none" = test_data[[area_column]],
+    "log10" = log10(test_data[[area_column]]),
+    "log1p" = log1p(test_data[[area_column]])
+  )
+
+  res <- tapply(test_data, list(test_data$my_id), function(x) {
+    res <- wilcox.test(x = x[x[[group]] == group1, area_column],
+                       y = x[x[[group]] == group2, area_column])
+    data.frame(
+      "pvalue" = res$p.value,
+      # y / x = group2 / group1
+      "fold_change" = mean(x[x[[group]] == group2, area_column], na.rm = TRUE) /
+        mean(x[x[[group]] == group1, area_column], na.rm = TRUE)
+    )
   })
   res <- do.call("rbind", res)
   res$my_id <- rownames(res)

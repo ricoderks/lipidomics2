@@ -182,6 +182,7 @@ mod_volcano_server <- function(id, r){
 
       plot_data <- do_test(data = test_data,
                            area_column = area_column,
+                           transformation = input$volcanoTransformation,
                            test = input$volcanoTest,
                            group = input$volcanoGroup,
                            group1 = input$volcanoGroup1,
