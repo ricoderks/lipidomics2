@@ -15,7 +15,7 @@
 #'
 #' @author Rico Derks
 #'
-#' @importFrom tidyr pivot_wider
+#' @importFrom tidyr pivot_wider pivot_longer
 #'
 #' @noRd
 do_pca <- function(data = NULL,
@@ -59,7 +59,12 @@ do_pca <- function(data = NULL,
     "PC" = 1:m@nPcs,
     "R2cum" = m@R2cum,
     "Q2cum" = m@cvstat
-  )
+  ) |>
+    tidyr::pivot_longer(
+      cols = c("R2cum", "Q2cum"),
+      names_to = "variable",
+      values_to = "value"
+    )
 
   # scores data
   scores <- data.frame(
@@ -118,7 +123,7 @@ do_pca <- function(data = NULL,
 show_pca <- function(data = NULL,
                      x = "PC1",
                      y = "PC2",
-                     plot = c("scores", "loadings", "sumfit"),
+                     plot = c("scores", "loadings", "summary_fit"),
                      sample_annotation = NULL,
                      feature_annotation = NULL) {
 
@@ -133,7 +138,8 @@ show_pca <- function(data = NULL,
     "loadings" = loadings_plot(data = plot_data,
                                feature_annotation = feature_annotation,
                                x = x,
-                               y = y)
+                               y = y),
+    "summary_fit" = summary_fit(data = plot_data)
   )
 
   return(ply)
@@ -154,7 +160,7 @@ show_pca <- function(data = NULL,
 #'
 #' @author Rico Derks
 #'
-#' @importFrom plotly plot_ly
+#' @importFrom plotly plot_ly layout
 #' @importFrom stats as.formula
 #'
 #' @noRd
@@ -175,8 +181,15 @@ scores_plot <- function(data = NULL,
     y = ~.data[[y]],
     color = color_arg,
     type = "scatter",
-    mode = "markers"
-  )
+    mode = "markers",
+    marker = list(
+      size = 8
+    )
+  ) |>
+    plotly::layout(
+      xaxis = list(title = x),
+      yaxis = list(title = y)
+    )
 
   return(ply)
 }
@@ -196,7 +209,7 @@ scores_plot <- function(data = NULL,
 #'
 #' @author Rico Derks
 #'
-#' @importFrom plotly plot_ly
+#' @importFrom plotly plot_ly layout
 #' @importFrom stats as.formula
 #'
 #' @noRd
@@ -217,7 +230,44 @@ loadings_plot <- function(data = NULL,
     y = ~.data[[y]],
     color = color_arg,
     type = "scatter",
-    mode = "markers"
+    mode = "markers",
+    marker = list(
+      size = 4
+    )
+  ) |>
+    plotly::layout(
+      xaxis = list(title = x),
+      yaxis = list(title = y)
+    )
+
+  return(ply)
+}
+
+
+#' @title show summary of fit of a PCA model
+#'
+#' @description Create a plot which shows a summary of the fit your PCA model.
+#'
+#' @param data data frame with all data. See details for more information.
+#'
+#' @returns A summary of fit plot as plotly object.
+#'
+#' @details The data frame \code{data} should contain 3 columns. \code{PC},
+#' \code{variable} and \code{value}.
+#'
+#' @importFrom plotly plot_ly
+#'
+#' @author Rico Derks
+#'
+#' @noRd
+#'
+summary_fit <- function(data = NULL) {
+  ply <- plot_ly(
+    data = data,
+    x = ~PC,
+    y = ~value,
+    color = ~variable,
+    type = "bar"
   )
 
   return(ply)

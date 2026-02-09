@@ -49,7 +49,8 @@ mod_pca_server <- function(id, r){
       pca = list(
         x = "PC1",
         y = "PC2",
-        nPcs = 4
+        nPcs = 4,
+        plot = "scores"
       )
     )
 
@@ -102,8 +103,8 @@ mod_pca_server <- function(id, r){
             label = "Show plot:",
             choices = c("Scores" = "scores",
                         "Loadings" = "loadings",
-                        "Summary of fit" = "sumfit"),
-            selected = "scores"
+                        "Summary of fit" = "summary_fit"),
+            selected = analysis_settings$pca$plot
           ),
           shiny::selectInput(
             inputId = ns("pcaX"),
@@ -125,11 +126,13 @@ mod_pca_server <- function(id, r){
     shiny::observeEvent(
       c(input$pcaNumberPcs,
         input$pcaX,
-        input$pcaY),
+        input$pcaY,
+        input$pcaSelectPlot),
       {
         analysis_settings$pca$nPcs <- input$pcaNumberPcs
         analysis_settings$pca$x <- input$pcaX
         analysis_settings$pca$y <- input$pcaY
+        analysis_settings$pca$plot <- input$pcaSelectPlot
       })
 
     output$pcaPlot <- plotly::renderPlotly({
