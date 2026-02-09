@@ -43,6 +43,7 @@ golem::add_fct("export", with_test = TRUE)
 golem::add_fct("analysis", with_test = TRUE)
 golem::add_fct("heatmap", with_test = TRUE)
 golem::add_fct("pca", with_test = TRUE)
+golem::add_fct("volcano", with_test = TRUE)
 # golem::add_utils("helpers", with_test = TRUE)
 
 ## External resources
