@@ -28,6 +28,7 @@ mod_volcano_ui <- function(id) {
             width = "50%"
           )
         ),
+        # is becoming to high
         plotly::plotlyOutput(
           outputId = ns("volcanoPlot")
         )
@@ -56,7 +57,7 @@ mod_volcano_server <- function(id, r){
         group1 = choices_group[1],
         group2 = choices_group[2],
         fc_threshold = 2,
-        pval_threshold = 0.05
+        pvalue_threshold = 0.05
       )
     )
 
@@ -116,6 +117,22 @@ mod_volcano_server <- function(id, r){
             choices = choices_group,
             selected = shiny::isolate(analysis_settings$volcano$group2)
           ),
+          shiny::sliderInput(
+            inputId = ns("volcanoFcThreshold"),
+            label = "Fold change threshold:",
+            value = shiny::isolate(analysis_settings$volcano$fc_threshold),
+            min = 1,
+            max = 4,
+            step = 0.1
+          ),
+          shiny::sliderInput(
+            inputId = ns("volcanoPValueThreshold"),
+            label = "p-value threshold:",
+            value = shiny::isolate(analysis_settings$volcano$pvalue_threshold),
+            min = 0,
+            max = 0.1,
+            step = 0.005
+          ),
           style = "font-size:75%"
         )
       )
@@ -129,7 +146,9 @@ mod_volcano_server <- function(id, r){
         input$volcanoTest,
         input$volcanoGroup,
         input$volcanoGroup1,
-        input$volcanoGroup2
+        input$volcanoGroup2,
+        input$volcanoFcThreshold,
+        input$volcanoPValueThreshold
       ), {
         analysis_settings$volcano$table <- input$volcanoSelectTable
         analysis_settings$volcano$transformation <- input$volcanoTransformation
@@ -137,6 +156,8 @@ mod_volcano_server <- function(id, r){
         analysis_settings$volcano$group <- input$volcanoGroup
         analysis_settings$volcano$group1 <- input$volcanoGroup1
         analysis_settings$volcano$group2 <- input$volcanoGroup2
+        analysis_settings$volcano$fc_threshold <- input$volcanoFcThreshold
+        analysis_settings$volcano$pvalue_threshold <- input$volcanoPValueThreshold
       }
     )
 
@@ -167,7 +188,9 @@ mod_volcano_server <- function(id, r){
                  input$volcanoSelectTable,
                  input$volcanoTransformation,
                  input$volcanoTest,
-                 input$volcanoGroup)
+                 input$volcanoGroup,
+                 input$volcanoFcThreshold,
+                 input$volcanoPValueThreshold)
 
       area_column <- switch(
         input$volcanoSelectTable,
@@ -188,7 +211,9 @@ mod_volcano_server <- function(id, r){
                            group1 = input$volcanoGroup1,
                            group2 = input$volcanoGroup2)
 
-      ply <- show_volcano(data = plot_data)
+      ply <- show_volcano(data = plot_data,
+                          fc_threshold = as.numeric(input$volcanoFcThreshold),
+                          pvalue_threshold = as.numeric(input$volcanoPValueThreshold))
 
       return(ply)
     })

@@ -177,7 +177,7 @@ do_test.mw <- function(data = NULL,
 #'
 #' @param data  data.frame().
 #' @param fc_threshold numeric(1) threshold for the fold change threshold lines.
-#' @param pval_threshold numeric(1) threshold for the p-value threshold line.
+#' @param pvalue_threshold numeric(1) threshold for the p-value threshold line.
 #'
 #' @returns volcano plot as plotly object.
 #'
@@ -189,7 +189,10 @@ do_test.mw <- function(data = NULL,
 #'
 show_volcano <- function(data = NULL,
                          fc_threshold = 2,
-                         pval_threshold = 0.05) {
+                         pvalue_threshold = 0.05) {
+  # todo:
+  # * min / max not working due to Inf/-Inf values
+  # * highlight only significant values (opacity in marker list)
   # print(min(data$log2fc))
   # print(max(data$log2fc))
 
@@ -211,7 +214,7 @@ show_volcano <- function(data = NULL,
         x0 = -log2(fc_threshold),
         x1 = -log2(fc_threshold),
         y0 = 0,
-        y1 = 1.2 * max(c(data$log10p, -log10(pval_threshold))),
+        y1 = 1.2 * max(c(data$log10p, -log10(pvalue_threshold))),
         line = list(color = "black", width = 1, dash = "dot")
       ),
       list(
@@ -219,15 +222,15 @@ show_volcano <- function(data = NULL,
         x0 = log2(fc_threshold),
         x1 = log2(fc_threshold),
         y0 = 0,
-        y1 = 1.2 * max(c(data$log10p, -log10(pval_threshold))),
+        y1 = 1.2 * max(c(data$log10p, -log10(pvalue_threshold))),
         line = list(color = "black", width = 1, dash = "dot")
       ),
       list(
         type = "line",
         x0 = 1.2 * round(min(data$log2fc, na.rm = TRUE)),
         x1 = 1.2 * round(max(data$log2fc, na.rm = TRUE)),
-        y0 = -log10(pval_threshold),
-        y1 = -log10(pval_threshold),
+        y0 = -log10(pvalue_threshold),
+        y1 = -log10(pvalue_threshold),
         line = list(color = "black", width = 1, dash = "dot")
       )
     )
