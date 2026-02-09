@@ -27,6 +27,7 @@ Imports:
     readxl,
     rlang,
     rmarkdown,
+    scales,
     sessioninfo,
     shiny,
     shinyjs,

@@ -184,6 +184,7 @@ do_test.mw <- function(data = NULL,
 #' @author Rico Derks
 #'
 #' @importFrom plotly plot_ly layout
+#' @importFrom scales rescale
 #'
 #' @noRd
 #'
@@ -193,8 +194,17 @@ show_volcano <- function(data = NULL,
   # todo:
   # * min / max not working due to Inf/-Inf values
   # * highlight only significant values (opacity in marker list)
+  # * color feature annotation
+  # * name of feature in the popup
+  # * violin/box plot on popup
   # print(min(data$log2fc))
   # print(max(data$log2fc))
+
+  data$signif <- ifelse(data$pvalue <= pvalue_threshold &
+                          (data$fold_change >= fc_threshold |
+                             data$fold_change <= 1 / fc_threshold),
+                        1,
+                        0.5)
 
   ply <- plotly::plot_ly(
     data = data,
@@ -203,7 +213,8 @@ show_volcano <- function(data = NULL,
     type = "scatter",
     mode = "markers",
     marker = list(
-      size = 8
+      size = 10,
+      opacity = ~signif
     )
   ) |> plotly::layout(
     xaxis = list(title = "log2(fold change)"),
