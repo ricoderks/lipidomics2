@@ -50,7 +50,11 @@ mod_pca_server <- function(id, r){
         x = "PC1",
         y = "PC2",
         nPcs = 4,
-        plot = "scores"
+        plot = "scores",
+        scaling = "uv",
+        sample_annotation = "none",
+        feature_annotation = "none",
+        table = "raw"
       )
     )
 
@@ -69,7 +73,7 @@ mod_pca_server <- function(id, r){
             inputId = ns("pcaSelectTable"),
             label = "Select data table:",
             choices = selection[selection %in% selected],
-            selected = "raw"
+            selected = analysis_settings$pca$table
           ),
           shiny::sliderInput(
             inputId = ns("pcaNumberPcs"),
@@ -85,18 +89,20 @@ mod_pca_server <- function(id, r){
             choices = c("None" = "none",
                         "UV" = "uv",
                         "Pareto" = "pareto"),
-            selected = "uv"
+            selected = analysis_settings$pca$scaling
           ),
           shiny::selectInput(
             inputId = ns("pcaSampleAnnotation"),
             label = "Sample annotation:",
-            choices = c("none", r$columns$groups)
+            choices = c("none", r$columns$groups),
+            selected = analysis_settings$pca$sample_annotation
           ),
           shiny::selectInput(
             inputId = ns("pcaFeatureAnnotation"),
             label = "Feature annotation:",
             choices = c("None" = "none",
-                        "Lipid class" = "Class")
+                        "Lipid class" = "Class"),
+            selected = analysis_settings$pca$feature_annotation
           ),
           shiny::selectInput(
             inputId = ns("pcaSelectPlot"),
@@ -124,15 +130,23 @@ mod_pca_server <- function(id, r){
     })
 
     shiny::observeEvent(
-      c(input$pcaNumberPcs,
+      c(input$pcaSelectTable,
+        input$pcaNumberPcs,
         input$pcaX,
         input$pcaY,
-        input$pcaSelectPlot),
+        input$pcaSelectPlot,
+        input$pcaScaling,
+        input$pcaSampleAnnotation,
+        input$pcaFeatureAnnotation),
       {
+        analysis_settings$pca$table <- input$pcaSelectTable
         analysis_settings$pca$nPcs <- input$pcaNumberPcs
         analysis_settings$pca$x <- input$pcaX
         analysis_settings$pca$y <- input$pcaY
         analysis_settings$pca$plot <- input$pcaSelectPlot
+        analysis_settings$pca$scaling <- input$pcaScaling
+        analysis_settings$pca$sample_annotation <- input$pcaSampleAnnotation
+        analysis_settings$pca$feature_annotation <- input$pcaFeatureAnnotation
       })
 
     output$pcaPlot <- plotly::renderPlotly({

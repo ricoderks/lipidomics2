@@ -44,7 +44,6 @@ do_pca <- function(data = NULL,
     ) |>
     as.data.frame()
   rownames(data_wide) <- data_wide$sample_name
-  data_wide$sample_name <- NULL
   pca_data <- data_wide[, !(colnames(data_wide) %in% columns)]
 
   m <- pcaMethods::pca(
@@ -160,7 +159,7 @@ show_pca <- function(data = NULL,
 #'
 #' @author Rico Derks
 #'
-#' @importFrom plotly plot_ly layout
+#' @importFrom plotly plot_ly layout add_trace
 #' @importFrom stats as.formula
 #'
 #' @noRd
@@ -175,7 +174,13 @@ scores_plot <- function(data = NULL,
     color_arg <- stats::as.formula(paste0("~", sample_annotation))
   }
 
-  ply <- plot_ly(
+  # get the data points of the ellipse
+  t2 <- simple_ellipse(
+    x = data[[x]],
+    y = data[[y]]
+  )
+
+  ply <- plotly::plot_ly(
     data = data,
     x = ~.data[[x]],
     y = ~.data[[y]],
@@ -186,6 +191,19 @@ scores_plot <- function(data = NULL,
       size = 8
     )
   ) |>
+    plotly::add_trace(
+      data = t2,
+      x = ~x,
+      y = ~y,
+      type = "scatter",
+      mode = "lines",
+      line = list(
+        color = "lightgrey"
+      ),
+      text = NULL,
+      inherit = FALSE,
+      showlegend = FALSE
+    ) |>
     plotly::layout(
       xaxis = list(title = x),
       yaxis = list(title = y)
@@ -224,7 +242,7 @@ loadings_plot <- function(data = NULL,
     color_arg <- stats::as.formula(paste0("~", feature_annotation))
   }
 
-  ply <- plot_ly(
+  ply <- plotly::plot_ly(
     data = data,
     x = ~.data[[x]],
     y = ~.data[[y]],
@@ -262,7 +280,7 @@ loadings_plot <- function(data = NULL,
 #' @noRd
 #'
 summary_fit <- function(data = NULL) {
-  ply <- plot_ly(
+  ply <- plotly::plot_ly(
     data = data,
     x = ~PC,
     y = ~value,
@@ -271,4 +289,40 @@ summary_fit <- function(data = NULL) {
   )
 
   return(ply)
+}
+
+
+#' @title Create a Hotelling T2 ellipse for a PCA score plot
+#'
+#' @description This function can be used to create a confidence (Hotelling T2) interval for a
+#' PCA score plot.
+#'
+#' @param x x vector
+#' @param y y vector
+#' @param alpha confidence interval
+#' @param len number of points to create the ellipse
+#'
+#' @returns A data frame is returned with the points to create the ellipse.
+#'
+#' @details This is a helper function which is used to create a confidence (Hotelling T2) interval for a
+#' PCA score plot.
+#'
+#' @importFrom stats var qf
+#'
+#' @author Rico Derks
+#'
+#' @noRd
+simple_ellipse <- function(x, y, alpha = 0.95, len = 200) {
+  N <- length(x)
+  mypi <- seq(0, 2 * pi, length = len)
+
+  r1 <- sqrt(stats::var(x) * stats::qf(alpha, 2, N - 2) * (2 * (N^2 - 1) / (N * (N - 2))))
+  r2 <- sqrt(stats::var(y) * stats::qf(alpha, 2, N - 2) * (2 * (N^2 - 1) / (N * (N - 2))))
+
+  result <- data.frame(
+    x = (r1 * cos(mypi) + mean(x)),
+    y = (r2 * sin(mypi) + mean(y))
+  )
+
+  return(result)
 }
