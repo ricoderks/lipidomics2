@@ -60,7 +60,7 @@ mod_pca_server <- function(id, r){
     )
 
     output$settingsPca <- shiny::renderUI({
-      print("Initialize")
+      # executes twice?!?!
       selection <- c(
         "Raw data" = "raw",
         "Total area normalization" = "totNorm",
@@ -74,7 +74,7 @@ mod_pca_server <- function(id, r){
           shiny::selectInput(
             inputId = ns("pcaSelectTable"),
             label = "Select data table:",
-            choices = selection[selection %in% shiny::isolate(analysis_settings$selection)],
+            choices = selection[selection %in% selected],
             selected = shiny::isolate(analysis_settings$pca$table)
           ),
           shiny::sliderInput(
