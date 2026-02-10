@@ -71,71 +71,82 @@ mod_pca_server <- function(id, r){
       selected <- c("raw", selected)
       shiny::tagList(
         shiny::div(
-          shiny::selectInput(
-            inputId = ns("pcaSelectTable"),
-            label = "Select data table:",
-            choices = selection[selection %in% selected],
-            selected = shiny::isolate(analysis_settings$pca$table)
-          ),
-          shiny::sliderInput(
-            inputId = ns("pcaNumberPcs"),
-            label = "Maximum number of PCs:",
-            value = shiny::isolate(analysis_settings$pca$nPcs),
-            min = 2,
-            max = 10,
-            step = 1
-          ),
-          shiny::selectInput(
-            inputId = ns("pcaTransformation"),
-            label = "Transformation:",
-            choices = c("None" = "none",
-                        "Log10" = "log10",
-                        "Log1p" = "log1p"),
-            selected = shiny::isolate(analysis_settings$pca$transformation)
-          ),
-          shiny::selectInput(
-            inputId = ns("pcaScaling"),
-            label = "Scaling:",
-            choices = c("None" = "none",
-                        "UV" = "uv",
-                        "Pareto" = "pareto"),
-            selected = shiny::isolate(analysis_settings$pca$scaling)
-          ),
-          shiny::selectInput(
-            inputId = ns("pcaSampleAnnotation"),
-            label = "Sample annotation:",
-            choices = c("none", r$columns$groups),
-            selected = shiny::isolate(analysis_settings$pca$sample_annotation)
-          ),
-          shiny::selectInput(
-            inputId = ns("pcaFeatureAnnotation"),
-            label = "Feature annotation:",
-            choices = c("None" = "none",
-                        "Lipid class" = "Class"),
-            selected = shiny::isolate(analysis_settings$pca$feature_annotation)
-          ),
-          shiny::selectInput(
-            inputId = ns("pcaSelectPlot"),
-            label = "Show plot:",
-            choices = c("Scores" = "scores",
-                        "Loadings" = "loadings",
-                        "Summary of fit" = "summary_fit"),
-            selected = shiny::isolate(analysis_settings$pca$plot)
-          ),
-          shiny::selectInput(
-            inputId = ns("pcaX"),
-            label = "x-axis:",
-            choices = paste0("PC", 1:analysis_settings$pca$nPcs),
-            selected = shiny::isolate(analysis_settings$pca$x)
-          ),
-          shiny::selectInput(
-            inputId = ns("pcaY"),
-            label = "y-axis:",
-            choices = paste0("PC", 1:analysis_settings$pca$nPcs),
-            selected = shiny::isolate(analysis_settings$pca$y)
-          ),
+          bslib::accordion(
+            multiple = FALSE,
+            bslib::accordion_panel(
+              title = "PCA settings",
+              icon = bsicons::bs_icon("menu-app"),
+              shiny::selectInput(
+                inputId = ns("pcaSelectTable"),
+                label = "Select data table:",
+                choices = selection[selection %in% selected],
+                selected = shiny::isolate(analysis_settings$pca$table)
+              ),
+              shiny::sliderInput(
+                inputId = ns("pcaNumberPcs"),
+                label = "Maximum number of PCs:",
+                value = shiny::isolate(analysis_settings$pca$nPcs),
+                min = 2,
+                max = 10,
+                step = 1
+              ),
+              shiny::selectInput(
+                inputId = ns("pcaTransformation"),
+                label = "Transformation:",
+                choices = c("None" = "none",
+                            "Log10" = "log10",
+                            "Log1p" = "log1p"),
+                selected = shiny::isolate(analysis_settings$pca$transformation)
+              ),
+              shiny::selectInput(
+                inputId = ns("pcaScaling"),
+                label = "Scaling:",
+                choices = c("None" = "none",
+                            "UV" = "uv",
+                            "Pareto" = "pareto"),
+                selected = shiny::isolate(analysis_settings$pca$scaling)
+              )
+            ),
+            bslib::accordion_panel(
+              title = "Plot settings",
+              icon = bsicons::bs_icon("menu-app"),
+              shiny::selectInput(
+                inputId = ns("pcaSampleAnnotation"),
+                label = "Sample annotation:",
+                choices = c("none", r$columns$groups),
+                selected = shiny::isolate(analysis_settings$pca$sample_annotation)
+              ),
+              shiny::selectInput(
+                inputId = ns("pcaFeatureAnnotation"),
+                label = "Feature annotation:",
+                choices = c("None" = "none",
+                            "Lipid class" = "Class"),
+                selected = shiny::isolate(analysis_settings$pca$feature_annotation)
+              ),
+              shiny::selectInput(
+                inputId = ns("pcaSelectPlot"),
+                label = "Show plot:",
+                choices = c("Scores" = "scores",
+                            "Loadings" = "loadings",
+                            "Summary of fit" = "summary_fit"),
+                selected = shiny::isolate(analysis_settings$pca$plot)
+              ),
+              shiny::selectInput(
+                inputId = ns("pcaX"),
+                label = "x-axis:",
+                choices = paste0("PC", 1:analysis_settings$pca$nPcs),
+                selected = shiny::isolate(analysis_settings$pca$x)
+              ),
+              shiny::selectInput(
+                inputId = ns("pcaY"),
+                label = "y-axis:",
+                choices = paste0("PC", 1:analysis_settings$pca$nPcs),
+                selected = shiny::isolate(analysis_settings$pca$y)
+              )
+            )
+          ), # end accordion
           style = "font-size:75%"
-        )
+        ) # end div
       )
     })
 
