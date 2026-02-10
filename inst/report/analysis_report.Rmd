@@ -21,6 +21,7 @@ params:
 knitr::opts_chunk$set(echo=FALSE, warning=FALSE, message=FALSE)
 library(knitr)
 library(htmltools)
+library(plotly)
 library(sessioninfo)
 ```
 
@@ -52,12 +53,11 @@ if(any(heatmap_index)) {
 }
 ```
 
-```{r fig.height=20}
+```{r}
 if(any(heatmap_index)) {
   l <- htmltools::tagList()
   for(a in 1:length(heatmap_data)) {
     names_settings <- names(heatmap_data[[a]]$settings)
-    print(names_settings)
     l[[a]] <- htmltools::tagList(
       htmltools::h2(heatmap_data[[a]]$label),
       htmltools::p("Settings:"),
@@ -66,7 +66,8 @@ if(any(heatmap_index)) {
           tags$li(paste0(setting, ": ", paste(heatmap_data[[a]]$settings[[setting]], collapse = ", ")))
         })
       ),
-      heatmap_data[[a]]$plot
+      heatmap_data[[a]]$plot |> 
+        plotly::layout(height = 800)
     )
   }
   l
