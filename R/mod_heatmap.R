@@ -49,6 +49,12 @@ mod_heatmap_server <- function(id, r){
 
     print("Heatmap server started")
 
+    analysis_settings <- shiny::reactiveValues(
+      heatmap = list(
+        table = "raw"
+      )
+    )
+
     hmPlot <- reactiveVal()
 
     output$settingsHeatmap <- shiny::renderUI({
@@ -127,6 +133,18 @@ mod_heatmap_server <- function(id, r){
 
       return(hmPlot())
     })
+
+    #--------------------------------------------------------------- export ----
+    export <- function() {
+      res <- list(
+        plot = hmPlot(),
+        settings = analysis_settings$heatmap
+      )
+
+      return(res)
+    }
+
+    return(list(export = export))
 
   })
 }

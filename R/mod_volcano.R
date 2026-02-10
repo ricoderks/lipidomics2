@@ -67,6 +67,10 @@ mod_volcano_server <- function(id, r){
       )
     )
 
+    exportplot <- shiny::reactiveValues(
+      plot = NULL
+    )
+
     output$settingsVolcano <- shiny::renderUI({
       selection <- c(
         "Raw data" = "raw",
@@ -208,6 +212,7 @@ mod_volcano_server <- function(id, r){
 
 
     output$volcanoPlot <- plotly::renderPlotly({
+      print("show plot")
       shiny::req(input$volcanoGroup1 != input$volcanoGroup2,
                  input$volcanoSelectTable,
                  input$volcanoTransformation,
@@ -240,8 +245,21 @@ mod_volcano_server <- function(id, r){
                           pvalue_threshold = as.numeric(input$volcanoPValueThreshold),
                           feature_annotation = input$volcanoFeatureAnnotation)
 
+      exportplot$plot <- ply
+
       return(ply)
     })
 
+    #--------------------------------------------------------------- export ----
+    export <- function() {
+      res <- list(
+        plot = exportplot$plot,
+        settings = analysis_settings$volcano
+      )
+
+      return(res)
+    }
+
+    return(list(export = export))
   })
 }

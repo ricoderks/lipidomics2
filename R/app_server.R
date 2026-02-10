@@ -214,7 +214,8 @@ app_server <- function(input, output, session) {
       normalization = list(
         totNorm = FALSE,
         pqnNorm = FALSE
-      )
+      ),
+      modules = NULL
     )
   )
 

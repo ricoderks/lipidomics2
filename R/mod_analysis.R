@@ -84,7 +84,7 @@ mod_analysis_server <- function(id, r) {
         NULL
       )
 
-      rv$modules[[tabId]] <- list(type = type, label = label, export = NA)
+      rv$modules[[tabId]] <- list(type = type, label = label, export = mod$export)
       rv$labels[[tabId]]  <- label
 
       shiny::observeEvent(input[[paste0(tabId, "-remove")]], {
@@ -97,7 +97,9 @@ mod_analysis_server <- function(id, r) {
       },
       once = TRUE,
       ignoreInit = TRUE)
-    }
+
+      r$analysis$modules <- rv$modules
+    } # end add_analysis_tab
 
 
     output$analysis_sidebar_ui <- shiny::renderUI({

@@ -144,16 +144,39 @@ mod_export_server <- function(id, r) {
                   to = temp_report,
                   overwrite = TRUE)
 
-        # param stuff
-        params <- list(
-          analysis_data = r$tables$analysis_data,
-          trend_data = r$tables$trend_data,
-          rsd_data_overall = r$tables$rsd_data_overall,
-          rsd_data_batch = r$tables$rsd_data_batch,
-          selected_pools = r$index$selected_pools,
-          selected_samples = r$index$selected_samples,
-          rsd_cutoff = r$settings$rsd_cutoff
-        )
+        if(input$export_select_report == "qc") {
+          # param stuff
+          params <- list(
+            analysis_data = r$tables$analysis_data,
+            trend_data = r$tables$trend_data,
+            rsd_data_overall = r$tables$rsd_data_overall,
+            rsd_data_batch = r$tables$rsd_data_batch,
+            selected_pools = r$index$selected_pools,
+            selected_samples = r$index$selected_samples,
+            rsd_cutoff = r$settings$rsd_cutoff
+          )
+        } else {
+          analyses <- replicate(
+            n = length(r$analysis$modules),
+            list(
+              label = NULL,
+              plot = NULL,
+              settings = NULL
+            ),
+            simplify = FALSE
+          )
+          names(analyses) <- names(r$analysis$modules)
+          for(a in 1:length(r$analysis$modules)) {
+            m <- r$analysis$modules[[a]]
+            analyses[[a]]$label <- m$label
+            analyses[[a]]$plot <- m$export()$plot
+            analyses[[a]]$settings <- m$export()$settings
+          }
+
+          params <- list(
+            analyses = analyses
+          )
+        }
 
         # render
         rmarkdown::render(input = temp_report,

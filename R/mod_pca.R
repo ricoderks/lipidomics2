@@ -208,5 +208,12 @@ mod_pca_server <- function(id, r){
 
       return(ply)
     })
+
+    #--------------------------------------------------------------- export ----
+    export <- function() {
+
+    }
+
+    return(list(export = export))
   })
 }
