@@ -102,8 +102,7 @@ mod_file_ui <- function(id) {
                 ),
                 style = "font-size:75%"
               )
-
-            ),
+            ), # end sidebar
             shiny::div(
               bslib::card_body(
                 shiny::fileInput(

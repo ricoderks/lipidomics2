@@ -28,9 +28,11 @@ mod_volcano_ui <- function(id) {
             width = "50%"
           )
         ),
-        # is becoming to high
-        plotly::plotlyOutput(
-          outputId = ns("volcanoPlot")
+        bslib::card(
+          plotly::plotlyOutput(
+            outputId = ns("volcanoPlot")
+          ),
+          height = "100%"
         )
       )
     )
@@ -38,6 +40,9 @@ mod_volcano_ui <- function(id) {
 }
 
 #' volcano Server Functions
+#'
+#' @importFrom bsicons bs_icon
+#' @importFrom bslib accordion accordion_panel
 #'
 #' @noRd
 mod_volcano_server <- function(id, r){
@@ -57,7 +62,8 @@ mod_volcano_server <- function(id, r){
         group1 = choices_group[1],
         group2 = choices_group[2],
         fc_threshold = 2,
-        pvalue_threshold = 0.05
+        pvalue_threshold = 0.05,
+        feature_annotation = "none"
       )
     )
 
@@ -78,61 +84,79 @@ mod_volcano_server <- function(id, r){
 
       shiny::tagList(
         shiny::div(
-          shiny::selectInput(
-            inputId = ns("volcanoSelectTable"),
-            label = "Select data table:",
-            choices = selection[selection %in% selected],
-            selected = shiny::isolate(analysis_settings$volcano$table)
-          ),
-          shiny::selectInput(
-            inputId = ns("volcanoTransformation"),
-            label = "Transformation:",
-            choices = c("None" = "none",
-                        "Log10" = "log10",
-                        "Log1p" = "log1p"),
-            selected = shiny::isolate(analysis_settings$volcano$transformation)
-          ),
-          shiny::selectInput(
-            inputId = ns("volcanoTest"),
-            label = "Select test:",
-            choices = c("t-test" = "ttest",
-                        "Mann-Whitney" = "mw"),
-            selected = shiny::isolate(analysis_settings$volcano$test)
-          ),
-          shiny::selectInput(
-            inputId = ns("volcanoGroup"),
-            label = "Select group column:",
-            choices = r$columns$groups,
-            selected = r$columns$groups
-          ),
-          shiny::selectInput(
-            inputId = ns("volcanoGroup1"),
-            label = "Select group 1:",
-            choices = choices_group,
-            selected = shiny::isolate(analysis_settings$volcano$group1)
-          ),
-          shiny::selectInput(
-            inputId = ns("volcanoGroup2"),
-            label = "Select group 2:",
-            choices = choices_group,
-            selected = shiny::isolate(analysis_settings$volcano$group2)
-          ),
-          shiny::sliderInput(
-            inputId = ns("volcanoFcThreshold"),
-            label = "Fold change threshold:",
-            value = shiny::isolate(analysis_settings$volcano$fc_threshold),
-            min = 1,
-            max = 4,
-            step = 0.1
-          ),
-          shiny::sliderInput(
-            inputId = ns("volcanoPValueThreshold"),
-            label = "p-value threshold:",
-            value = shiny::isolate(analysis_settings$volcano$pvalue_threshold),
-            min = 0,
-            max = 0.1,
-            step = 0.005
-          ),
+          bslib::accordion(
+            multiple = FALSE,
+            bslib::accordion_panel(
+              title = "Test settings",
+              icon = bsicons::bs_icon("menu-app"),
+              shiny::selectInput(
+                inputId = ns("volcanoSelectTable"),
+                label = "Select data table:",
+                choices = selection[selection %in% selected],
+                selected = shiny::isolate(analysis_settings$volcano$table)
+              ),
+              shiny::selectInput(
+                inputId = ns("volcanoTransformation"),
+                label = "Transformation:",
+                choices = c("None" = "none",
+                            "Log10" = "log10",
+                            "Log1p" = "log1p"),
+                selected = shiny::isolate(analysis_settings$volcano$transformation)
+              ),
+              shiny::selectInput(
+                inputId = ns("volcanoTest"),
+                label = "Select test:",
+                choices = c("t-test" = "ttest",
+                            "Mann-Whitney" = "mw"),
+                selected = shiny::isolate(analysis_settings$volcano$test)
+              ),
+              shiny::selectInput(
+                inputId = ns("volcanoGroup"),
+                label = "Select group column:",
+                choices = r$columns$groups,
+                selected = r$columns$groups
+              ),
+              shiny::selectInput(
+                inputId = ns("volcanoGroup1"),
+                label = "Select group 1:",
+                choices = choices_group,
+                selected = shiny::isolate(analysis_settings$volcano$group1)
+              ),
+              shiny::selectInput(
+                inputId = ns("volcanoGroup2"),
+                label = "Select group 2:",
+                choices = choices_group,
+                selected = shiny::isolate(analysis_settings$volcano$group2)
+              )
+            ),
+            bslib::accordion_panel(
+              title = "Plot settings",
+              icon = bsicons::bs_icon("menu-app"),
+              shiny::selectInput(
+                inputId = ns("volcanoFeatureAnnotation"),
+                label = "Feature annotation",
+                choices = c("None" = "none",
+                            "Lipid class" = "Class"),
+                selected = shiny::isolate(analysis_settings$volcano$feature_annotation)
+              ),
+              shiny::sliderInput(
+                inputId = ns("volcanoFcThreshold"),
+                label = "Fold change threshold:",
+                value = shiny::isolate(analysis_settings$volcano$fc_threshold),
+                min = 1,
+                max = 4,
+                step = 0.1
+              ),
+              shiny::sliderInput(
+                inputId = ns("volcanoPValueThreshold"),
+                label = "p-value threshold:",
+                value = shiny::isolate(analysis_settings$volcano$pvalue_threshold),
+                min = 0,
+                max = 0.1,
+                step = 0.005
+              )
+            )
+          ), # end accordion panel
           style = "font-size:75%"
         )
       )
@@ -213,7 +237,8 @@ mod_volcano_server <- function(id, r){
 
       ply <- show_volcano(data = plot_data,
                           fc_threshold = as.numeric(input$volcanoFcThreshold),
-                          pvalue_threshold = as.numeric(input$volcanoPValueThreshold))
+                          pvalue_threshold = as.numeric(input$volcanoPValueThreshold),
+                          feature_annotation = input$volcanoFeatureAnnotation)
 
       return(ply)
     })
