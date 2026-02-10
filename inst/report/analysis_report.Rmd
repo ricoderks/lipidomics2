@@ -78,7 +78,7 @@ if(any(volcano_index)) {
 }
 ```
 
-```{r results='asis'}
+```{r}
 if(any(volcano_index)) {
   l <- htmltools::tagList()
   for(a in 1:length(volcano_data)) {
