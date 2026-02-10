@@ -57,12 +57,13 @@ if(any(heatmap_index)) {
   l <- htmltools::tagList()
   for(a in 1:length(heatmap_data)) {
     names_settings <- names(heatmap_data[[a]]$settings)
+    print(names_settings)
     l[[a]] <- htmltools::tagList(
       htmltools::h2(heatmap_data[[a]]$label),
       htmltools::p("Settings:"),
       htmltools::tags$ul(
         lapply(names_settings, function(setting) {
-          tags$li(paste0(setting, ": ", heatmap_data[[a]]$settings[[setting]]))
+          tags$li(paste0(setting, ": ", paste(heatmap_data[[a]]$settings[[setting]], collapse = ", ")))
         })
       ),
       heatmap_data[[a]]$plot
@@ -88,7 +89,7 @@ if(any(volcano_index)) {
       htmltools::p("Settings:"),
       htmltools::tags$ul(
         lapply(names_settings, function(setting) {
-          tags$li(paste0(setting, ": ", volcano_data[[a]]$settings[[setting]]))
+          tags$li(paste0(setting, ": ", paste(volcano_data[[a]]$settings[[setting]], collapse = ", ")))
         })
       ),
       volcano_data[[a]]$plot

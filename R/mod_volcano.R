@@ -118,7 +118,7 @@ mod_volcano_server <- function(id, r){
                 inputId = ns("volcanoGroup"),
                 label = "Select group column:",
                 choices = r$columns$groups,
-                selected = r$columns$groups
+                selected = shiny::isolate(analysis_settings$volcano$group)
               ),
               shiny::selectInput(
                 inputId = ns("volcanoGroup1"),

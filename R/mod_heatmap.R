@@ -51,11 +51,18 @@ mod_heatmap_server <- function(id, r){
 
     analysis_settings <- shiny::reactiveValues(
       heatmap = list(
-        table = "raw"
+        table = "raw",
+        clustering = NULL,
+        sample_annotation = NULL,
+        feature_annotation = NULL
       )
     )
 
-    hmPlot <- reactiveVal()
+    plot_data <- reactiveVal()
+
+    exportplot <- shiny::reactiveValues(
+      plot = NULL
+    )
 
     output$settingsHeatmap <- shiny::renderUI({
       selection <- c(
@@ -72,28 +79,43 @@ mod_heatmap_server <- function(id, r){
           inputId = ns("hmSelectTable"),
           label = "Select data table:",
           choices = selection[selection %in% selected],
-          selected = "raw"
+          selected = shiny::isolate(analysis_settings$heatmap$table)
         ),
         shiny::checkboxGroupInput(
           inputId = ns("hmClustering"),
           label = "Select clustering:",
           choices = c("Features" = "rows",
-                      "Samples" = "columns")
+                      "Samples" = "columns"),
+          selected = shiny::isolate(analysis_settings$heatmap$clustering)
         ),
         shiny::selectInput(
           inputId = ns("hmSampleAnnotation"),
           label = "Sample annotation:",
           choices = r$columns$groups,
+          selected = shiny::isolate(analysis_settings$heatmap$sample_annotation),
           multiple = TRUE
         ),
         shiny::selectInput(
           inputId = ns("hmFeatureAnnotation"),
           label = "Feature annotation:",
           choices = c("Lipid class" = "Class"),
+          selected = shiny::isolate(analysis_settings$heatmap$feature_annotation),
           multiple = TRUE
         )
       )
     })
+
+
+    shiny::observeEvent(
+      c(input$hmSelectTable,
+        input$hmClustering,
+        input$hmSampleAnnotation,
+        input$hmFeatureAnnotation), {
+          analysis_settings$heatmap$table <- input$hmSelectTable
+          analysis_settings$heatmap$clustering <- input$hmClustering
+          analysis_settings$heatmap$sample_annotation <- input$hmSampleAnnotation
+          analysis_settings$heatmap$feature_annotation <- input$hmFeatureAnnotation
+        })
 
 
     shiny::observeEvent(input$hmGenerate, {
@@ -117,27 +139,30 @@ mod_heatmap_server <- function(id, r){
                                             r$tables$analysis$class_keep == TRUE &
                                             r$tables$analysis$sample_name %in% r$index$selected_samples, ]
 
-      hmPlot(show_heatmap(data = plot_data,
-                          area_column = area_column,
-                          column_annotation = sample_annotation,
-                          row_annotation = feature_annotation,
-                          row_clustering = row_clustering,
-                          col_clustering = col_clustering))
+      output$heatmap <- plotly::renderPlotly({
+        shiny::req(plot_data)
+
+        ply <- show_heatmap(data = plot_data,
+                            area_column = area_column,
+                            column_annotation = sample_annotation,
+                            row_annotation = feature_annotation,
+                            row_clustering = row_clustering,
+                            col_clustering = col_clustering)
+
+        exportplot$plot <- ply
+
+        return(ply)
+      })
+
     })
 
 
-    output$heatmap <- plotly::renderPlotly({
-      shiny::req(hmPlot())
 
-      print("Show heatmap here")
-
-      return(hmPlot())
-    })
 
     #--------------------------------------------------------------- export ----
     export <- function() {
       res <- list(
-        plot = hmPlot(),
+        plot = exportplot$plot,
         settings = analysis_settings$heatmap
       )
 
