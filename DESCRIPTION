@@ -1,6 +1,6 @@
 Package: lipidomics2
 Title: Lipidomics worklow Shiny app
-Version: 0.0.0.9025
+Version: 0.0.0.9026
 Authors@R: 
     person("Rico", "Derks", , "r.j.e.derks@lumc.nl", role = c("aut", "cre"))
 Description: A lipidomics workflow app, build on the Shiny framework.  It

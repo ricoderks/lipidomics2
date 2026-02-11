@@ -66,8 +66,11 @@ if(any(heatmap_index)) {
           tags$li(paste0(setting, ": ", paste(heatmap_data[[a]]$settings[[setting]], collapse = ", ")))
         })
       ),
-      heatmap_data[[a]]$plot |> 
+      htmltools::div(
+        style = "height: 800px; margin-bottom: 50px;",
+        heatmap_data[[a]]$plot |> 
         plotly::layout(height = 800)
+      )
     )
   }
   l
