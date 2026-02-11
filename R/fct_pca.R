@@ -96,13 +96,11 @@ do_pca <- function(data = NULL,
     "my_id" = colnames(pca_data),
     m@loadings
   )
-  if(!is.null(feature_annotation)) {
-    loadings <- merge(
-      x = loadings,
-      y = unique(data[, c("my_id", feature_annotation)]),
-      by = "my_id"
-    )
-  }
+  loadings <- merge(
+    x = loadings,
+    y = unique(data[, c("my_id", "ShortLipidName", "LongLipidName", "Class")]),
+    by = "my_id"
+  )
 
   res <- list(
     "summary_fit" = summary_fit,
@@ -280,6 +278,17 @@ loadings_plot <- function(data = NULL,
     x = ~.data[[x]],
     y = ~.data[[y]],
     color = color_arg,
+    text = ~paste0(
+      "Class: ", Class, "<br>",
+      "Lipid (short): ", ShortLipidName, "<br>",
+      "Lipid: ", LongLipidName
+    ),
+    hovertemplate = paste0(
+      "<b>%{text}</b><br><br>",
+      "%{xaxis.title.text}: %{x:.3}<br>",
+      "%{yaxis.title.text}: %{y:.3}<br>",
+      "<extra></extra>"
+    ),
     type = "scatter",
     mode = "markers",
     marker = list(
