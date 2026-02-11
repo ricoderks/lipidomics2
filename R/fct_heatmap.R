@@ -10,6 +10,7 @@
 #' @param row_annotation character(), vector with column names for feature annotation.
 #' @param row_clustering logical(1), should the rows be clustered.
 #' @param col_clustering logical(1), should the rows be clustered.
+#' @param height numeric(1), height of the plotly plot in pixels.
 #'
 #' @return Heatmap, plotly object.
 #'
@@ -25,7 +26,8 @@ show_heatmap <- function(data = NULL,
                          column_annotation = NULL,
                          row_annotation = NULL,
                          row_clustering = FALSE,
-                         col_clustering = FALSE) {
+                         col_clustering = FALSE,
+                         height = NULL) {
 
   columns <- c("my_id", "sample_name", "LongLipidName",
                "ShortLipidName", "Class")
@@ -81,7 +83,8 @@ show_heatmap <- function(data = NULL,
     col_side_colors = sample_annotation,
     row_side_colors = feature_annotation,
     row_side_palette = colors,
-    scale = "row"
+    scale = "row",
+    height = height
   )
 
   if(!is.null(feature_annotation)) {

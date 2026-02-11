@@ -13,28 +13,47 @@ mod_heatmap_ui <- function(id) {
   ns <- shiny::NS(id)
 
   shiny::tagList(
-    bslib::card(
-      bslib::page_sidebar(
-        sidebar = bslib::sidebar(
-          shiny::uiOutput(
-            outputId = ns("settingsHeatmap")
-          ),
-          shiny::actionButton(
-            inputId = ns("hmGenerate"),
-            label = "Generate heatmap"
-          ),
-          shiny::hr(),
-          shiny::actionButton(
-            inputId = ns("remove"),
-            label = "",
-            icon = icon("trash"),
-            class = "btn-danger",
-            width = "50%"
-          )
+    # determine the window height
+
+    shiny::tags$script(
+      sprintf(
+        "
+        function sendHeight() {
+          Shiny.setInputValue('%s', window.innerHeight);
+        }
+
+        $(document).on('shiny:connected', function() {
+          sendHeight();
+        });
+
+        $(window).resize(function() {
+          sendHeight();
+        });
+        ",
+        ns("window_height")
+      )
+    ),
+
+    bslib::layout_sidebar(
+      sidebar = bslib::sidebar(
+        shiny::uiOutput(
+          outputId = ns("settingsHeatmap")
         ),
-        plotly::plotlyOutput(
-          outputId = ns("heatmap")
+        shiny::actionButton(
+          inputId = ns("hmGenerate"),
+          label = "Generate heatmap"
+        ),
+        shiny::hr(),
+        shiny::actionButton(
+          inputId = ns("remove"),
+          label = "",
+          icon = icon("trash"),
+          class = "btn-danger",
+          width = "50%"
         )
+      ),
+      shiny::uiOutput(
+        outputId = ns("hmMain")
       )
     )
   )
@@ -106,6 +125,20 @@ mod_heatmap_server <- function(id, r){
     })
 
 
+    output$hmMain <- shiny::renderUI({
+      shiny::req(input$window_height)
+
+      shiny::tagList(
+        bslib::card(
+          plotly::plotlyOutput(
+            outputId = ns("hmHeatmap")
+          ),
+          height = paste0(0.80 * input$window_height, "px")
+        )
+      )
+    })
+
+
     shiny::observeEvent(
       c(input$hmSelectTable,
         input$hmClustering,
@@ -139,15 +172,17 @@ mod_heatmap_server <- function(id, r){
                                             r$tables$analysis$class_keep == TRUE &
                                             r$tables$analysis$sample_name %in% r$index$selected_samples, ]
 
-      output$heatmap <- plotly::renderPlotly({
-        shiny::req(plot_data)
+      output$hmHeatmap <- plotly::renderPlotly({
+        shiny::req(plot_data,
+                   input$window_height)
 
         ply <- show_heatmap(data = plot_data,
                             area_column = area_column,
                             column_annotation = sample_annotation,
                             row_annotation = feature_annotation,
                             row_clustering = row_clustering,
-                            col_clustering = col_clustering)
+                            col_clustering = col_clustering,
+                            height =  0.78 * input$window_height)
 
         exportplot$plot <- ply
 
