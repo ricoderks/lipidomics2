@@ -85,7 +85,7 @@ if(any(heatmap_index)) {
         })
       ),
       htmltools::div(
-        style = "height: 800px; margin-bottom: 25px;",
+        style = "height: 1200px; margin-bottom: 25px;",
         heatmap_data[[a]]$plot |> 
           plotly::layout(height = 1200)
       )
