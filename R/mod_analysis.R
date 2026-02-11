@@ -94,6 +94,8 @@ mod_analysis_server <- function(id, r) {
         )
         rv$modules[[tabId]] <- NULL
         rv$labels[[tabId]]  <- NULL
+
+        r$analysis$modules <- rv$modules
       },
       once = TRUE,
       ignoreInit = TRUE)
