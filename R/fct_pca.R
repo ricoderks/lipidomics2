@@ -343,6 +343,12 @@ summary_fit <- function(data = NULL) {
     x = ~PC,
     y = ~value,
     color = ~variable,
+    customdata = ~variable,
+    hovertemplate = paste0(
+      "<b>PC%{x}</b><br>",
+      "%{customdata}: %{y:.3f}",
+      "<extra></extra>"
+    ),
     type = "bar"
   ) |>
     plotly::layout(
