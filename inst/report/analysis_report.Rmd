@@ -85,9 +85,9 @@ if(any(heatmap_index)) {
         })
       ),
       htmltools::div(
-        style = "height: 800px; margin-bottom: 50px;",
+        style = "height: 800px; margin-bottom: 25px;",
         heatmap_data[[a]]$plot |> 
-        plotly::layout(height = 800)
+          plotly::layout(height = 1200)
       )
     )
   }
@@ -115,10 +115,34 @@ if(any(pca_index)) {
         })
       ),
       htmltools::div(
-        style = "height: 800px; margin-bottom: 50px;",
-        pca_data[[a]]$plot |> 
-        plotly::layout(height = 800)
+        style = "height: 250px; margin-bottom: 25px;",
+        pca_data[[a]]$plot[["summary_fit"]] |> 
+          plotly::layout(height = 250)
+      ),
+      
+      htmltools::div(
+        style = paste(
+          "display: grid;",
+          "grid-template-columns: repeat(2, minmax(0, 1fr));",
+          "gap: 16px;",
+          "margin-bottom: 50px;"
+        ),
+        # Left plot
+        htmltools::div(
+          style = "height: 500px;",
+          pca_data[[a]]$plot[["scores"]] |> 
+            plotly::layout(height = 500) |>
+            plotly::config(responsive = TRUE)
+        ),
+        # Right plot
+        htmltools::div(
+          style = "height: 500px;",
+          pca_data[[a]]$plot[["loadings"]] |> 
+            plotly::layout(height = 500) |>
+            plotly::config(responsive = TRUE)
+        )
       )
+      
     )
   }
   l
@@ -144,7 +168,11 @@ if(any(volcano_index)) {
           tags$li(paste0(setting, ": ", paste(volcano_data[[a]]$settings[[setting]], collapse = ", ")))
         })
       ),
-      volcano_data[[a]]$plot
+      htmltools::div(
+        style = "height: 800px; margin-bottom: 25px;",
+        volcano_data[[a]]$plot |> 
+          plotly::layout(height = 600)
+      )
     )
   }
   l

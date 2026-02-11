@@ -120,7 +120,6 @@ do_pca <- function(data = NULL,
 #' Show a plot of the PCA analysis.
 #'
 #' @param data list with 3 data.frames summary of fit, scores and loadings.
-#' @param plot character(1) which plot to show.
 #' @param x character(1), what to show on the x-axis.
 #' @param y character(1), what to show on the y-axis.
 #' @param sample_annotation character(1), what to color in the scores plot.
@@ -135,26 +134,26 @@ do_pca <- function(data = NULL,
 show_pca <- function(data = NULL,
                      x = "PC1",
                      y = "PC2",
-                     plot = c("scores", "loadings", "summary_fit"),
                      sample_annotation = NULL,
                      feature_annotation = NULL) {
 
-  plot_data <- data[[plot]]
-
-  ply <- switch(
-    plot,
-    "scores" = scores_plot(data = plot_data,
-                           sample_annotation = sample_annotation,
-                           x = x,
-                           y = y),
-    "loadings" = loadings_plot(data = plot_data,
-                               feature_annotation = feature_annotation,
-                               x = x,
-                               y = y),
-    "summary_fit" = summary_fit(data = plot_data)
+  plys <- list(
+    "scores" = NULL,
+    "loadings" = NULL,
+    "summary_fit" = NULL
   )
 
-  return(ply)
+  plys[["scores"]] <- scores_plot(data = data[["scores"]],
+                                  sample_annotation = sample_annotation,
+                                  x = x,
+                                  y = y)
+  plys[["loadings"]] <- loadings_plot(data = data[["loadings"]],
+                                      feature_annotation = feature_annotation,
+                                      x = x,
+                                      y = y)
+  plys[["summary_fit"]] <- summary_fit(data = data[["summary_fit"]])
+
+  return(plys)
 }
 
 
@@ -218,6 +217,7 @@ scores_plot <- function(data = NULL,
       showlegend = FALSE
     ) |>
     plotly::layout(
+      title = list(text = "Scores plot"),
       xaxis = list(title = x),
       yaxis = list(title = y)
     )
@@ -267,6 +267,7 @@ loadings_plot <- function(data = NULL,
     )
   ) |>
     plotly::layout(
+      title = list(text = "Loadings plot"),
       xaxis = list(title = x),
       yaxis = list(title = y)
     )
@@ -286,7 +287,7 @@ loadings_plot <- function(data = NULL,
 #' @details The data frame \code{data} should contain 3 columns. \code{PC},
 #' \code{variable} and \code{value}.
 #'
-#' @importFrom plotly plot_ly
+#' @importFrom plotly plot_ly layout
 #'
 #' @author Rico Derks
 #'
@@ -299,7 +300,10 @@ summary_fit <- function(data = NULL) {
     y = ~value,
     color = ~variable,
     type = "bar"
-  )
+  ) |>
+    plotly::layout(
+      title = list(text = "Summary of fit")
+    )
 
   return(ply)
 }

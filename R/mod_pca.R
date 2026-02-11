@@ -59,6 +59,14 @@ mod_pca_server <- function(id, r){
       )
     )
 
+    exportplot <- shiny::reactiveValues(
+      plot = list(
+        scores = NULL,
+        loadings = NULL,
+        summary_fit = NULL
+      )
+    )
+
     output$settingsPca <- shiny::renderUI({
       # executes twice?!?!
       selection <- c(
@@ -152,25 +160,26 @@ mod_pca_server <- function(id, r){
 
     shiny::observeEvent(
       c(input$pcaSelectTable,
+        input$pcaTransformation,
+        input$pcaScaling,
         input$pcaNumberPcs,
         input$pcaX,
         input$pcaY,
         input$pcaSelectPlot,
-        input$pcaTransformation,
-        input$pcaScaling,
         input$pcaSampleAnnotation,
         input$pcaFeatureAnnotation),
       {
-        analysis_settings$pca$table <- input$pcaSelectTable
         analysis_settings$pca$nPcs <- input$pcaNumberPcs
         analysis_settings$pca$x <- input$pcaX
         analysis_settings$pca$y <- input$pcaY
         analysis_settings$pca$plot <- input$pcaSelectPlot
-        analysis_settings$pca$transformation <- input$pcaTransformation
-        analysis_settings$pca$scaling <- input$pcaScaling
         analysis_settings$pca$sample_annotation <- input$pcaSampleAnnotation
         analysis_settings$pca$feature_annotation <- input$pcaFeatureAnnotation
+        analysis_settings$pca$table <- input$pcaSelectTable
+        analysis_settings$pca$transformation <- input$pcaTransformation
+        analysis_settings$pca$scaling <- input$pcaScaling
       })
+
 
     output$pcaPlot <- plotly::renderPlotly({
       shiny::req(r$tables$analysis_data,
@@ -199,19 +208,27 @@ mod_pca_server <- function(id, r){
                           scaling = input$pcaScaling,
                           transformation = input$pcaTransformation)
 
-      ply <- show_pca(data = plot_data,
-                      plot = input$pcaSelectPlot,
-                      x = input$pcaX,
-                      y = input$pcaY,
-                      sample_annotation = input$pcaSampleAnnotation,
-                      feature_annotation = input$pcaFeatureAnnotation)
+      plys <- show_pca(
+        data = plot_data,
+        x = input$pcaX,
+        y = input$pcaY,
+        sample_annotation = input$pcaSampleAnnotation,
+        feature_annotation = input$pcaFeatureAnnotation
+      )
 
-      return(ply)
+      exportplot$plot <- plys
+
+      return(plys[[input$pcaSelectPlot]])
     })
 
     #--------------------------------------------------------------- export ----
     export <- function() {
+      res <- list(
+        plot = exportplot$plot,
+        settings = analysis_settings$pca
+      )
 
+      return(res)
     }
 
     return(list(export = export))
