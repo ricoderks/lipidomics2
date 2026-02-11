@@ -234,18 +234,27 @@ mod_volcano_server <- function(id, r){
                                             r$tables$analysis$class_keep == TRUE &
                                             r$tables$analysis$sample_name %in% r$index$selected_samples, ]
 
-      plot_data <- do_test(data = test_data,
-                           area_column = area_column,
-                           transformation = input$volcanoTransformation,
-                           test = input$volcanoTest,
-                           group = input$volcanoGroup,
-                           group1 = input$volcanoGroup1,
-                           group2 = input$volcanoGroup2)
+      plot_data <- do_test(
+        data = test_data,
+        area_column = area_column,
+        transformation = input$volcanoTransformation,
+        test = input$volcanoTest,
+        group = input$volcanoGroup,
+        group1 = input$volcanoGroup1,
+        group2 = input$volcanoGroup2
+      )
 
-      ply <- show_volcano(data = plot_data,
-                          fc_threshold = as.numeric(input$volcanoFcThreshold),
-                          pvalue_threshold = as.numeric(input$volcanoPValueThreshold),
-                          feature_annotation = input$volcanoFeatureAnnotation)
+      write.csv(x = plot_data,
+                file = "plot_data.csv")
+
+      ply <- show_volcano(
+        data = plot_data,
+        fc_threshold = as.numeric(input$volcanoFcThreshold),
+        pvalue_threshold = as.numeric(input$volcanoPValueThreshold),
+        feature_annotation = input$volcanoFeatureAnnotation,
+        right_label = input$volcanoGroup1,
+        left_label = input$volcanoGroup2
+      )
 
       exportplot$plot <- ply
 

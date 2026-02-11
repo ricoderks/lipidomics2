@@ -104,6 +104,8 @@ do_test.ttest <- function(data = NULL,
                          y = x[x[[group]] == group2, area_column])
     data.frame("pvalue" = res$p.value,
                # y / x = group2 / group1
+               "mean1" = res$estimate[1],
+               "mean2" = res$estimate[2],
                "fold_change" = res$estimate[2] / res$estimate[1])
   })
   res <- do.call("rbind", res)
@@ -183,6 +185,8 @@ do_test.mw <- function(data = NULL,
 #' @param fc_threshold numeric(1) threshold for the fold change threshold lines.
 #' @param pvalue_threshold numeric(1) threshold for the p-value threshold line.
 #' @param feature_annotation character(1), column with extra feature information.
+#' @param right_label character(1), right side part of the plot title.
+#' @param left_label character(1), left side part of the plot title.
 #'
 #' @returns volcano plot as plotly object.
 #'
@@ -197,7 +201,9 @@ do_test.mw <- function(data = NULL,
 show_volcano <- function(data = NULL,
                          fc_threshold = 2,
                          pvalue_threshold = 0.05,
-                         feature_annotation = "none") {
+                         feature_annotation = "none",
+                         right_label = "right",
+                         left_label = "left") {
   # todo:
   # * violin/box plot on popup
   if(feature_annotation == "none") {
@@ -226,6 +232,23 @@ show_volcano <- function(data = NULL,
   colors <- colors[1:length(classes)]
   names(colors) <- classes
 
+  # create the title
+  if(nchar(left_label) != nchar(right_label)) {
+    if(nchar(left_label) > nchar(right_label)) {
+      num <- nchar(left_label) - nchar(right_label)
+      r_label <- paste0(right_label, paste(rep("&nbsp;", num), collapse = ""))
+      l_label <- left_label
+    } else {
+      num <- nchar(right_label) - nchar(left_label)
+      r_label <- right_label
+      l_label <- paste0(paste(rep("&nbsp;", num), collapse = ""),  left_label)
+    }
+  } else {
+    r_label <- right_label
+    l_label <- left_label
+  }
+  plot_label = paste0(l_label, " vs ", r_label)
+
   ply <- plotly::plot_ly(
     data = data,
     x = ~log2fc,
@@ -247,8 +270,26 @@ show_volcano <- function(data = NULL,
       # opacity = ~significant
     )
   ) |> plotly::layout(
-    xaxis = list(title = "log2(fold change)"),
-    yaxis = list(title = "-log10(p-value)"),
+    title = list(
+      text = plot_label,
+      xanchor = "center",
+      xref = "paper"
+    ),
+    xaxis = list(
+      title = list(
+        text ="log2(fold change)"
+      ),
+      zeroline = TRUE,
+      range = c(
+        -ceiling(max(abs(data$log2fc))),
+        ceiling(max(abs(data$log2fc)))
+      )
+    ),
+    yaxis = list(
+      title = list(
+        text = "-log10(p-value)"
+      ),
+      zeroline = TRUE),
     shapes = list(
       list(
         type = "line",
