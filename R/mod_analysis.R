@@ -167,26 +167,24 @@ mod_analysis_server <- function(id, r) {
 
 
     shiny::observeEvent(input$applyNormalization, {
-      # shiny::req(r$tables$analysis_data)
-      shiny::req(!is.null(r$analysis$normalization))
-
-      # write.csv(x = r$tables$analysis_data,
-      #           file = "test.csv")
+      shiny::req(input$selectNormalization)
 
       print("Apply normalization.")
       selection <- input$selectNormalization
       r$analysis$normalization[names(r$analysis$normalization)] <-
         ifelse(names(r$analysis$normalization) %in% selection, TRUE, FALSE)
 
-      res <- switch(
-        selection,
-        "totNorm" = total_area_norm(data = r$tables$analysis_data)
-      )
+      for(norm in selection) {
+        res <- switch(
+          norm,
+          "totNorm" = total_area_norm(data = r$tables$analysis_data),
+          "pqnNorm" = pqn_norm(data = r$tables$analysis_data,
+                               QC = r$index$selected_pools),
+          r$tables$analysis_data
+        )
+      }
 
-      # write.csv(x = res,
-      #           file = "test_norm.csv")
       r$tables$analysis_data <- res
-
     })
 
 
