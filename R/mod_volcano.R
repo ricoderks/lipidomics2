@@ -244,9 +244,6 @@ mod_volcano_server <- function(id, r){
         group2 = input$volcanoGroup2
       )
 
-      write.csv(x = plot_data,
-                file = "plot_data.csv")
-
       ply <- show_volcano(
         data = plot_data,
         fc_threshold = as.numeric(input$volcanoFcThreshold),
