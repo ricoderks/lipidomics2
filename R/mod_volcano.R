@@ -186,7 +186,8 @@ mod_volcano_server <- function(id, r){
         analysis_settings$volcano$group2 <- input$volcanoGroup2
         analysis_settings$volcano$fc_threshold <- input$volcanoFcThreshold
         analysis_settings$volcano$pvalue_threshold <- input$volcanoPValueThreshold
-      }
+      },
+      ignoreInit = TRUE
     )
 
 
@@ -212,7 +213,6 @@ mod_volcano_server <- function(id, r){
 
 
     output$volcanoPlot <- plotly::renderPlotly({
-      print("show plot")
       shiny::req(input$volcanoGroup1 != input$volcanoGroup2,
                  input$volcanoSelectTable,
                  input$volcanoTransformation,
@@ -220,6 +220,8 @@ mod_volcano_server <- function(id, r){
                  input$volcanoGroup,
                  input$volcanoFcThreshold,
                  input$volcanoPValueThreshold)
+
+      print("show plot")
 
       area_column <- switch(
         input$volcanoSelectTable,
