@@ -61,6 +61,8 @@ mod_export_ui <- function(id) {
 
 #' export Server Functions
 #'
+#' @importFrom utils packageVersion
+#'
 #' @noRd
 #'
 mod_export_server <- function(id, r) {
@@ -174,7 +176,10 @@ mod_export_server <- function(id, r) {
           }
 
           params <- list(
-            analyses = analyses
+            title = "My first dynamic report",
+            author = paste0("CPM - Lipidomics | v", utils::packageVersion("lipidomics2")),
+            analyses = analyses,
+            meta_data = r$tables$meta_data
           )
         }
 
