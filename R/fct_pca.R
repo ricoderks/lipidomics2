@@ -182,8 +182,23 @@ scores_plot <- function(data = NULL,
                         sample_annotation = NULL) {
   if(sample_annotation == "none") {
     color_arg <- NULL
+    customdata <- rep("", nrow(data))
+    hovertemplate <- paste0(
+      "<b>%{text}</b><br><br>",
+      "%{xaxis.title.text}: %{x:.3}<br>",
+      "%{yaxis.title.text}: %{y:.3}<br>",
+      "<extra></extra>"
+    )
   } else {
     color_arg <- stats::as.formula(paste0("~", sample_annotation))
+    customdata <- stats::as.formula(paste0("~", sample_annotation))
+    hovertemplate <- paste0(
+      "<b>%{text}</b><br><br>",
+      "%{xaxis.title.text}: %{x:.3}<br>",
+      "%{yaxis.title.text}: %{y:.3}<br>",
+      "<b>%{customdata}</b><br>",
+      "<extra></extra>"
+    )
   }
 
   # get the data points of the ellipse
@@ -197,6 +212,11 @@ scores_plot <- function(data = NULL,
     x = ~.data[[x]],
     y = ~.data[[y]],
     color = color_arg,
+    customdata = customdata,
+    text = ~paste0(
+      "Sample: ", sample_name
+    ),
+    hovertemplate = hovertemplate,
     type = "scatter",
     mode = "markers",
     marker = list(
