@@ -25,128 +25,111 @@ mod_settings_ui <- function(id) {
       bslib::nav_panel(
         title = "General settings",
         value = "general_settings",
-        bslib::card(
-          bslib::card_header(bslib::tooltip(
-            trigger = list(
-              "Quality control",
-              bsicons::bs_icon(name = "info-circle")
-            ),
-            "Features are immediately tagged with `large_rsd` and will not show up in the bubble plots (identification tab) or in the analysis part."
-          )),
-          shiny::div(
-            bslib::layout_sidebar(
-              fillable = TRUE,
-              sidebar = bslib::sidebar(
-                shiny::checkboxInput(
-                  inputId = ns("settings_apply_rsd_cutoff"),
-                  label = "Apply RSD filtering",
-                  value = TRUE
-                ),
-                open = "always"
-              ),
-              shiny::numericInput(
-                inputId = ns("settings_rsd_cutoff"),
-                label = "RSD cut off value :",
-                value = 0.3,
-                min = 0,
-                max = 1,
-                step = 0.05
-              )
-            ),
-            style = "font-size:75%;"
-          )
-
-        ),
-        bslib::card(
-          bslib::card_header(
-            bslib::tooltip(
-              trigger = list(
-                "Identification",
-                bsicons::bs_icon(name = "info-circle")
-              ),
-              "Features are immediately tagged with `no_match`. They will show up in the bubble plots (identification tab), but not in the analysis part. Individual features can be added back via the bubble plots (identification part). Keep in mind that when the value of this filter is changed they might be removed again!!"
-            )
-          ),
-          shiny::div(
-            bslib::layout_sidebar(
-              fillable = TRUE,
-              sidebar = bslib::sidebar(
-                shiny::checkboxInput(
-                  inputId = ns("settings_apply_id_filtering"),
-                  label = "Apply ID filtering",
-                  value = TRUE
-                ),
-                open = "always"
-              ),
-              bslib::layout_column_wrap(
-                width = 1 / 2,
-                shiny::numericInput(
-                  inputId = ns("settings_dot_cutoff"),
-                  label = "Dot product cut off value :",
-                  value = 50,
-                  min = 0,
-                  max = 100,
-                  step = 1
+        bslib::accordion(
+          id = ns("general_settings_accordion"),
+          bslib::accordion_panel(
+            title = "Quality Control",
+            value = "settings_rsd",
+            shiny::div(
+              bslib::layout_sidebar(
+                fillable = TRUE,
+                sidebar = bslib::sidebar(
+                  shiny::checkboxInput(
+                    inputId = ns("settings_apply_rsd_cutoff"),
+                    label = "Apply RSD filtering",
+                    value = TRUE
+                  ),
+                  open = "always"
                 ),
                 shiny::numericInput(
-                  inputId = ns("settings_revdot_cutoff"),
-                  label = "Reverse dot product cut off value :",
-                  value = 50,
-                  min = 0,
-                  max = 100,
-                  step = 1
-                ),
-                fill = FALSE,
-                fillable = FALSE
-              )
-            ),
-            style = "font-size:75%;"
-          )
-        ),
-        bslib::card(
-          bslib::card_header(
-            bslib::tooltip(
-              trigger = list(
-                "Sample / blank ratio filter",
-                bsicons::bs_icon(name = "info-circle")
-              ),
-              "For all samples are sample / blank ratio is calculated. In 80% (default threshold) of the samples this value should be higher than the sample / blank ratio cut off. If it is not the feature is removed from the data set (set as high background)."
-            )
-          ),
-          shiny::div(
-            bslib::layout_sidebar(
-              fillable = TRUE,
-              sidebar = bslib::sidebar(
-                shiny::checkboxInput(
-                  inputId = ns("settings_apply_blank_filtering"),
-                  label = "Apply blank filtering",
-                  value = TRUE
-                ),
-                open = "always"
-              ),
-              bslib::layout_column_wrap(
-                width = 1 / 2,
-                shiny::numericInput(
-                  inputId = ns("settings_ratio"),
-                  label = "Sample / average blank ratio",
-                  value = 5,
-                  min = 0,
-                  step = 0.1
-                ),
-                shiny::sliderInput(
-                  inputId = ns("settings_threshold"),
-                  label = "Threshold",
-                  value = 0.8,
+                  inputId = ns("settings_rsd_cutoff"),
+                  label = "RSD cut off value :",
+                  value = 0.3,
                   min = 0,
                   max = 1,
-                  step = 0.1
+                  step = 0.05
                 )
-              )
-            ),
-            style = "font-size:75%;"
-          )
-        )
-      ),
+              ),
+              style = "font-size:75%;"
+            )
+          ), # end accordion_panel Quality control
+          bslib::accordion_panel(
+            title = "Identification",
+            value = "settings_identification",
+            shiny::div(
+              bslib::layout_sidebar(
+                fillable = TRUE,
+                sidebar = bslib::sidebar(
+                  shiny::checkboxInput(
+                    inputId = ns("settings_apply_id_filtering"),
+                    label = "Apply ID filtering",
+                    value = TRUE
+                  ),
+                  open = "always"
+                ),
+                bslib::layout_column_wrap(
+                  width = 1 / 2,
+                  shiny::numericInput(
+                    inputId = ns("settings_dot_cutoff"),
+                    label = "Dot product cut off value :",
+                    value = 50,
+                    min = 0,
+                    max = 100,
+                    step = 1
+                  ),
+                  shiny::numericInput(
+                    inputId = ns("settings_revdot_cutoff"),
+                    label = "Reverse dot product cut off value :",
+                    value = 50,
+                    min = 0,
+                    max = 100,
+                    step = 1
+                  ),
+                  fill = FALSE,
+                  fillable = FALSE
+                )
+              ),
+              style = "font-size:75%;"
+            )
+          ), # end accordion_panel Identification
+          bslib::accordion_panel(
+            title = "Sample / blank ratio filter",
+            value = "settings_sampleblank_filter",
+            shiny::div(
+              bslib::layout_sidebar(
+                fillable = TRUE,
+                sidebar = bslib::sidebar(
+                  shiny::checkboxInput(
+                    inputId = ns("settings_apply_blank_filtering"),
+                    label = "Apply blank filtering",
+                    value = TRUE
+                  ),
+                  open = "always"
+                ),
+                bslib::layout_column_wrap(
+                  width = 1 / 2,
+                  shiny::numericInput(
+                    inputId = ns("settings_ratio"),
+                    label = "Sample / average blank ratio",
+                    value = 5,
+                    min = 0,
+                    step = 0.1
+                  ),
+                  shiny::sliderInput(
+                    inputId = ns("settings_threshold"),
+                    label = "Threshold",
+                    value = 0.8,
+                    min = 0,
+                    max = 1,
+                    step = 0.1
+                  )
+                )
+              ),
+              style = "font-size:75%;"
+            )
+          ) # end accordion_panel sample/blank filter
+        ) # end accordion
+      ), # end nav_panel general settings
 
       #------------------------------------------------------ lipid classes ----
       bslib::nav_panel(
