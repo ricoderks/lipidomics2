@@ -141,8 +141,6 @@ mod_analysis_server <- function(id, r) {
       normSelected <- names(unlist(r$analysis$normalization)[unlist(r$analysis$normalization)])
 
       shiny::tagList(
-        shiny::h4("Trend correction"),
-        shiny::hr(),
         shiny::h4("Normalization"),
         shiny::checkboxGroupInput(
           inputId = ns("selectNormalization"),

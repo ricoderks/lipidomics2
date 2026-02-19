@@ -127,7 +127,30 @@ mod_settings_ui <- function(id) {
               ),
               style = "font-size:75%;"
             )
-          ) # end accordion_panel sample/blank filter
+          ), # end accordion_panel sample/blank filter
+          bslib::accordion_panel(
+            title = "Trend correction",
+            value = "settings_trend_correction",
+            shiny::div(
+              bslib::layout_sidebar(
+                fillable = TRUE,
+                sidebar = bslib::sidebar(
+                  shiny::checkboxInput(
+                    inputId = ns("settings_apply_trend_correction"),
+                    label = "Apply trend correction",
+                    value = FALSE
+                  ),
+                  open = "always"
+                ),
+                shiny::selectInput(
+                  inputId = ns("settings_select_trend"),
+                  label = "Select trend correction:",
+                  choices = c("LOESS" = "loess")
+                )
+              ),
+              style = "font-size:75%"
+            )
+          ) # end accordion_panel trend correction
         ) # end accordion
       ), # end nav_panel general settings
 
@@ -227,6 +250,18 @@ mod_settings_server <- function(id, r){
                            condition = isTRUE(r$settings$apply_blank_filtering))
       shinyjs::toggleState(id = "settings_threshold",
                            condition = isTRUE(r$settings$apply_blank_filtering))
+
+      # trend correction
+      shiny::updateCheckboxInput(
+        inputId = "settings_apply_trend_correction",
+        value = r$settings$apply_trend_correction
+      )
+      shiny::updateSelectInput(
+        inputId = "settings_select_trend",
+        selected = r$settings$trend_correction_method
+      )
+      shinyjs::toggleState(id = "settings_select_trend",
+                           condition = isTRUE(r$settings$apply_trend_correction))
     },
     once = TRUE)
 
@@ -234,6 +269,13 @@ mod_settings_server <- function(id, r){
     #-------------------------------------------------------- loading rdata ----
     shiny::observeEvent(shiny::req(r$rdata), {
       print("Run once RDATA!")
+      # delay to update r$rdata
+      # only works if one of the settings is not the same as the defaults.
+      onceReset <- shiny::observe({
+        r$rdata <- FALSE
+        onceReset$destroy()
+      },
+      suspended = TRUE)
 
       # RSD filtering
       shiny::updateCheckboxInput(
@@ -283,6 +325,18 @@ mod_settings_server <- function(id, r){
       shinyjs::toggleState(id = "settings_threshold",
                            condition = isTRUE(r$settings$apply_blank_filtering))
 
+      # Trend correction
+      shiny::updateCheckboxInput(
+        inputId = "settings_apply_trend_correction",
+        value = r$settings$apply_trend_correction
+      )
+      shiny::updateSelectInput(
+        inputId = "settings_select_trend",
+        selected = r$settings$trend_correction_method
+      )
+      shinyjs::toggleState(id = "settings_select_trend",
+                           condition = isTRUE(r$settings$apply_trend_correction))
+
       # make sure r$rdata gets not updated to early
       # make sure the order is the same as above
       # not the most beautiful solution
@@ -294,7 +348,10 @@ mod_settings_server <- function(id, r){
         "settings_revdot_cutoff" = input$settings_revdot_cutoff,
         "settings_apply_blank_filtering" = input$settings_apply_blank_filtering,
         "settings_ratio" = input$settings_ratio,
-        "settings_threshold" = input$settings_threshold)
+        "settings_threshold" = input$settings_threshold,
+        "settings_apply_trend_correction" = input$settings_apply_trend_correction,
+        "settings_select_trend" = input$settings_select_trend
+      )
       check_defaults <- r$settings[c("apply_rsd_cutoff",
                                      "rsd_cutoff",
                                      "apply_id_filtering",
@@ -302,7 +359,9 @@ mod_settings_server <- function(id, r){
                                      "revdot_cutoff",
                                      "apply_blank_filtering",
                                      "blanksample_ratio",
-                                     "blanksample_threshold")]
+                                     "blanksample_threshold",
+                                     "apply_trend_correction",
+                                     "trend_correction_method")]
 
       changed <- mapply(
         function(current_value, default_value) {
@@ -311,14 +370,20 @@ mod_settings_server <- function(id, r){
         check_inputs,
         check_defaults
       )
-      changed <- names(changed)[max(which(changed))]
 
-      onceReset <- observeEvent(input[[changed]], {
-        r$rdata <- FALSE
-        onceReset$destroy()   # remove this one-off observer
-      },
-      ignoreInit = TRUE,
-      once = TRUE)
+      if(length(which(changed)) > 0) {
+        changed <- names(changed)[max(which(changed))]
+
+        onceReset1 <- shiny::observeEvent(input[[changed]], {
+          r$rdata <- FALSE
+          onceReset1$destroy()   # remove this one-off observer
+        },
+        ignoreInit = TRUE,
+        once = TRUE)
+      } else {
+        onceReset$resume()
+      }
+
     })
 
 
@@ -452,6 +517,134 @@ mod_settings_server <- function(id, r){
                      r$tables$analysis_data$comment[!r$tables$analysis_data$rsd_keep] <- "large_rsd"
                    }
                  },
+      ignoreInit = TRUE
+    )
+
+    #----------------------------------------------------- trend correction ----
+    shiny::observeEvent(
+      shiny::req(!is.null(input$settings_apply_trend_correction)), {
+        if(!is.null(r$tables$analysis_data) & isFALSE(r$rdata)) {
+          r$settings$apply_trend_correction <- input$settings_apply_trend_correction
+          if(r$settings$apply_trend_correction) {
+            print("Trend correction!")
+            shinyjs::enable(id = "settings_select_trend")
+            r$settings$trend_correction_method <- input$settings_select_trend
+
+            w$show()
+
+            # apply trend correction here
+            res <- do_trend_correction(
+              data = r$tables$analysis_data,
+              method = input$settings_select_trend,
+              columns = r$columns,
+              index = r$index
+            )
+
+            r$tables$clean_data <- res
+
+            # after trend correction everything needs to be recalculated
+            print("Recalculate everything!")
+
+            r$tables$analysis_data <- r$tables$clean_data
+
+            # Trend calculation
+            qcpool_data <- r$tables$clean_data[r$tables$clean_data$sample_name %in% r$index$selected_pools, ]
+            r$tables$trend_data <- calc_trend(pool_data = qcpool_data,
+                                              order_column = r$columns$acqorder)
+
+            # RSD filtering
+            rsd_res <- calc_rsd(data = r$tables$clean_data,
+                                pools = r$index$selected_pools,
+                                cut_off = r$settings$rsd_cutoff)
+            r$index$keep_rsd <- rsd_res$keep
+            r$tables$qc_data <- rsd_res$qc_data
+            r$tables$rsd_data_overall <- rsd_res$rsd_data_overall
+            r$tables$rsd_data_batch <- rsd_res$rsd_data_batch
+
+            # ID filtering
+            r$index$keep_id <- filter_id(data = r$tables$clean_data,
+                                         dot_cutoff = r$settings$dot_cutoff,
+                                         revdot_cutoff = r$settings$revdot_cutoff)
+            # Blank filtering
+            r$index$keep_blankratio <- calc_blank_ratio(data = r$tables$clean_data,
+                                                        blanks = r$index$selected_blanks,
+                                                        samples = r$index$selected_samples,
+                                                        ratio = r$settings$blanksample_ratio,
+                                                        threshold = r$settings$blanksample_threshold)
+
+            r$tables$analysis_data$rsd_keep <- r$tables$analysis_data$my_id %in%
+              r$index$keep_rsd
+            r$tables$analysis_data$match_keep <- r$tables$analysis_data$my_id %in%
+              r$index$keep_id
+            r$tables$analysis_data$background_keep <- r$tables$analysis_data$my_id %in%
+              r$index$keep_blankratio
+            r$tables$analysis_data$keep <- mapply(all,
+                                                  r$tables$analysis_data$rsd_keep,
+                                                  r$tables$analysis_data$match_keep,
+                                                  r$tables$analysis_data$background_keep)
+
+            r$tables$analysis_data$comment <- "keep"
+            r$tables$analysis_data$comment[!r$tables$analysis_data$background_keep] <- "high_bg"
+            r$tables$analysis_data$comment[!r$tables$analysis_data$match_keep] <- "no_match"
+            r$tables$analysis_data$comment[!r$tables$analysis_data$rsd_keep] <- "large_rsd"
+
+            w$hide()
+
+          } else {
+            print("Disabled trend correction!")
+            shinyjs::disable(id = "settings_select_trend")
+            w$show()
+            print("Recalculate everything!")
+
+            # put the uncorrected data back
+            r$tables$clean_data$area <- r$tables$clean_data$areaOriginal
+            r$tables$analysis_data <- r$tables$clean_data
+
+            # Trend calculation
+            qcpool_data <- r$tables$clean_data[r$tables$clean_data$sample_name %in% r$index$selected_pools, ]
+            r$tables$trend_data <- calc_trend(pool_data = qcpool_data,
+                                              order_column = r$columns$acqorder)
+
+            # RSD filtering
+            rsd_res <- calc_rsd(data = r$tables$clean_data,
+                                pools = r$index$selected_pools,
+                                cut_off = r$settings$rsd_cutoff)
+            r$index$keep_rsd <- rsd_res$keep
+            r$tables$qc_data <- rsd_res$qc_data
+            r$tables$rsd_data_overall <- rsd_res$rsd_data_overall
+            r$tables$rsd_data_batch <- rsd_res$rsd_data_batch
+
+            # ID filtering
+            r$index$keep_id <- filter_id(data = r$tables$clean_data,
+                                         dot_cutoff = r$settings$dot_cutoff,
+                                         revdot_cutoff = r$settings$revdot_cutoff)
+            # Blank filtering
+            r$index$keep_blankratio <- calc_blank_ratio(data = r$tables$clean_data,
+                                                        blanks = r$index$selected_blanks,
+                                                        samples = r$index$selected_samples,
+                                                        ratio = r$settings$blanksample_ratio,
+                                                        threshold = r$settings$blanksample_threshold)
+
+            r$tables$analysis_data$rsd_keep <- r$tables$analysis_data$my_id %in%
+              r$index$keep_rsd
+            r$tables$analysis_data$match_keep <- r$tables$analysis_data$my_id %in%
+              r$index$keep_id
+            r$tables$analysis_data$background_keep <- r$tables$analysis_data$my_id %in%
+              r$index$keep_blankratio
+            r$tables$analysis_data$keep <- mapply(all,
+                                                  r$tables$analysis_data$rsd_keep,
+                                                  r$tables$analysis_data$match_keep,
+                                                  r$tables$analysis_data$background_keep)
+
+            r$tables$analysis_data$comment <- "keep"
+            r$tables$analysis_data$comment[!r$tables$analysis_data$background_keep] <- "high_bg"
+            r$tables$analysis_data$comment[!r$tables$analysis_data$match_keep] <- "no_match"
+            r$tables$analysis_data$comment[!r$tables$analysis_data$rsd_keep] <- "large_rsd"
+
+            w$hide()
+          }
+        }
+      },
       ignoreInit = TRUE
     )
 

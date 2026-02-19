@@ -161,11 +161,13 @@ app_server <- function(input, output, session) {
       revdot_cutoff = 50,
       blanksample_ratio = 5,
       blanksample_threshold = 0.8,
+      trend_correction_method = "loess",
       feature_class = NULL,
       selected_feature_class = NULL,
       apply_rsd_cutoff = TRUE,
       apply_id_filtering = TRUE,
-      apply_blank_filtering = TRUE
+      apply_blank_filtering = TRUE,
+      apply_trend_correction = FALSE
     ),
     files = list(
       meta_file = NULL,

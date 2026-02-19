@@ -785,6 +785,8 @@ mod_file_server <- function(id, r){
       r$settings$blanksample_threshold <- import_env$r$settings$blanksample_threshold
       r$settings$feature_class <- import_env$r$settings$feature_class
       r$settings$selected_feature_class <- import_env$r$settings$selected_feature_class
+      r$settings$apply_trend_correction <- import_env$r$settings$apply_trend_correction
+      r$settings$trend_correction_method <- import_env$r$settings$trend_correction_method
 
       progress$set(value = 70,
                    message = "Processing...",
