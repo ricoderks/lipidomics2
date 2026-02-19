@@ -553,14 +553,16 @@ mod_settings_server <- function(id, r){
                                               order_column = r$columns$acqorder)
 
             # RSD filtering
+            rsd_res <- calc_rsd(data = r$tables$clean_data,
+                                pools = r$index$selected_pools,
+                                cut_off = r$settings$rsd_cutoff)
+
+            r$tables$qc_data <- rsd_res$qc_data
+            r$tables$rsd_data_overall <- rsd_res$rsd_data_overall
+            r$tables$rsd_data_batch <- rsd_res$rsd_data_batch
+
             if(r$settings$apply_rsd_cutoff) {
-              rsd_res <- calc_rsd(data = r$tables$clean_data,
-                                  pools = r$index$selected_pools,
-                                  cut_off = r$settings$rsd_cutoff)
               r$index$keep_rsd <- rsd_res$keep
-              r$tables$qc_data <- rsd_res$qc_data
-              r$tables$rsd_data_overall <- rsd_res$rsd_data_overall
-              r$tables$rsd_data_batch <- rsd_res$rsd_data_batch
 
               r$tables$analysis_data$rsd_keep <- r$tables$analysis_data$my_id %in%
                 r$index$keep_rsd
@@ -595,14 +597,16 @@ mod_settings_server <- function(id, r){
                                               order_column = r$columns$acqorder)
 
             # RSD filtering
+            rsd_res <- calc_rsd(data = r$tables$clean_data,
+                                pools = r$index$selected_pools,
+                                cut_off = r$settings$rsd_cutoff)
+
+            r$tables$qc_data <- rsd_res$qc_data
+            r$tables$rsd_data_overall <- rsd_res$rsd_data_overall
+            r$tables$rsd_data_batch <- rsd_res$rsd_data_batch
+
             if(r$settings$apply_rsd_cutoff) {
-              rsd_res <- calc_rsd(data = r$tables$clean_data,
-                                  pools = r$index$selected_pools,
-                                  cut_off = r$settings$rsd_cutoff)
               r$index$keep_rsd <- rsd_res$keep
-              r$tables$qc_data <- rsd_res$qc_data
-              r$tables$rsd_data_overall <- rsd_res$rsd_data_overall
-              r$tables$rsd_data_batch <- rsd_res$rsd_data_batch
 
               r$tables$analysis_data$rsd_keep <- r$tables$analysis_data$my_id %in%
                 r$index$keep_rsd
