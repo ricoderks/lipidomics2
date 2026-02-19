@@ -102,8 +102,7 @@ mod_file_ui <- function(id) {
                 ),
                 style = "font-size:75%"
               )
-
-            ),
+            ), # end sidebar
             shiny::div(
               bslib::card_body(
                 shiny::fileInput(
@@ -225,10 +224,11 @@ mod_file_ui <- function(id) {
           )
         )
       ), # end navpanel raw data
+      #-------------------------------------------------------------- rdata ----
       bslib::nav_panel(
         title = "Rdata",
         bslib::card(
-          p("Load a .Rdata file here. NOT working yet!"),
+          p("Load a .Rdata file here."),
           shiny::fileInput(inputId = ns("load_rdata"),
                            label = "Load Rdata file",
                            multiple = FALSE,
@@ -464,8 +464,25 @@ mod_file_server <- function(id, r){
         r$columns$sampletype <- input$metadata_select_sampletype
         r$columns$acqorder <- input$metadata_select_acqorder
         r$columns$batch <- input$metadata_select_batch
+        r$columns$groups <- input$metadata_select_groups
       }
     )
+
+    shiny::observeEvent(c(
+      input$metadata_select_sampleid,
+      input$metadata_select_filename,
+      input$metadata_select_sampletype,
+      input$metadata_select_acqorder,
+      input$metadata_select_batch,
+      input$metadata_select_groups
+    ), {
+      r$columns$sampleid <- input$metadata_select_sampleid
+      r$columns$filename <- input$metadata_select_filename
+      r$columns$sampletype <- input$metadata_select_sampletype
+      r$columns$acqorder <- input$metadata_select_acqorder
+      r$columns$batch <- input$metadata_select_batch
+      r$columns$groups <- input$metadata_select_groups
+    })
 
 
     output$metadata_sampletype_plot <- shiny::renderPlot({
@@ -768,6 +785,8 @@ mod_file_server <- function(id, r){
       r$settings$blanksample_threshold <- import_env$r$settings$blanksample_threshold
       r$settings$feature_class <- import_env$r$settings$feature_class
       r$settings$selected_feature_class <- import_env$r$settings$selected_feature_class
+      r$settings$apply_trend_correction <- import_env$r$settings$apply_trend_correction
+      r$settings$trend_correction_method <- import_env$r$settings$trend_correction_method
 
       progress$set(value = 70,
                    message = "Processing...",

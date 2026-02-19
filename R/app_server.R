@@ -32,6 +32,15 @@ app_server <- function(input, output, session) {
                          "PS - [M-H]-", "SHexCer - [M-H]-", "SL - [M-H]-", "SM - [M+H]+", "Sph - [M+H]+",
                          "SQDG - [M-H]-", "SSulfate - [M-H]-", "ST - [M+H-H2O]+", "ST - [M+H]+", "TG - [M+NH4]+", "TG_EST - [M+NH4]+", "VAE - [M+H]+"),
       metclass_ion = NULL,
+      colors = c("#F81626", "#32E322", "#1C0DFC", "#EDB8C7", "#FF22EC", "#0DD7FD",
+                 "#D7C500", "#006535", "#E97D35", "#5D3287", "#CD0071", "#845C16",
+                 "#F99FFE", "#C400FF", "#00DDBE", "#759EFD", "#8A1C63", "#7390A3",
+                 "#99D576", "#F28293", "#B3BE9F", "#FE68CB", "#5F4549", "#BE1C16",
+                 "#AC00B6", "#C6BAFB", "#BB7DFD", "#FAB980", "#0069A1", "#FF0079",
+                 "#808722", "#1CDE86", "#930D2A", "#2E38B2", "#9F75A0", "#FBB900",
+                 "#E98AC3", "#974F51", "#79D4D8", "#008200", "#8DD700", "#76C495",
+                 "#FF16B8", "#555626", "#0D79FC", "#8000DC", "#D9C580", "#963B96",
+                 "#BD6D40", "#FC6280"),
       lipid_classes = list(
         "Fatty acyls" = list(
           "FA" = list(id = "FA",
@@ -66,7 +75,7 @@ app_server <- function(input, output, session) {
                       pattern = "^(Ether)?L?PC$",
                       name = "Glycerophosphocholines (PC)"),
           "PE" = list(id = "PE",
-                      pattern = "^(LNA)?(Ether)?L?PE(\\(P\\))?$",
+                      pattern = "^(LNA)?(Ether)?L?(DM)?PE(\\(P\\))?$",
                       name = "Glycerophosphoethanolamines (PE)"),
           "PG" = list(id = "PG",
                       pattern = "^(H?BMP|(Ether)?L?PG)$",
@@ -97,7 +106,7 @@ app_server <- function(input, output, session) {
         ),
         "Sphingolipids" = list(
           "AcGL" = list(id = "AcGL",
-                        pattern = "^(GM3|SHexCer(\\+O)?)$",
+                        pattern = "^(GM[13]|GD[1-3][ab]?|G[QT]1b|NGcGM3|SHexCer(\\+O)?)$",
                         name = "Acidic glycosphingolipids"),
           "Cer" = list(id = "Cer",
                        pattern = "^Cer[P_]",
@@ -132,14 +141,14 @@ app_server <- function(input, output, session) {
         )
       ),
       patterns = list(
-        PL = "^(?:(Ether)?(Ox)?(L)?(LNA)?(MM)?P[ACEGISM]|HBMP|BMP)(?!_Cer)",
+        PL = "^(?:(Ether)?(Ox)?(L)?(LNA)?([DM]M)?P[ACEGISM]|HBMP|BMP)(?!_Cer)",
         GL = "^(Ox|Ether|SQ|EtherS|L|A)?[DMT]G",
         Cer = "^Cer[P_]",
         HexCer = "^A?Hex[23]?Cer",
         FA = "^((Ox)?FA|FAHFA|NAGly|NAGlySer|NAOrn|NAE|CAR|DMEDFA|DMEDOxFA)",
         PSL = "^(ASM|PE_Cer(\\+O)?|PI_Cer(\\+O)?|SM|SM\\+O)",
         SB = "^(PhytoSph|SL|SL\\+O|DHSph|Sph)",
-        SA = "^(GM3|SHexCer|SHexCer\\+O)",
+        SA = "^(GM[13]|GD[1-3][ab]?|G[QT]1b|NGcGM3|SHexCer(\\+O)?)",
         CL = "^([DM]L)?CL",
         ACPIM = "^Ac[2-4]PIM[12]",
         STL = "^((BA|S)Sulfate|BileAcid|AHex[BCS][AIRTS][S]?|(BRS|CAS|C|SIS|STS|DCA|TDCA|KLCA)E|SHex|Cholesterol|Vitamin_D|ST) ",
@@ -152,11 +161,13 @@ app_server <- function(input, output, session) {
       revdot_cutoff = 50,
       blanksample_ratio = 5,
       blanksample_threshold = 0.8,
+      trend_correction_method = "loess",
       feature_class = NULL,
       selected_feature_class = NULL,
       apply_rsd_cutoff = TRUE,
       apply_id_filtering = TRUE,
-      apply_blank_filtering = TRUE
+      apply_blank_filtering = TRUE,
+      apply_trend_correction = FALSE
     ),
     files = list(
       meta_file = NULL,
@@ -200,6 +211,13 @@ app_server <- function(input, output, session) {
       rsd_data_overall = NULL,
       analysis_data = NULL,
       trend_data = NULL
+    ),
+    analysis = list(
+      normalization = list(
+        totNorm = FALSE,
+        pqnNorm = FALSE
+      ),
+      modules = NULL
     )
   )
 
@@ -224,7 +242,7 @@ app_server <- function(input, output, session) {
   mod_export_server(id = "export",
                     r = r)
 
-  #--------------------------------------------------------------------- help ----
+  #------------------------------------------------------------------- help ----
   mod_help_server(id = "help")
 
   mod_about_server(id = "about")

@@ -370,7 +370,8 @@ make_tidy <- function(data = NULL,
                                                       .data$ShortLipidName)) |>
         # sort back
         dplyr::arrange(.data$Class, .data$ShortLipidName) |>
-        dplyr::select(-.data$count_duplicates, -.data$append_name)
+        dplyr::select(-.data$count_duplicates, -.data$append_name) |>
+        dplyr::mutate(areaOriginal = .data$area)
     }
   )
 
@@ -623,7 +624,7 @@ calc_blank_ratio <- function(data = NULL,
   blank_df <- data[data$sample_name %in% blanks, ]
 
   res <- tapply(blank_df, list(blank_df$my_id), function(x) {
-    mean_area <- mean(x$area, na.rm = TRUE)
+    mean_area <- mean(x$areaOriginal, na.rm = TRUE)
     res <- data.frame(
       my_id = x$my_id[1],
       blankArea = mean_area
@@ -641,7 +642,7 @@ calc_blank_ratio <- function(data = NULL,
     suffixes = c("", ".y")
   )
 
-  data$blankRatio <- data$area / data$blankArea
+  data$blankRatio <- data$areaOriginal / data$blankArea
   data$threshold <- data$blankRatio >= ratio
 
   res <- tapply(data, list(data$my_id), function(x) {

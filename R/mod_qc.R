@@ -13,7 +13,7 @@ mod_qc_ui <- function(id) {
   ns <- shiny::NS(id)
   shiny::tagList(
     bslib::navset_card_tab(
-      #--------------------------------------------------- general settings ----
+      #------------------------------------------------------------- QC RSD ----
       bslib::nav_panel(
         title = "QC - RSD",
         value = "qc_rsd",
@@ -33,6 +33,7 @@ mod_qc_ui <- function(id) {
           )
         )
       ),
+      #------------------------------------------------------- QC RSD class ----
       bslib::nav_panel(
         title = "QC - RSD Class",
         value = "qc_class",
@@ -52,6 +53,7 @@ mod_qc_ui <- function(id) {
           )
         )
       ),
+      #----------------------------------------------------- QC Correlation ----
       bslib::nav_panel(
         title = "QC - correlation ",
         value = "qc_correlation",
@@ -60,7 +62,7 @@ mod_qc_ui <- function(id) {
             outputId = ns("qc_correlation_plot")
           )
         )
-      ),
+      ),#--------------------------------------------------------- QC Trend ----
       bslib::nav_panel(
         title = "QC - Trend",
         value = "qc_trend",

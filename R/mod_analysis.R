@@ -12,51 +12,25 @@
 mod_analysis_ui <- function(id) {
   ns <- shiny::NS(id)
   shiny::tagList(
-    bslib::navset_card_tab(
-      id = "Analysis",
-      bslib::nav_panel(
-        title = "Heatmap",
-        value = "analysis_heatmap",
-        bslib::card(
-          bslib::page_sidebar(
-            sidebar = bslib::sidebar(
-              shiny::p("Settings")
+    bslib::layout_sidebar(
+      sidebar = bslib::sidebar(
+        shiny::uiOutput(
+          outputId = ns("analysis_sidebar_ui")
+        ),
+        width = 325
+      ),
+      bslib::navset_card_tab(
+        id = ns("analysisTabs"),
+        bslib::nav_panel(
+          title = "Settings",
+          value = "analysisSettingsPanel",
+          bslib::card(
+            shiny::uiOutput(
+              outputId = ns("analysisSettings")
             )
-          ),
-          bslib::card_body(
-            shiny::p("Show heatmap")
           )
         )
       )
-      # ,
-      # bslib::nav_panel(
-      #   title = "Compare samples",
-      #   value = "analysis_compare",
-      #   bslib::card(
-      #     bslib::page_sidebar(
-      #       sidebar = bslib::sidebar(
-      #         shiny::p("Settings")
-      #       )
-      #     ),
-      #     bslib::card_body(
-      #       shiny::p("Show volcano plot")
-      #     )
-      #   )
-      # ),
-      # bslib::nav_panel(
-      #   title = "PCA",
-      #   value = "analysis_pca",
-      #   bslib::card(
-      #     bslib::page_sidebar(
-      #       sidebar = bslib::sidebar(
-      #         shiny::p("Settings")
-      #       )
-      #     ),
-      #     bslib::card_body(
-      #       shiny::p("Show PCA")
-      #     )
-      #   )
-      # )
     )
   )
 }
@@ -68,6 +42,171 @@ mod_analysis_ui <- function(id) {
 mod_analysis_server <- function(id, r) {
   shiny::moduleServer(id, function(input, output, session){
     ns <- session$ns
+
+    rv <- shiny::reactiveValues(
+      next_id = 0L,
+      type_counts = setNames(as.list(rep(0L, 3L)), c("heatmap", "pca", "volcano")),
+      modules = list(),   # id -> list(type, label, export)
+      labels  = list()    # id -> label
+    )
+
+    add_analysis_tab <- function(type = NULL) {
+      rv$next_id <- rv$next_id + 1L
+      rv$type_counts[[type]] <- rv$type_counts[[type]] + 1L
+      tabId <- paste0(tolower(gsub("[^a-zA-Z0-9]+", "_", type)), "_", rv$next_id)
+      label <- paste0(type, " #", rv$type_counts[[type]])
+
+      ui_content <- switch(
+        type,
+        "heatmap" = mod_heatmap_ui(id = ns(tabId)),
+        "pca"     = mod_pca_ui(id = ns(tabId)),
+        "volcano"  = mod_volcano_ui(id = ns(tabId)),
+        div("Unknown analysis type.")
+      )
+
+      # do not put anything else in between ui_content and mod!
+      bslib::nav_insert(
+        id = "analysisTabs",
+        nav = bslib::nav_panel(
+          title = label,
+          value = tabId,
+          ui_content
+        ),
+        session = session,
+        select = TRUE
+      )
+
+      mod <- switch(
+        type,
+        "heatmap" = mod_heatmap_server(id = tabId, r = r),
+        "pca"     = mod_pca_server(id = tabId, r = r),
+        "volcano"  = mod_volcano_server(id = tabId, r = r),
+        NULL
+      )
+
+      rv$modules[[tabId]] <- list(type = type, label = label, export = mod$export)
+      rv$labels[[tabId]]  <- label
+
+      shiny::observeEvent(input[[paste0(tabId, "-remove")]], {
+        bslib::nav_remove(
+          id = "analysisTabs",
+          target = tabId
+        )
+        rv$modules[[tabId]] <- NULL
+        rv$labels[[tabId]]  <- NULL
+
+        r$analysis$modules <- rv$modules
+      },
+      once = TRUE,
+      ignoreInit = TRUE)
+
+      r$analysis$modules <- rv$modules
+    } # end add_analysis_tab
+
+
+    output$analysis_sidebar_ui <- shiny::renderUI({
+      # The selectInput will be dynamically in the future depending
+      # on if it is metabolomics or lipidomics project.
+
+      shiny::tagList(
+        shiny::h4("Analysis"),
+        shiny::selectInput(
+          inputId = ns("selectAnalysisMethod"),
+          label = "Select an analysis:",
+          choices = list(
+            "Heatmap" = "heatmap",
+            "PCA" = "pca",
+            "Volcano plot" = "volcano"
+          )
+        ),
+        shiny::actionButton(
+          inputId = ns("addAnalysisTab"),
+          label = "Add analysis",
+          width = "75%"
+        )
+      )
+    })
+
+
+    shiny::observeEvent(input$addAnalysisTab, {
+      shiny::req(input$selectAnalysisMethod)
+
+      add_analysis_tab(type = input$selectAnalysisMethod)
+    })
+
+
+    output$analysisSettings <- shiny::renderUI({
+      shiny::req(!is.null(r$analysis$normalization))
+
+      normSelected <- names(unlist(r$analysis$normalization)[unlist(r$analysis$normalization)])
+
+      shiny::tagList(
+        shiny::h4("Normalization"),
+        shiny::checkboxGroupInput(
+          inputId = ns("selectNormalization"),
+          label = "Select normalization",
+          choices = c(
+            "Total area normalization" = "totNorm",
+            "PQN normalization" = "pqnNorm"
+          ),
+          selected = normSelected
+        ),
+        shiny::htmlOutput(
+          outputId = ns("statusNormalization")
+        ),
+        shiny::actionButton(
+          inputId = ns("applyNormalization"),
+          label = "Apply normalization",
+          width = "225px"
+        ),
+        shiny::hr()
+      )
+    })
+
+
+    shiny::observeEvent(input$applyNormalization, {
+      shiny::req(input$selectNormalization)
+
+      print("Apply normalization.")
+      selection <- input$selectNormalization
+      r$analysis$normalization[names(r$analysis$normalization)] <-
+        ifelse(names(r$analysis$normalization) %in% selection, TRUE, FALSE)
+
+      for(norm in selection) {
+        res <- switch(
+          norm,
+          "totNorm" = total_area_norm(data = r$tables$analysis_data),
+          "pqnNorm" = pqn_norm(data = r$tables$analysis_data,
+                               QC = r$index$selected_pools),
+          r$tables$analysis_data
+        )
+      }
+
+      r$tables$analysis_data <- res
+    })
+
+
+    output$statusNormalization <- shiny::renderUI({
+      shiny::req(!is.null(r$analysis$normalization))
+      print("Update status normalization")
+
+      if(sum(unlist(r$analysis$normalization)) == 0) {
+        statusText <- "No normalization applied"
+      } else {
+        statusText <- c()
+        selection <- names(unlist(r$analysis$normalization)[unlist(r$analysis$normalization)])
+        for(selected in selection) {
+          tmp <- switch(
+            selected,
+            "totNorm" = "Total area normalization",
+            "pqnNorm" = "PQN normalization"
+          )
+          statusText <- c(statusText, tmp)
+        }
+        statusText <- paste(statusText, collapse = ", ")
+      }
+      shiny::p(statusText)
+    })
 
   })
 }
