@@ -14,6 +14,7 @@ params:
   generated_on: !r format(Sys.time(), "%Y-%m-%d %H:%M:%S")
   analyses: NULL
   meta_data: NULL
+  general_settings: NULL
 ---
 
 ```{r setup, include=FALSE}
@@ -52,6 +53,8 @@ heatmap_index <- sapply(params$analyses, function(analysis) {
 if(any(heatmap_index)) {
   heatmap_data <- params$analyses[heatmap_index]
 }
+
+general_settings <- params$general_settings
 ```
 
 # Introduction
@@ -61,6 +64,56 @@ if(any(heatmap_index)) {
 ```{r}
 DT::datatable(params$meta_data, 
               options = list(dom = 'pt'))
+```
+
+# Settings
+
+## General settings
+
+```{r general_settings_rsd}
+htmltools::p(htmltools::strong("RSD filtering:"))
+if(general_settings$apply_rsd_cutoff) {
+  htmltools::tags$ul(
+    htmltools::tags$li(paste0("RSD cut-off: ", general_settings$rsd_cutoff))
+  )
+} else {
+  htmltools::p("No RSD filtering applied.")
+}
+```
+
+```{r general_settings_id}
+htmltools::p(htmltools::strong("ID filtering:"))
+if(general_settings$apply_id_filtering) {
+  htmltools::tags$ul(
+    htmltools::tags$li(paste0("DOT product cut-off: ", general_settings$dot_cutoff)),
+    htmltools::tags$li(paste0("Reverse DOT product cut-off: ", general_settings$revdot_cutoff))
+  )
+} else {
+  htmltools::p("No ID filtering applied.")
+}
+```
+
+```{r general_settings_blank}
+htmltools::p(htmltools::strong("Blank filtering:"))
+if(general_settings$apply_blank_filtering) {
+  htmltools::tags$ul(
+    htmltools::tags$li(paste0("Sample / blank ratio: ", general_settings$blanksample_ratio)),
+    htmltools::tags$li(paste0("Threshold: ", general_settings$blanksample_threshold))
+  )
+} else {
+  htmltools::p("No blank filtering applied.")
+}
+```
+
+```{r general_settings_trend}
+htmltools::p(htmltools::strong("Trend correction:"))
+if(general_settings$apply_trend_correction) {
+  htmltools::tags$ul(
+    htmltools::tags$li(paste0("Method: ", general_settings$trend_correction_method))
+  )
+} else {
+  htmltools::p("No trend correction applied.")
+}
 ```
 
 # Analysis {.tabset}

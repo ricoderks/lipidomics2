@@ -52,6 +52,14 @@ mod_export_ui <- function(id) {
           shiny::downloadButton(outputId = ns("download_report"),
                                 label = "Download report",
                                 style = "width:20%;"),
+          shiny::conditionalPanel(
+            condition = "input.export_select_report === 'analysis'",
+            ns = ns,
+            shiny::textInput(
+              inputId = ns("export_analysis_title"),
+              label = "Title analysis report:"
+            )
+          ),
           shiny::hr()
         )
       )
@@ -77,6 +85,7 @@ mod_export_server <- function(id, r) {
       ),
       color = "rgba(255, 255, 255, 0.5)"
     )
+
 
     output$download_lipid_xlsx <- shiny::downloadHandler(
       filename = function() {
@@ -176,10 +185,11 @@ mod_export_server <- function(id, r) {
           }
 
           params <- list(
-            title = "My first dynamic report",
+            title = input$export_analysis_title,
             author = paste0("CPM - Lipidomics | v", utils::packageVersion("lipidomics2")),
             analyses = analyses,
-            meta_data = r$tables$meta_data
+            meta_data = r$tables$meta_data,
+            general_settings = r$settings
           )
         }
 
