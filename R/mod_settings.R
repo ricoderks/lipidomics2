@@ -553,31 +553,20 @@ mod_settings_server <- function(id, r){
                                               order_column = r$columns$acqorder)
 
             # RSD filtering
-            rsd_res <- calc_rsd(data = r$tables$clean_data,
-                                pools = r$index$selected_pools,
-                                cut_off = r$settings$rsd_cutoff)
-            r$index$keep_rsd <- rsd_res$keep
-            r$tables$qc_data <- rsd_res$qc_data
-            r$tables$rsd_data_overall <- rsd_res$rsd_data_overall
-            r$tables$rsd_data_batch <- rsd_res$rsd_data_batch
+            if(r$settings$apply_rsd_cutoff) {
+              rsd_res <- calc_rsd(data = r$tables$clean_data,
+                                  pools = r$index$selected_pools,
+                                  cut_off = r$settings$rsd_cutoff)
+              r$index$keep_rsd <- rsd_res$keep
+              r$tables$qc_data <- rsd_res$qc_data
+              r$tables$rsd_data_overall <- rsd_res$rsd_data_overall
+              r$tables$rsd_data_batch <- rsd_res$rsd_data_batch
 
-            # ID filtering
-            r$index$keep_id <- filter_id(data = r$tables$clean_data,
-                                         dot_cutoff = r$settings$dot_cutoff,
-                                         revdot_cutoff = r$settings$revdot_cutoff)
-            # Blank filtering
-            r$index$keep_blankratio <- calc_blank_ratio(data = r$tables$clean_data,
-                                                        blanks = r$index$selected_blanks,
-                                                        samples = r$index$selected_samples,
-                                                        ratio = r$settings$blanksample_ratio,
-                                                        threshold = r$settings$blanksample_threshold)
+              r$tables$analysis_data$rsd_keep <- r$tables$analysis_data$my_id %in%
+                r$index$keep_rsd
+            }
 
-            r$tables$analysis_data$rsd_keep <- r$tables$analysis_data$my_id %in%
-              r$index$keep_rsd
-            r$tables$analysis_data$match_keep <- r$tables$analysis_data$my_id %in%
-              r$index$keep_id
-            r$tables$analysis_data$background_keep <- r$tables$analysis_data$my_id %in%
-              r$index$keep_blankratio
+            # update what to keep
             r$tables$analysis_data$keep <- mapply(all,
                                                   r$tables$analysis_data$rsd_keep,
                                                   r$tables$analysis_data$match_keep,
@@ -606,31 +595,20 @@ mod_settings_server <- function(id, r){
                                               order_column = r$columns$acqorder)
 
             # RSD filtering
-            rsd_res <- calc_rsd(data = r$tables$clean_data,
-                                pools = r$index$selected_pools,
-                                cut_off = r$settings$rsd_cutoff)
-            r$index$keep_rsd <- rsd_res$keep
-            r$tables$qc_data <- rsd_res$qc_data
-            r$tables$rsd_data_overall <- rsd_res$rsd_data_overall
-            r$tables$rsd_data_batch <- rsd_res$rsd_data_batch
+            if(r$settings$apply_rsd_cutoff) {
+              rsd_res <- calc_rsd(data = r$tables$clean_data,
+                                  pools = r$index$selected_pools,
+                                  cut_off = r$settings$rsd_cutoff)
+              r$index$keep_rsd <- rsd_res$keep
+              r$tables$qc_data <- rsd_res$qc_data
+              r$tables$rsd_data_overall <- rsd_res$rsd_data_overall
+              r$tables$rsd_data_batch <- rsd_res$rsd_data_batch
 
-            # ID filtering
-            r$index$keep_id <- filter_id(data = r$tables$clean_data,
-                                         dot_cutoff = r$settings$dot_cutoff,
-                                         revdot_cutoff = r$settings$revdot_cutoff)
-            # Blank filtering
-            r$index$keep_blankratio <- calc_blank_ratio(data = r$tables$clean_data,
-                                                        blanks = r$index$selected_blanks,
-                                                        samples = r$index$selected_samples,
-                                                        ratio = r$settings$blanksample_ratio,
-                                                        threshold = r$settings$blanksample_threshold)
+              r$tables$analysis_data$rsd_keep <- r$tables$analysis_data$my_id %in%
+                r$index$keep_rsd
+            }
 
-            r$tables$analysis_data$rsd_keep <- r$tables$analysis_data$my_id %in%
-              r$index$keep_rsd
-            r$tables$analysis_data$match_keep <- r$tables$analysis_data$my_id %in%
-              r$index$keep_id
-            r$tables$analysis_data$background_keep <- r$tables$analysis_data$my_id %in%
-              r$index$keep_blankratio
+            # update what to keep
             r$tables$analysis_data$keep <- mapply(all,
                                                   r$tables$analysis_data$rsd_keep,
                                                   r$tables$analysis_data$match_keep,
