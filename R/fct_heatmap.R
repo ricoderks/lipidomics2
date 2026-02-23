@@ -16,7 +16,7 @@
 #'
 #' @author Rico Derks
 #'
-#' @importFrom heatmaply heatmaply
+#' @importFrom heatmaply heatmaply RdBu
 #' @importFrom plotly plotly_build
 #' @importFrom tidyr pivot_wider
 #'
@@ -74,6 +74,7 @@ show_heatmap <- function(data = NULL,
 
   ply <- heatmaply::heatmaply(
     x = data_wide[, !(colnames(data_wide) %in% columns)],
+    colors = rev(heatmaply::RdBu(n = 100)),
     Rowv = row_clustering,
     Colv = col_clustering,
     plot_method = "ggplot",
