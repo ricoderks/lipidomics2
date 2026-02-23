@@ -87,7 +87,8 @@ mod_heatmap_server <- function(id, r){
       selection <- c(
         "Raw data" = "raw",
         "Total area normalization" = "totNorm",
-        "PQN normalization" = "pqnNorm"
+        "PQN normalization" = "pqnNorm",
+        "Protein normalization" = "protNorm"
       )
 
       selected <- names(unlist(r$analysis$normalization)[unlist(r$analysis$normalization)])
@@ -159,7 +160,8 @@ mod_heatmap_server <- function(id, r){
         input$hmSelectTable,
         "raw" = "area",
         "totNorm" = "totNormArea",
-        "pqnNorm" = "pqnNormArea"
+        "pqnNorm" = "pqnNormArea",
+        "protNorm" = "protNormArea"
       )
 
       sample_annotation <- input$hmSampleAnnotation

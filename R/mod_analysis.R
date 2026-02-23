@@ -140,15 +140,25 @@ mod_analysis_server <- function(id, r) {
 
       normSelected <- names(unlist(r$analysis$normalization)[unlist(r$analysis$normalization)])
 
+      if(r$columns$protein_normalisation == "select a column") {
+        choices <- c(
+          "Total area normalization" = "totNorm",
+          "PQN normalization" = "pqnNorm"
+        )
+      } else {
+        choices <- c(
+          "Total area normalization" = "totNorm",
+          "PQN normalization" = "pqnNorm",
+          "Protein normalization" = "protNorm"
+        )
+      }
+
       shiny::tagList(
         shiny::h4("Normalization"),
         shiny::checkboxGroupInput(
           inputId = ns("selectNormalization"),
           label = "Select normalization",
-          choices = c(
-            "Total area normalization" = "totNorm",
-            "PQN normalization" = "pqnNorm"
-          ),
+          choices = choices,
           selected = normSelected
         ),
         shiny::htmlOutput(
@@ -178,11 +188,12 @@ mod_analysis_server <- function(id, r) {
           "totNorm" = total_area_norm(data = r$tables$analysis_data),
           "pqnNorm" = pqn_norm(data = r$tables$analysis_data,
                                QC = r$index$selected_pools),
+          "protNorm" = prot_norm(data = r$tables$analysis_data,
+                                 column = r$columns$protein_normalisation),
           r$tables$analysis_data
         )
+        r$tables$analysis_data <- res
       }
-
-      r$tables$analysis_data <- res
     })
 
 
@@ -199,7 +210,8 @@ mod_analysis_server <- function(id, r) {
           tmp <- switch(
             selected,
             "totNorm" = "Total area normalization",
-            "pqnNorm" = "PQN normalization"
+            "pqnNorm" = "PQN normalization",
+            "protNorm" = "Protein normalization"
           )
           statusText <- c(statusText, tmp)
         }
