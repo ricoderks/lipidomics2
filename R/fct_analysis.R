@@ -12,6 +12,7 @@
 #'
 #' @noRd
 total_area_norm <- function(data = NULL) {
+  print("Do total area normalization.")
   if("totNormArea" %in% colnames(data)) {
     data$totNormArea <- NULL
     data$totalArea <- NULL
@@ -63,6 +64,7 @@ total_area_norm <- function(data = NULL) {
 #' @noRd
 pqn_norm <- function(data = NULL,
                      QC = NULL) {
+  print("Do pqn normalization.")
   if("pqnNormArea" %in% colnames(data)) {
     data$pqnNormArea <- NULL
   }
@@ -162,4 +164,29 @@ pqn <- function(X = NULL,
   }
 
   return(X.norm)
+}
+
+
+#' @title Protein normalization
+#'
+#' @description Protein normalization
+#'
+#' @param data data.frame in long format.
+#' @param column character(1), column containing the protein amount/concentration.
+#'
+#' @return The return value, if any, from executing the function.
+#'
+#' @author Rico Derks
+#'
+#' @noRd
+prot_norm <- function(data = NULL,
+                     column = NULL) {
+  print("Do protein normalization.")
+  if("protNormArea" %in% colnames(data)) {
+    data$protNormArea <- NULL
+  }
+
+  data$protNormArea <- data$area / data[[column]]
+
+  return(data)
 }

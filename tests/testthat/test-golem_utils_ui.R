@@ -91,17 +91,14 @@ test_that("Test undisplay works", {
     '<p src="plop" style="display: none;">pouet</p>'
   )
 
+  # applied fix https://github.com/ThinkR-open/golem/pull/1212
   b <- shiny::actionButton("go_filter", "go")
-  expect_s3_class(b, "shiny.tag")
   expect_equal(
-    as.character(b),
-    '<button id="go_filter" type="button" class="btn btn-default action-button">\n  <span class="action-label">go</span>\n</button>'
-  )
-  b_undisplay <- undisplay(b)
-  expect_s3_class(b, "shiny.tag")
-  expect_equal(
-    as.character(b_undisplay),
-    '<button id="go_filter" type="button" class="btn btn-default action-button" style="display: none;">\n  <span class="action-label">go</span>\n</button>'
+    tagGetAttribute(
+      undisplay(b),
+      "style"
+    ),
+    "display: none;"
   )
 
   c <- shiny::tags$p(src = "plop", style = "some_style", "pouet")

@@ -52,6 +52,17 @@ mod_file_ui <- function(id) {
                   choices = NULL
                 ),
                 shiny::selectInput(
+                  inputId = ns("metadata_select_protein"),
+                  label = bslib::tooltip(
+                    trigger = list(
+                      "Protein normalization",
+                      bsicons::bs_icon(name = "info-circle")
+                    ),
+                    "Select column with protein amount / concentration. This will be used for protein normalization."
+                  ),
+                  choices = NULL
+                ),
+                shiny::selectInput(
                   inputId = ns("metadata_select_groups"),
                   label = bslib::tooltip(
                     trigger = list(
@@ -431,6 +442,18 @@ mod_file_server <- function(id, r){
                             column_names[1])
         )
         shiny::updateSelectInput(
+          inputId = "metadata_select_protein",
+          choices = c("select a column", sort(column_names)),
+          selected = ifelse(any(grepl(x = column_names,
+                                      pattern = ".*protein.*",
+                                      ignore.case = TRUE)),
+                            grep(x = column_names,
+                                 pattern = ".*protein.*",
+                                 ignore.case = TRUE,
+                                 value = TRUE)[1],
+                            "select a column")
+        )
+        shiny::updateSelectInput(
           inputId = "metadata_select_groups",
           choices = sort(column_names)
         )
@@ -454,19 +477,21 @@ mod_file_server <- function(id, r){
     })
 
 
-    shiny::observeEvent(
-      c(input$metadata_select_filename,
-        input$metadata_select_sampletype,
-        input$metadata_select_acqorder),
-      {
-        r$columns$sampleid <- input$metadata_select_sampleid
-        r$columns$filename <- input$metadata_select_filename
-        r$columns$sampletype <- input$metadata_select_sampletype
-        r$columns$acqorder <- input$metadata_select_acqorder
-        r$columns$batch <- input$metadata_select_batch
-        r$columns$groups <- input$metadata_select_groups
-      }
-    )
+    # why this one?
+    # shiny::observeEvent(
+    #   c(input$metadata_select_filename,
+    #     input$metadata_select_sampletype,
+    #     input$metadata_select_acqorder),
+    #   {
+    #     r$columns$sampleid <- input$metadata_select_sampleid
+    #     r$columns$filename <- input$metadata_select_filename
+    #     r$columns$sampletype <- input$metadata_select_sampletype
+    #     r$columns$acqorder <- input$metadata_select_acqorder
+    #     r$columns$batch <- input$metadata_select_batch
+    #     r$columns$protein_normalisation <- input$metadata_select_protein
+    #     r$columns$groups <- input$metadata_select_groups
+    #   }
+    # )
 
     shiny::observeEvent(c(
       input$metadata_select_sampleid,
@@ -474,6 +499,7 @@ mod_file_server <- function(id, r){
       input$metadata_select_sampletype,
       input$metadata_select_acqorder,
       input$metadata_select_batch,
+      input$metadata_select_protein,
       input$metadata_select_groups
     ), {
       r$columns$sampleid <- input$metadata_select_sampleid
@@ -481,6 +507,7 @@ mod_file_server <- function(id, r){
       r$columns$sampletype <- input$metadata_select_sampletype
       r$columns$acqorder <- input$metadata_select_acqorder
       r$columns$batch <- input$metadata_select_batch
+      r$columns$protein_normalisation <- input$metadata_select_protein
       r$columns$groups <- input$metadata_select_groups
     })
 
@@ -820,6 +847,7 @@ mod_file_server <- function(id, r){
       r$columns$sampletype <- import_env$r$columns$sampletype
       r$columns$acqorder <- import_env$r$columns$acqorder
       r$columns$batch <- import_env$r$columns$batch
+      r$columns$protein_normalisation <- import_env$r$columns$protein_normalisation
       r$columns$groups <- import_env$r$columns$groups
       r$text_patterns$blanks <- import_env$r$text_patterns$blanks
       r$text_patterns$pools <- import_env$r$text_patterns$pools
@@ -850,6 +878,11 @@ mod_file_server <- function(id, r){
         inputId = "metadata_select_batch",
         choices = sort(column_names),
         selected = r$columns$batch
+      )
+      shiny::updateSelectInput(
+        inputId = "metadata_select_protein",
+        choices = sort(column_names),
+        selected = r$columns$protein_normalisation
       )
       shiny::updateSelectInput(
         inputId = "metadata_select_groups",

@@ -181,7 +181,8 @@ app_server <- function(input, output, session) {
       sampletype = NULL,
       acqorder = NULL,
       batch = NULL,
-      groups = NULL
+      groups = NULL,
+      protein_normalisation = NULL
     ),
     text_patterns = list(
       blanks = NULL,
@@ -215,7 +216,8 @@ app_server <- function(input, output, session) {
     analysis = list(
       normalization = list(
         totNorm = FALSE,
-        pqnNorm = FALSE
+        pqnNorm = FALSE,
+        protNorm = FALSE
       ),
       modules = NULL
     )
