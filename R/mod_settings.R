@@ -493,6 +493,7 @@ mod_settings_server <- function(id, r){
                        r$index$keep_blankratio <- calc_blank_ratio(data = shiny::isolate(r$tables$clean_data),
                                                                    blanks = r$index$selected_blanks,
                                                                    samples = r$index$selected_samples,
+                                                                   batch = r$columns$batch,
                                                                    ratio = r$settings$blanksample_ratio,
                                                                    threshold = r$settings$blanksample_threshold)
 
@@ -708,6 +709,7 @@ mod_settings_server <- function(id, r){
         r$index$keep_blankratio <- calc_blank_ratio(data = r$tables$clean_data,
                                                     blanks = r$index$selected_blanks,
                                                     samples = r$index$selected_samples,
+                                                    batch = r$columns$batch,
                                                     ratio = r$settings$blanksample_ratio,
                                                     threshold = r$settings$blanksample_threshold)
 
