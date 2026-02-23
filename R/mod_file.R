@@ -63,6 +63,17 @@ mod_file_ui <- function(id) {
                   choices = NULL
                 ),
                 shiny::selectInput(
+                  inputId = ns("metadata_select_blanksample"),
+                  label = bslib::tooltip(
+                    trigger = list(
+                      "Blank filtering",
+                      bsicons::bs_icon(name = "info-circle")
+                    ),
+                    "Select column a which will be used to apply the group threshold in the blank filtering step!"
+                  ),
+                  choices = NULL
+                ),
+                shiny::selectInput(
                   inputId = ns("metadata_select_groups"),
                   label = bslib::tooltip(
                     trigger = list(
@@ -454,6 +465,11 @@ mod_file_server <- function(id, r){
                             "select a column")
         )
         shiny::updateSelectInput(
+          inputId = "metadata_select_blanksample",
+          choices = c("select a column", sort(column_names)),
+          selected = "select a column"
+        )
+        shiny::updateSelectInput(
           inputId = "metadata_select_groups",
           choices = sort(column_names)
         )
@@ -500,6 +516,7 @@ mod_file_server <- function(id, r){
       input$metadata_select_acqorder,
       input$metadata_select_batch,
       input$metadata_select_protein,
+      input$metadata_select_blanksample,
       input$metadata_select_groups
     ), {
       r$columns$sampleid <- input$metadata_select_sampleid
@@ -508,6 +525,7 @@ mod_file_server <- function(id, r){
       r$columns$acqorder <- input$metadata_select_acqorder
       r$columns$batch <- input$metadata_select_batch
       r$columns$protein_normalisation <- input$metadata_select_protein
+      r$columns$blanksample <- input$metadata_select_blanksample
       r$columns$groups <- input$metadata_select_groups
     })
 
@@ -676,7 +694,9 @@ mod_file_server <- function(id, r){
                                                       samples = r$index$selected_samples,
                                                       batch = r$columns$batch,
                                                       ratio = r$settings$blanksample_ratio,
-                                                      threshold = r$settings$blanksample_threshold)
+                                                      threshold = r$settings$blanksample_threshold,
+                                                      group_threshold = r$settings$blanksample_threshold_group,
+                                                      group_column = r$columns$blanksample)
 
           progress$set(value = 75,
                        message = "Processing...",
@@ -811,6 +831,7 @@ mod_file_server <- function(id, r){
       r$settings$apply_blank_filtering <- import_env$r$settings$apply_blank_filtering
       r$settings$blanksample_ratio <- import_env$r$settings$blanksample_ratio
       r$settings$blanksample_threshold <- import_env$r$settings$blanksample_threshold
+      r$settings$blanksample_threshold_group <- import_env$r$settings$blanksample_threshold_group
       r$settings$feature_class <- import_env$r$settings$feature_class
       r$settings$selected_feature_class <- import_env$r$settings$selected_feature_class
       r$settings$apply_trend_correction <- import_env$r$settings$apply_trend_correction
@@ -848,6 +869,7 @@ mod_file_server <- function(id, r){
       r$columns$acqorder <- import_env$r$columns$acqorder
       r$columns$batch <- import_env$r$columns$batch
       r$columns$protein_normalisation <- import_env$r$columns$protein_normalisation
+      r$columns$blanksample <- import_env$r$columns$blanksample
       r$columns$groups <- import_env$r$columns$groups
       r$text_patterns$blanks <- import_env$r$text_patterns$blanks
       r$text_patterns$pools <- import_env$r$text_patterns$pools
@@ -881,8 +903,13 @@ mod_file_server <- function(id, r){
       )
       shiny::updateSelectInput(
         inputId = "metadata_select_protein",
-        choices = sort(column_names),
+        choices = c("select a column", sort(column_names)),
         selected = r$columns$protein_normalisation
+      )
+      shiny::updateSelectInput(
+        inputId = "metadata_select_blanksample",
+        choices = c("select a column", sort(column_names)),
+        selected = r$columns$blanksample
       )
       shiny::updateSelectInput(
         inputId = "metadata_select_groups",

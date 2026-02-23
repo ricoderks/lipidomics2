@@ -605,6 +605,9 @@ calc_rsd <- function(data = NULL,
 #' @param data tibble in tidy format.
 #' @param ratio numeric(1) cutoff ratio of sample/ blank.
 #' @param threshold numeric(1) threshold.
+#' @param group_threshold numeric(1) group threshold.
+#' @param group_column character(1), name of the column with the group information
+#'     for the blank filtering.
 #' @param batch character(1), name of the column with batch information.
 #' @param blanks character() vector with the blank names.
 #' @param samples character() vector with the sample names.
@@ -620,7 +623,9 @@ calc_blank_ratio <- function(data = NULL,
                              samples = NULL,
                              batch = NULL,
                              ratio = 5,
-                             threshold = 0.8) {
+                             threshold = 0.8,
+                             group_threshold = 0.8,
+                             group_column = NULL) {
   print("Calculate blank ratio")
   samples_df <- data[data$sample_name %in% samples, ]
   blank_df <- data[data$sample_name %in% blanks, ]
@@ -648,6 +653,7 @@ calc_blank_ratio <- function(data = NULL,
   data$blankRatio <- data$areaOriginal / data$blankArea
   data$threshold <- data$blankRatio >= ratio
 
+  # overall threshold
   res <- tapply(data, list(data$my_id), function(x) {
     thresh <- mean(x$blankRatio >= ratio, na.rm = TRUE)
     res <- data.frame(
@@ -658,10 +664,20 @@ calc_blank_ratio <- function(data = NULL,
     return(res)
   })
   res <- do.call("rbind", res)
-
   keep <- res$my_id[res$threshold >= threshold]
 
-  return(keep)
+  # group threshold
+  res_group <- tapply(data, list(data$my_id, data[[group_column]]), function(x) {
+    mean(x$blankRatio >= ratio, na.rm = TRUE)
+  })
+  res_group <- as.data.frame(res_group)
+  res_group$group_threshold <- rowSums(res_group >= group_threshold) > 0
+  res_group$my_id <- rownames(res_group)
+  keep_group <- res_group$my_id[res_group$group_threshold]
+
+  keep_final <- union(keep, keep_group)
+
+  return(keep_final)
 }
 
 

@@ -161,6 +161,7 @@ app_server <- function(input, output, session) {
       revdot_cutoff = 50,
       blanksample_ratio = 5,
       blanksample_threshold = 0.8,
+      blanksample_threshold_group = 0.8,
       trend_correction_method = "loess",
       feature_class = NULL,
       selected_feature_class = NULL,
@@ -181,6 +182,7 @@ app_server <- function(input, output, session) {
       sampletype = NULL,
       acqorder = NULL,
       batch = NULL,
+      blanksample = NULL,
       groups = NULL,
       protein_normalisation = NULL
     ),
