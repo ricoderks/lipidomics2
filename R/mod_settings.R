@@ -107,7 +107,7 @@ mod_settings_ui <- function(id) {
                   open = "always"
                 ),
                 bslib::layout_column_wrap(
-                  width = 1 / 2,
+                  width = 1 / 3,
                   shiny::numericInput(
                     inputId = ns("settings_ratio"),
                     label = "Sample / average blank ratio",
@@ -118,6 +118,14 @@ mod_settings_ui <- function(id) {
                   shiny::sliderInput(
                     inputId = ns("settings_threshold"),
                     label = "Threshold",
+                    value = 0.8,
+                    min = 0,
+                    max = 1,
+                    step = 0.1
+                  ),
+                  shiny::sliderInput(
+                    inputId = ns("settings_threshold_group"),
+                    label = "Group threshold",
                     value = 0.8,
                     min = 0,
                     max = 1,
@@ -246,9 +254,15 @@ mod_settings_server <- function(id, r){
         inputId = "settings_threshold",
         value = r$settings$blanksample_threshold
       )
+      shiny::updateSliderInput(
+        inputId = "settings_threshold_group",
+        value = r$settings$blanksample_threshold_group
+      )
       shinyjs::toggleState(id = "settings_ratio",
                            condition = isTRUE(r$settings$apply_blank_filtering))
       shinyjs::toggleState(id = "settings_threshold",
+                           condition = isTRUE(r$settings$apply_blank_filtering))
+      shinyjs::toggleState(id = "settings_threshold_group",
                            condition = isTRUE(r$settings$apply_blank_filtering))
 
       # trend correction
@@ -320,9 +334,15 @@ mod_settings_server <- function(id, r){
         inputId = "settings_threshold",
         value = r$settings$blanksample_threshold
       )
+      shiny::updateSliderInput(
+        inputId = "settings_threshold_group",
+        value = r$settings$blanksample_threshold_group
+      )
       shinyjs::toggleState(id = "settings_ratio",
                            condition = isTRUE(r$settings$apply_blank_filtering))
       shinyjs::toggleState(id = "settings_threshold",
+                           condition = isTRUE(r$settings$apply_blank_filtering))
+      shinyjs::toggleState(id = "settings_threshold_group",
                            condition = isTRUE(r$settings$apply_blank_filtering))
 
       # Trend correction
@@ -349,6 +369,7 @@ mod_settings_server <- function(id, r){
         "settings_apply_blank_filtering" = input$settings_apply_blank_filtering,
         "settings_ratio" = input$settings_ratio,
         "settings_threshold" = input$settings_threshold,
+        "settings_threshold_group" = input$settings_threshold_group,
         "settings_apply_trend_correction" = input$settings_apply_trend_correction,
         "settings_select_trend" = input$settings_select_trend
       )
@@ -360,6 +381,7 @@ mod_settings_server <- function(id, r){
                                      "apply_blank_filtering",
                                      "blanksample_ratio",
                                      "blanksample_threshold",
+                                     "blanksample_threshold_group",
                                      "apply_trend_correction",
                                      "trend_correction_method")]
 
@@ -477,6 +499,7 @@ mod_settings_server <- function(id, r){
     shiny::observeEvent(
       shiny::req(!is.null(input$settings_ratio),
                  !is.null(input$settings_threshold),
+                 !is.null(input$settings_threshold_group),
                  !is.null(input$settings_apply_blank_filtering)), {
 
                    if(!is.null(r$tables$analysis_data) & isFALSE(r$rdata)) {
@@ -486,16 +509,20 @@ mod_settings_server <- function(id, r){
                        print("Changed blank / sample ratio.")
                        shinyjs::enable(id = "settings_ratio")
                        shinyjs::enable(id = "settings_threshold")
+                       shinyjs::enable(id = "settings_threshold_group")
 
                        r$settings$blanksample_ratio <- input$settings_ratio
                        r$settings$blanksample_threshold <- input$settings_threshold
+                       r$settings$blanksample_threshold_group <- input$settings_threshold_group
 
                        r$index$keep_blankratio <- calc_blank_ratio(data = shiny::isolate(r$tables$clean_data),
                                                                    blanks = r$index$selected_blanks,
                                                                    samples = r$index$selected_samples,
                                                                    batch = r$columns$batch,
                                                                    ratio = r$settings$blanksample_ratio,
-                                                                   threshold = r$settings$blanksample_threshold)
+                                                                   threshold = r$settings$blanksample_threshold,
+                                                                   group_threshold = r$settings$blanksample_threshold_group,
+                                                                   group_column = r$columns$blanksample)
 
                        r$tables$analysis_data$background_keep <- r$tables$analysis_data$my_id %in%
                          r$index$keep_blankratio
@@ -503,6 +530,7 @@ mod_settings_server <- function(id, r){
                        print("Disabled blank filtering!")
                        shinyjs::disable(id = "settings_ratio")
                        shinyjs::disable(id = "settings_threshold")
+                       shinyjs::disable(id = "settings_threshold_group")
 
                        r$index$keep_blankratio <- unique(r$tables$analysis_data$my_id)
                        r$tables$analysis_data$background_keep <- TRUE
@@ -711,7 +739,9 @@ mod_settings_server <- function(id, r){
                                                     samples = r$index$selected_samples,
                                                     batch = r$columns$batch,
                                                     ratio = r$settings$blanksample_ratio,
-                                                    threshold = r$settings$blanksample_threshold)
+                                                    threshold = r$settings$blanksample_threshold,
+                                                    group_threshold = r$settings$blanksample_threshold_group,
+                                                    group_column = r$columns$blanksample)
 
         r$tables$analysis_data$rsd_keep <- r$tables$analysis_data$my_id %in%
           r$index$keep_rsd
