@@ -661,9 +661,6 @@ calc_blank_ratio <- function(data = NULL,
 
   keep <- res$my_id[res$threshold >= threshold]
 
-  print("Rico")
-  print(keep)
-
   return(keep)
 }
 
