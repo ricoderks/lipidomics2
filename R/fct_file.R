@@ -666,16 +666,20 @@ calc_blank_ratio <- function(data = NULL,
   res <- do.call("rbind", res)
   keep <- res$my_id[res$threshold >= threshold]
 
-  # group threshold
-  res_group <- tapply(data, list(data$my_id, data[[group_column]]), function(x) {
-    mean(x$blankRatio >= ratio, na.rm = TRUE)
-  })
-  res_group <- as.data.frame(res_group)
-  res_group$group_threshold <- rowSums(res_group >= group_threshold) > 0
-  res_group$my_id <- rownames(res_group)
-  keep_group <- res_group$my_id[res_group$group_threshold]
+  if(group_column != "select a column") {
+    # group threshold
+    res_group <- tapply(data, list(data$my_id, data[[group_column]]), function(x) {
+      mean(x$blankRatio >= ratio, na.rm = TRUE)
+    })
+    res_group <- as.data.frame(res_group)
+    res_group$group_threshold <- rowSums(res_group >= group_threshold) > 0
+    res_group$my_id <- rownames(res_group)
+    keep_group <- res_group$my_id[res_group$group_threshold]
 
-  keep_final <- union(keep, keep_group)
+    keep_final <- union(keep, keep_group)
+  } else {
+    keep_final <- keep
+  }
 
   return(keep_final)
 }
