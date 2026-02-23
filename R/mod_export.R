@@ -100,7 +100,8 @@ mod_export_server <- function(id, r) {
                                       filename_column = r$columns$filename,
                                       blanks = r$index$selected_blanks,
                                       qcpools = r$index$selected_pools,
-                                      samples = r$index$selected_samples)
+                                      samples = r$index$selected_samples,
+                                      normalization = r$analysis$normalization)
 
         openxlsx2::write_xlsx(x = export,
                               file = file,
