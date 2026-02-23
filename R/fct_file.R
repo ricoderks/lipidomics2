@@ -605,6 +605,7 @@ calc_rsd <- function(data = NULL,
 #' @param data tibble in tidy format.
 #' @param ratio numeric(1) cutoff ratio of sample/ blank.
 #' @param threshold numeric(1) threshold.
+#' @param batch character(1), name of the column with batch information.
 #' @param blanks character() vector with the blank names.
 #' @param samples character() vector with the sample names.
 #'
@@ -617,28 +618,30 @@ calc_rsd <- function(data = NULL,
 calc_blank_ratio <- function(data = NULL,
                              blanks = NULL,
                              samples = NULL,
+                             batch = NULL,
                              ratio = 5,
                              threshold = 0.8) {
   print("Calculate blank ratio")
   samples_df <- data[data$sample_name %in% samples, ]
   blank_df <- data[data$sample_name %in% blanks, ]
 
-  res <- tapply(blank_df, list(blank_df$my_id), function(x) {
+  res <- tapply(blank_df, list(blank_df$my_id, blank_df[[batch]]), function(x) {
     mean_area <- mean(x$areaOriginal, na.rm = TRUE)
-    res <- data.frame(
-      my_id = x$my_id[1],
-      blankArea = mean_area
-    )
-
-    return(res)
   })
+  res <- as.data.frame(res)
+  res$my_id <- rownames(res)
 
-  res <- do.call("rbind", res)
+  res <- res |>
+    tidyr::pivot_longer(
+      cols = !c("my_id"),
+      names_to = batch,
+      values_to = "blankArea"
+    )
 
   data <- merge(
     x = samples_df,
     y = res,
-    by = "my_id",
+    by = c("my_id", batch),
     suffixes = c("", ".y")
   )
 
@@ -657,6 +660,9 @@ calc_blank_ratio <- function(data = NULL,
   res <- do.call("rbind", res)
 
   keep <- res$my_id[res$threshold >= threshold]
+
+  print("Rico")
+  print(keep)
 
   return(keep)
 }
