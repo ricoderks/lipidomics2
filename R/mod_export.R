@@ -186,7 +186,9 @@ mod_export_server <- function(id, r) {
           }
 
           params <- list(
-            title = input$export_analysis_title,
+            title = ifelse(input$export_analysis_title == "",
+                           "Analysis report",
+                           input$export_analysis_title),
             author = paste0("CPM - Lipidomics | v", utils::packageVersion("lipidomics2")),
             analyses = analyses,
             meta_data = r$tables$meta_data,
