@@ -15,6 +15,7 @@ params:
   analyses: NULL
   meta_data: NULL
   general_settings: NULL
+  columns: NULL
 ---
 
 ```{r setup, include=FALSE}
@@ -55,6 +56,7 @@ if(any(heatmap_index)) {
 }
 
 general_settings <- params$general_settings
+columns <- params$columns
 ```
 
 # Introduction
@@ -96,10 +98,19 @@ if(general_settings$apply_id_filtering) {
 ```{r general_settings_blank}
 htmltools::p(htmltools::strong("Blank filtering:"))
 if(general_settings$apply_blank_filtering) {
-  htmltools::tags$ul(
-    htmltools::tags$li(paste0("Sample / blank ratio: ", general_settings$blanksample_ratio)),
-    htmltools::tags$li(paste0("Threshold: ", general_settings$blanksample_threshold))
-  )
+  if(columns$blanksample != "select a column") {
+    htmltools::tags$ul(
+      htmltools::tags$li(paste0("Sample / blank ratio: ", general_settings$blanksample_ratio)),
+      htmltools::tags$li(paste0("Threshold: ", general_settings$blanksample_threshold)),
+      htmltools::tags$li(paste0("Group column: ", columns$blanksample)),
+      htmltools::tags$li(paste0("Group threshold: ", general_settings$blanksample_threshold_group))
+    )
+  } else {
+    htmltools::tags$ul(
+      htmltools::tags$li(paste0("Sample / blank ratio: ", general_settings$blanksample_ratio)),
+      htmltools::tags$li(paste0("Threshold: ", general_settings$blanksample_threshold))
+    )
+  }
 } else {
   htmltools::p("No blank filtering applied.")
 }

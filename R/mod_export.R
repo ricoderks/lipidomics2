@@ -190,7 +190,8 @@ mod_export_server <- function(id, r) {
             author = paste0("CPM - Lipidomics | v", utils::packageVersion("lipidomics2")),
             analyses = analyses,
             meta_data = r$tables$meta_data,
-            general_settings = r$settings
+            general_settings = r$settings,
+            columns = r$columns
           )
         }
 
