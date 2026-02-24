@@ -43,6 +43,7 @@ mod_volcano_ui <- function(id) {
 #'
 #' @importFrom bsicons bs_icon
 #' @importFrom bslib accordion accordion_panel
+#' @importFrom plotly event_data event_register
 #'
 #' @noRd
 mod_volcano_server <- function(id, r){
@@ -194,6 +195,7 @@ mod_volcano_server <- function(id, r){
 
     shiny::observeEvent(input$volcanoGroup, {
       shiny::req(input$volcanoGroup)
+      # this needs to be fixed, sampleid or filename
       choices_group <- unique(r$tables$meta_data[r$tables$meta_data[[r$columns$sampleid]] %in% r$index$selected_samples, input$volcanoGroup])
       analysis_settings$volcano$group1 <- choices_group[1]
       analysis_settings$volcano$group2 <- choices_group[2]
@@ -223,6 +225,7 @@ mod_volcano_server <- function(id, r){
                  input$volcanoPValueThreshold)
 
       print("show plot")
+      print(id)
 
       area_column <- switch(
         input$volcanoSelectTable,
@@ -248,6 +251,7 @@ mod_volcano_server <- function(id, r){
 
       ply <- show_volcano(
         data = plot_data,
+        name = id,
         fc_threshold = as.numeric(input$volcanoFcThreshold),
         pvalue_threshold = as.numeric(input$volcanoPValueThreshold),
         feature_annotation = input$volcanoFeatureAnnotation,
@@ -257,8 +261,75 @@ mod_volcano_server <- function(id, r){
 
       exportplot$plot <- ply
 
+      ply <- ply |>
+        plotly::event_register(event = "plotly_click")
+
       return(ply)
     })
+
+
+    #--------------------------------------------------------- popup violin ----
+    shiny::observeEvent(
+      plotly::event_data(
+        event = "plotly_click",
+        source = id
+      ), {
+
+        ns <- session$ns
+
+        ed <- plotly::event_data(event = "plotly_click",
+                                 source = id)
+
+        if (is.null(ed) || is.null(ed$customdata)) return()
+
+        my_id <- ed$customdata
+
+        features <- unique(r$tables$analysis_data[, c("my_id", "LongLipidName")])
+        selected_feature <- features$LongLipidName[features$my_id == my_id]
+
+        output$violin_modal <- plotly::renderPlotly({
+          area_column <- switch(
+            input$volcanoSelectTable,
+            "raw" = "area",
+            "totNorm" = "totNormArea",
+            "pqnNorm" = "pqnNormArea",
+            "protNorm" = "protNormArea"
+          )
+
+          plot_data <- r$tables$analysis_data[r$tables$analysis$keep == TRUE &
+                                                r$tables$analysis$class_keep == TRUE &
+                                                r$tables$analysis$sample_name %in% r$index$selected_samples, ]
+          plot_data <- plot_data[plot_data$my_id == my_id, ]
+
+
+          ply <- show_violin(
+            plot_data = plot_data,
+            area_column = area_column,
+            group = input$volcanoGroup,
+            group1 = input$volcanoGroup1,
+            group2 = input$volcanoGroup2
+          )
+
+          return(ply)
+        })
+
+        shiny::showModal(
+          shiny::modalDialog(
+            title = paste("Selected lipid:", selected_feature),
+            size = "l",
+            easyClose = TRUE,
+            footer = shiny::modalButton(label = "Close"),
+            plotly::plotlyOutput(
+              outputId = ns("violin_modal"),
+              height = "450px"
+            )
+          ),
+          session = session
+        )
+      })
+
+
+
 
     #--------------------------------------------------------------- export ----
     export <- function() {
