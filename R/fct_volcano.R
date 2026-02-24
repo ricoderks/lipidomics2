@@ -18,14 +18,14 @@
 #'
 #' @noRd
 do_test <- function(data = NULL,
-                    area_column = c("area", "totNormArea", "pqnNormArea"),
+                    area_column = c("area", "totNormArea", "pqnNormArea", "protNormArea"),
                     transformation = c("none", "log10", "log1p"),
                     test = c("ttest", "mw"),
                     group = NULL,
                     group1 = NULL,
                     group2 = NULL) {
   area_column <- match.arg(arg = area_column,
-                           choices = c("area", "totNormArea", "pqnNormArea"))
+                           choices = c("area", "totNormArea", "pqnNormArea", "protNormArea"))
   transformation <- match.arg(arg = transformation,
                               choices = c("none", "log10", "log1p"),
                               several.ok = FALSE)
@@ -78,13 +78,13 @@ do_test <- function(data = NULL,
 #'
 #' @noRd
 do_test.ttest <- function(data = NULL,
-                          area_column = c("area", "totNormArea", "pqnNormArea"),
+                          area_column = c("area", "totNormArea", "pqnNormArea", "protNormArea"),
                           transformation = c("none", "log10", "log1p"),
                           group = NULL,
                           group1 = NULL,
                           group2 = NULL) {
   area_column <- match.arg(arg = area_column,
-                           choices = c("area", "totNormArea", "pqnNormArea"))
+                           choices = c("area", "totNormArea", "pqnNormArea", "protNormArea"))
   transformation <- match.arg(arg = transformation,
                               choices = c("none", "log10", "log1p"),
                               several.ok = FALSE)
@@ -136,13 +136,13 @@ do_test.ttest <- function(data = NULL,
 #'
 #' @noRd
 do_test.mw <- function(data = NULL,
-                       area_column = c("area", "totNormArea", "pqnNormArea"),
+                       area_column = c("area", "totNormArea", "pqnNormArea", "protNormArea"),
                        transformation = c("none", "log10", "log1p"),
                        group = NULL,
                        group1 = NULL,
                        group2 = NULL) {
   area_column <- match.arg(arg = area_column,
-                           choices = c("area", "totNormArea", "pqnNormArea"))
+                           choices = c("area", "totNormArea", "pqnNormArea", "protNormArea"))
   transformation <- match.arg(arg = transformation,
                               choices = c("none", "log10", "log1p"),
                               several.ok = FALSE)
@@ -182,6 +182,7 @@ do_test.mw <- function(data = NULL,
 #' Show volcano plot.
 #'
 #' @param data  data.frame().
+#' @param name character(1), name of the plot. Used in source.
 #' @param fc_threshold numeric(1) threshold for the fold change threshold lines.
 #' @param pvalue_threshold numeric(1) threshold for the p-value threshold line.
 #' @param feature_annotation character(1), column with extra feature information.
@@ -199,6 +200,7 @@ do_test.mw <- function(data = NULL,
 #' @noRd
 #'
 show_volcano <- function(data = NULL,
+                         name = NULL,
                          fc_threshold = 2,
                          pvalue_threshold = 0.05,
                          feature_annotation = "none",
@@ -251,8 +253,10 @@ show_volcano <- function(data = NULL,
 
   ply <- plotly::plot_ly(
     data = data,
+    source = name,
     x = ~log2fc,
     y = ~log10p,
+    customdata = data$my_id,
     color = color_arg,
     colors = colors,
     text = ~paste0(
@@ -317,6 +321,59 @@ show_volcano <- function(data = NULL,
       )
     )
   )
+
+  return(ply)
+}
+
+
+#' @title Show a violin plot
+#'
+#' @description
+#' Show a violin plot.
+#'
+#' @param plot_data data.frame with the data.
+#' @param area_column character(1), which column contains the peak area information.
+#' @param group character(1) name of the grouping column.
+#' @param group1 character(1) what value of the group is x.
+#' @param group2 character(1) what value of the group is y.
+#'
+#' @returns violin plot as plotly object.
+#'
+#' @author Rico Derks
+#'
+#' @importFrom plotly plot_ly layout
+#'
+#' @noRd
+#'
+show_violin <- function(plot_data = NULL,
+                        area_column = c("area", "totNormArea", "pqnNormArea", "protNormArea"),
+                        group = NULL,
+                        group1 = NULL,
+                        group2 = NULL) {
+  area_column <- match.arg(arg = area_column,
+                           choices = c("area", "totNormArea", "pqnNormArea", "protNormArea"))
+
+  ply <- plotly::plot_ly(
+    # data = plot_data,
+    type = "violin",
+    x = plot_data[[group]],
+    y = plot_data[[area_column]],
+    color = plot_data[[group]],
+    colors = c("#1F77B4", "#FF7F0E"),
+    meanline = list(
+      visible = TRUE
+    ),
+    points = "all",
+    jitter = 0.5,
+    pointpos = 0
+  ) |>
+    plotly::layout(
+      xaxis = list(title = "Group"),
+      yaxis = list(title = "Value",
+                   zeroline = TRUE,
+                   rangemode = "tozero"),
+      showlegend = FALSE
+    )
 
   return(ply)
 }
