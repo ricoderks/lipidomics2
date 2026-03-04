@@ -43,6 +43,10 @@ mod_heatmap_ui <- function(id) {
           inputId = ns("hmGenerate"),
           label = "Generate heatmap"
         ),
+        shiny::actionButton(
+          inputId = ns("hmComments"),
+          label = "Add comments"
+        ),
         shiny::hr(),
         shiny::actionButton(
           inputId = ns("remove"),
@@ -70,10 +74,16 @@ mod_heatmap_server <- function(id, r){
 
     analysis_settings <- shiny::reactiveValues(
       heatmap = list(
-        table = "raw",
-        clustering = NULL,
-        sample_annotation = NULL,
-        feature_annotation = NULL
+        settings = list(
+          table = "raw",
+          clustering = NULL,
+          sample_annotation = NULL,
+          feature_annotation = NULL
+        ),
+        comments = list(
+          comment_before = NULL,
+          comment_after = NULL
+        )
       )
     )
 
@@ -99,27 +109,27 @@ mod_heatmap_server <- function(id, r){
           inputId = ns("hmSelectTable"),
           label = "Select data table:",
           choices = selection[selection %in% selected],
-          selected = shiny::isolate(analysis_settings$heatmap$table)
+          selected = shiny::isolate(analysis_settings$heatmap$settings$table)
         ),
         shiny::checkboxGroupInput(
           inputId = ns("hmClustering"),
           label = "Select clustering:",
           choices = c("Features" = "rows",
                       "Samples" = "columns"),
-          selected = shiny::isolate(analysis_settings$heatmap$clustering)
+          selected = shiny::isolate(analysis_settings$heatmap$settings$clustering)
         ),
         shiny::selectInput(
           inputId = ns("hmSampleAnnotation"),
           label = "Sample annotation:",
           choices = r$columns$groups,
-          selected = shiny::isolate(analysis_settings$heatmap$sample_annotation),
+          selected = shiny::isolate(analysis_settings$heatmap$settings$sample_annotation),
           multiple = TRUE
         ),
         shiny::selectInput(
           inputId = ns("hmFeatureAnnotation"),
           label = "Feature annotation:",
           choices = c("Lipid class" = "Class"),
-          selected = shiny::isolate(analysis_settings$heatmap$feature_annotation),
+          selected = shiny::isolate(analysis_settings$heatmap$settings$feature_annotation),
           multiple = TRUE
         )
       )
@@ -145,10 +155,10 @@ mod_heatmap_server <- function(id, r){
         input$hmClustering,
         input$hmSampleAnnotation,
         input$hmFeatureAnnotation), {
-          analysis_settings$heatmap$table <- input$hmSelectTable
-          analysis_settings$heatmap$clustering <- input$hmClustering
-          analysis_settings$heatmap$sample_annotation <- input$hmSampleAnnotation
-          analysis_settings$heatmap$feature_annotation <- input$hmFeatureAnnotation
+          analysis_settings$heatmap$settings$table <- input$hmSelectTable
+          analysis_settings$heatmap$settings$clustering <- input$hmClustering
+          analysis_settings$heatmap$settings$sample_annotation <- input$hmSampleAnnotation
+          analysis_settings$heatmap$settings$feature_annotation <- input$hmFeatureAnnotation
         })
 
 
@@ -194,13 +204,47 @@ mod_heatmap_server <- function(id, r){
     })
 
 
+    #-------------------------------------------------------------- comment ----
+    shiny::observeEvent(input$hmComments, {
+      shiny::showModal(
+        shiny::modalDialog(
+          title = "Add comments for heatmap",
+          size = "l",
+          easyClose = TRUE,
+          footer = shiny::modalButton(label = "Close"),
+          shiny::textAreaInput(
+            label = "Comment before:",
+            inputId = ns("hmCommentBefore"),
+            value = analysis_settings$heatmap$comments$comment_before,
+            width = "100%"
+          ),
+          shiny::textAreaInput(
+            label = "Comment after:",
+            inputId = ns("hmCommentAfter"),
+            value = analysis_settings$heatmap$comments$comment_after,
+            width = "100%"
+          )
+        ),
+        session = session
+      )
+    })
 
+
+    shiny::observeEvent(c(input$hmCommentBefore), {
+      analysis_settings$heatmap$comments$comment_before <- input$hmCommentBefore
+    })
+
+
+    shiny::observeEvent(c(input$hmCommentAfter), {
+      analysis_settings$heatmap$comments$comment_after <- input$hmCommentAfter
+    })
 
     #--------------------------------------------------------------- export ----
     export <- function() {
       res <- list(
         plot = exportplot$plot,
-        settings = analysis_settings$heatmap
+        settings = analysis_settings$heatmap$settings,
+        comments = analysis_settings$heatmap$comments
       )
 
       return(res)

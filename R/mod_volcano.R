@@ -19,6 +19,10 @@ mod_volcano_ui <- function(id) {
           shiny::uiOutput(
             outputId = ns("settingsVolcano")
           ),
+          shiny::actionButton(
+            inputId = ns("volcanoComments"),
+            label = "Add comments"
+          ),
           shiny::hr(),
           shiny::actionButton(
             inputId = ns("remove"),
@@ -55,16 +59,22 @@ mod_volcano_server <- function(id, r){
     choices_group <- unique(r$tables$meta_data[r$tables$meta_data[[r$columns$sampleid]] %in% r$index$selected_samples, r$columns$group[1]])
     analysis_settings <- shiny::reactiveValues(
       volcano = list(
-        table = "raw",
-        transformation = "none",
-        test = "ttest",
-        group = r$columns$groups[1],
-        comparison = NULL,
-        group1 = choices_group[1],
-        group2 = choices_group[2],
-        fc_threshold = 2,
-        pvalue_threshold = 0.05,
-        feature_annotation = "none"
+        settings = list(
+          table = "raw",
+          transformation = "none",
+          test = "ttest",
+          group = r$columns$groups[1],
+          comparison = NULL,
+          group1 = choices_group[1],
+          group2 = choices_group[2],
+          fc_threshold = 2,
+          pvalue_threshold = 0.05,
+          feature_annotation = "none"
+        ),
+        comments = list(
+          comment_before = NULL,
+          comment_after = NULL
+        )
       )
     )
 
@@ -85,7 +95,7 @@ mod_volcano_server <- function(id, r){
 
       choices_group <- unique(
         r$tables$meta_data[r$tables$meta_data[[r$columns$sampleid]] %in% r$index$selected_samples,
-                           shiny::isolate(analysis_settings$volcano$group)]
+                           shiny::isolate(analysis_settings$volcano$settings$group)]
       )
 
       shiny::tagList(
@@ -99,7 +109,7 @@ mod_volcano_server <- function(id, r){
                 inputId = ns("volcanoSelectTable"),
                 label = "Select data table:",
                 choices = selection[selection %in% selected],
-                selected = shiny::isolate(analysis_settings$volcano$table)
+                selected = shiny::isolate(analysis_settings$volcano$settings$table)
               ),
               shiny::selectInput(
                 inputId = ns("volcanoTransformation"),
@@ -107,32 +117,32 @@ mod_volcano_server <- function(id, r){
                 choices = c("None" = "none",
                             "Log10" = "log10",
                             "Log1p" = "log1p"),
-                selected = shiny::isolate(analysis_settings$volcano$transformation)
+                selected = shiny::isolate(analysis_settings$volcano$settings$transformation)
               ),
               shiny::selectInput(
                 inputId = ns("volcanoTest"),
                 label = "Select test:",
                 choices = c("t-test" = "ttest",
                             "Mann-Whitney" = "mw"),
-                selected = shiny::isolate(analysis_settings$volcano$test)
+                selected = shiny::isolate(analysis_settings$volcano$settings$test)
               ),
               shiny::selectInput(
                 inputId = ns("volcanoGroup"),
                 label = "Select group column:",
                 choices = r$columns$groups,
-                selected = shiny::isolate(analysis_settings$volcano$group)
+                selected = shiny::isolate(analysis_settings$volcano$settings$group)
               ),
               shiny::selectInput(
                 inputId = ns("volcanoGroup1"),
                 label = "Select group 1:",
                 choices = choices_group,
-                selected = shiny::isolate(analysis_settings$volcano$group1)
+                selected = shiny::isolate(analysis_settings$volcano$settings$group1)
               ),
               shiny::selectInput(
                 inputId = ns("volcanoGroup2"),
                 label = "Select group 2:",
                 choices = choices_group,
-                selected = shiny::isolate(analysis_settings$volcano$group2)
+                selected = shiny::isolate(analysis_settings$volcano$settings$group2)
               )
             ),
             bslib::accordion_panel(
@@ -143,12 +153,12 @@ mod_volcano_server <- function(id, r){
                 label = "Feature annotation",
                 choices = c("None" = "none",
                             "Lipid class" = "Class"),
-                selected = shiny::isolate(analysis_settings$volcano$feature_annotation)
+                selected = shiny::isolate(analysis_settings$volcano$settings$feature_annotation)
               ),
               shiny::sliderInput(
                 inputId = ns("volcanoFcThreshold"),
                 label = "Fold change threshold:",
-                value = shiny::isolate(analysis_settings$volcano$fc_threshold),
+                value = shiny::isolate(analysis_settings$volcano$settings$fc_threshold),
                 min = 1,
                 max = 4,
                 step = 0.1
@@ -156,7 +166,7 @@ mod_volcano_server <- function(id, r){
               shiny::sliderInput(
                 inputId = ns("volcanoPValueThreshold"),
                 label = "p-value threshold:",
-                value = shiny::isolate(analysis_settings$volcano$pvalue_threshold),
+                value = shiny::isolate(analysis_settings$volcano$settings$pvalue_threshold),
                 min = 0,
                 max = 0.1,
                 step = 0.005
@@ -180,14 +190,14 @@ mod_volcano_server <- function(id, r){
         input$volcanoFcThreshold,
         input$volcanoPValueThreshold
       ), {
-        analysis_settings$volcano$table <- input$volcanoSelectTable
-        analysis_settings$volcano$transformation <- input$volcanoTransformation
-        analysis_settings$volcano$test <- input$volcanoTest
-        analysis_settings$volcano$group <- input$volcanoGroup
-        analysis_settings$volcano$group1 <- input$volcanoGroup1
-        analysis_settings$volcano$group2 <- input$volcanoGroup2
-        analysis_settings$volcano$fc_threshold <- input$volcanoFcThreshold
-        analysis_settings$volcano$pvalue_threshold <- input$volcanoPValueThreshold
+        analysis_settings$volcano$settings$table <- input$volcanoSelectTable
+        analysis_settings$volcano$settings$transformation <- input$volcanoTransformation
+        analysis_settings$volcano$settings$test <- input$volcanoTest
+        analysis_settings$volcano$settings$group <- input$volcanoGroup
+        analysis_settings$volcano$settings$group1 <- input$volcanoGroup1
+        analysis_settings$volcano$settings$group2 <- input$volcanoGroup2
+        analysis_settings$volcano$settings$fc_threshold <- input$volcanoFcThreshold
+        analysis_settings$volcano$settings$pvalue_threshold <- input$volcanoPValueThreshold
       },
       ignoreInit = TRUE
     )
@@ -197,20 +207,20 @@ mod_volcano_server <- function(id, r){
       shiny::req(input$volcanoGroup)
       # this needs to be fixed, sampleid or filename
       choices_group <- unique(r$tables$meta_data[r$tables$meta_data[[r$columns$sampleid]] %in% r$index$selected_samples, input$volcanoGroup])
-      analysis_settings$volcano$group1 <- choices_group[1]
-      analysis_settings$volcano$group2 <- choices_group[2]
+      analysis_settings$volcano$settings$group1 <- choices_group[1]
+      analysis_settings$volcano$settings$group2 <- choices_group[2]
 
       shiny::updateSelectInput(
         session = session,
         inputId = ns("volcanoGroup1"),
         choices = choices_group,
-        selected = analysis_settings$volcano$group1
+        selected = analysis_settings$volcano$settings$group1
       )
       shiny::updateSelectInput(
         session = session,
         inputId = ns("volcanoGroup2"),
         choices = choices_group,
-        selected = analysis_settings$volcano$group2
+        selected = analysis_settings$volcano$settings$group2
       )
     })
 
@@ -328,14 +338,47 @@ mod_volcano_server <- function(id, r){
         )
       })
 
+    #-------------------------------------------------------------- comment ----
+    shiny::observeEvent(input$volcanoComments, {
+      shiny::showModal(
+        shiny::modalDialog(
+          title = "Add comments for the volcano plots",
+          size = "l",
+          easyClose = TRUE,
+          footer = shiny::modalButton(label = "Close"),
+          shiny::textAreaInput(
+            label = "Comment before:",
+            inputId = ns("volcanoCommentBefore"),
+            value = analysis_settings$volcano$comments$comment_before,
+            width = "100%"
+          ),
+          shiny::textAreaInput(
+            label = "Comment after:",
+            inputId = ns("volcanoCommentAfter"),
+            value = analysis_settings$volcano$comments$comment_after,
+            width = "100%"
+          )
+        ),
+        session = session
+      )
+    })
 
 
+    shiny::observeEvent(c(input$volcanoCommentBefore), {
+      analysis_settings$volcano$comments$comment_before <- input$volcanoCommentBefore
+    })
+
+
+    shiny::observeEvent(c(input$volcanoCommentAfter), {
+      analysis_settings$volcano$comments$comment_after <- input$volcanoCommentAfter
+    })
 
     #--------------------------------------------------------------- export ----
     export <- function() {
       res <- list(
         plot = exportplot$plot,
-        settings = analysis_settings$volcano
+        settings = analysis_settings$volcano$settings,
+        comments = analysis_settings$volcano$comments
       )
 
       return(res)
