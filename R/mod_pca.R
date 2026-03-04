@@ -234,6 +234,7 @@ mod_pca_server <- function(id, r){
     })
 
 
+    #-------------------------------------------------------------- comment ----
     shiny::observeEvent(input$pcaComments, {
       shiny::showModal(
         shiny::modalDialog(

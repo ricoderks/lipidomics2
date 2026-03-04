@@ -204,6 +204,7 @@ mod_heatmap_server <- function(id, r){
     })
 
 
+    #-------------------------------------------------------------- comment ----
     shiny::observeEvent(input$hmComments, {
       shiny::showModal(
         shiny::modalDialog(
