@@ -27,6 +27,10 @@ library(plotly)
 library(sessioninfo)
 ```
 
+```{r include=FALSE}
+htmltools::tagList(plot_ly(x = rnorm(10), type = "histogram"))
+```
+
 ```{r}
 volcano_index <- sapply(params$analyses, function(analysis) {
   grepl(x = analysis$label,
@@ -129,35 +133,39 @@ if(general_settings$apply_trend_correction) {
 
 # Analysis {.tabset}
 
-```{r heatmap-title, results='asis'}
+```{r heatmap-title, results='asis', echo=FALSE}
 if(any(heatmap_index)) {
-  cat("## Heatmap {.tabset}\n\n")
+  cat("## Heatmap {.tabset}", "\n\n", sep = "")
 }
 ```
 
-```{r heatmaps}
+```{r heatmaps, results='asis', echo=FALSE}
 if(any(heatmap_index)) {
-  l <- htmltools::tagList()
   for(a in 1:length(heatmap_data)) {
     names_settings <- names(heatmap_data[[a]]$settings)
-    l[[a]] <- htmltools::tagList(
-      htmltools::h3(heatmap_data[[a]]$label),
+    settings <- htmltools::tagList(
       htmltools::p("Settings:"),
       htmltools::tags$ul(
         lapply(names_settings, function(setting) {
           tags$li(paste0(setting, ": ", paste(heatmap_data[[a]]$settings[[setting]], collapse = ", ")))
         })
-      ),
-      htmltools::p(heatmap_data[[a]]$comments$comment_before),
-      htmltools::div(
-        style = "height: 1200px; margin-bottom: 25px;",
+      )
+    )
+    
+    plot <- htmltools::div(
+      style = "height: 1200px; margin-bottom: 25px;",
+      htmltools::tagList(
         heatmap_data[[a]]$plot |> 
           plotly::layout(height = 1200)
-      ),
-      htmltools::p(heatmap_data[[a]]$comments$comment_after)
+      )
     )
+    
+    cat("###", heatmap_data[[a]]$label, "\n\n")
+    print(settings)
+    print(htmltools::p(heatmap_data[[a]]$comments$comment_before))
+    print(plot)
+    print(htmltools::p(heatmap_data[[a]]$comments$comment_after))
   }
-  l
 }
 ```
 
