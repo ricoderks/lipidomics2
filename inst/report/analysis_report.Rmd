@@ -221,35 +221,37 @@ if(any(pca_index)) {
 }
 ```
 
-```{r volcano-title, results='asis'}
+```{r volcano-title, results='asis', echo=FALSE}
 if(any(volcano_index)) {
-  cat("## Volcano plot {.tabset}\n\n")
+  cat("## Volcano plot {.tabset}", "\n\n", sep = "")
 }
 ```
 
-```{r volcano-plots}
+```{r volcano-plots, results='asis', echo=FALSE}
 if(any(volcano_index)) {
-  l <- htmltools::tagList()
   for(a in 1:length(volcano_data)) {
     names_settings <- names(volcano_data[[a]]$settings)
-    l[[a]] <- htmltools::tagList(
-      htmltools::h3(volcano_data[[a]]$label),
+    settings <- htmltools::tagList(
       htmltools::p("Settings:"),
       htmltools::tags$ul(
         lapply(names_settings, function(setting) {
           tags$li(paste0(setting, ": ", paste(volcano_data[[a]]$settings[[setting]], collapse = ", ")))
         })
-      ),
-      htmltools::p(volcano_data[[a]]$comments$comment_before),
-      htmltools::div(
-        style = "height: 800px; margin-bottom: 25px;",
+      )
+    )
+    plot <- htmltools::div(
+      style = "height: 800px; margin-bottom: 25px;",
+      htmltools::tagList(
         volcano_data[[a]]$plot |> 
           plotly::layout(height = 600)
-      ),
-      htmltools::p(volcano_data[[a]]$comments$comment_after)
+      )
     )
+    cat("###", volcano_data[[a]]$label, "\n\n")
+    print(settings)
+    print(htmltools::p(volcano_data[[a]]$comments$comment_before))
+    print(plot)
+    print(htmltools::p(volcano_data[[a]]$comments$comment_after))
   }
-  l
 }
 ```
 
