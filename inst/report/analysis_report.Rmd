@@ -163,7 +163,7 @@ if(any(heatmap_index)) {
 
 ```{r pca-title, results='asis'}
 if(any(pca_index)) {
-  cat("## PCA\n\n")
+  cat("## PCA {.tabset}\n\n")
 }
 ```
 
@@ -218,7 +218,7 @@ if(any(pca_index)) {
 
 ```{r volcano-title, results='asis'}
 if(any(volcano_index)) {
-  cat("## Volcano plot\n\n")
+  cat("## Volcano plot {.tabset}\n\n")
 }
 ```
 
@@ -235,11 +235,13 @@ if(any(volcano_index)) {
           tags$li(paste0(setting, ": ", paste(volcano_data[[a]]$settings[[setting]], collapse = ", ")))
         })
       ),
+      htmltools::p(volcano_data[[a]]$comments$comment_before),
       htmltools::div(
         style = "height: 800px; margin-bottom: 25px;",
         volcano_data[[a]]$plot |> 
           plotly::layout(height = 600)
-      )
+      ),
+      htmltools::p(volcano_data[[a]]$comments$comment_after)
     )
   }
   l
