@@ -56,7 +56,7 @@ mod_volcano_server <- function(id, r){
 
     print("Volcano plot server started")
 
-    choices_group <- unique(r$tables$meta_data[r$tables$meta_data[[r$columns$sampleid]] %in% r$index$selected_samples, r$columns$group[1]])
+    choices_group <- unique(r$tables$meta_data[r$tables$meta_data[[r$columns$filename]] %in% r$index$selected_samples, r$columns$group[1]])
     analysis_settings <- shiny::reactiveValues(
       volcano = list(
         settings = list(
@@ -94,7 +94,7 @@ mod_volcano_server <- function(id, r){
       selected <- c("raw", selected)
 
       choices_group <- unique(
-        r$tables$meta_data[r$tables$meta_data[[r$columns$sampleid]] %in% r$index$selected_samples,
+        r$tables$meta_data[r$tables$meta_data[[r$columns$filename]] %in% r$index$selected_samples,
                            shiny::isolate(analysis_settings$volcano$settings$group)]
       )
 
@@ -206,7 +206,8 @@ mod_volcano_server <- function(id, r){
     shiny::observeEvent(input$volcanoGroup, {
       shiny::req(input$volcanoGroup)
       # this needs to be fixed, sampleid or filename
-      choices_group <- unique(r$tables$meta_data[r$tables$meta_data[[r$columns$sampleid]] %in% r$index$selected_samples, input$volcanoGroup])
+      # this is in multiple locations
+      choices_group <- unique(r$tables$meta_data[r$tables$meta_data[[r$columns$filename]] %in% r$index$selected_samples, input$volcanoGroup])
       analysis_settings$volcano$settings$group1 <- choices_group[1]
       analysis_settings$volcano$settings$group2 <- choices_group[2]
 
