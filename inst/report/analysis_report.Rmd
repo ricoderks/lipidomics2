@@ -131,7 +131,7 @@ if(general_settings$apply_trend_correction) {
 
 ```{r heatmap-title, results='asis'}
 if(any(heatmap_index)) {
-  cat("## Heatmap\n\n")
+  cat("## Heatmap {.tabset}\n\n")
 }
 ```
 

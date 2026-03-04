@@ -82,7 +82,7 @@ mod_heatmap_server <- function(id, r){
         ),
         comments = list(
           comment_before = NULL,
-          comment_after = "testing"
+          comment_after = NULL
         )
       )
     )
