@@ -19,6 +19,10 @@ mod_pca_ui <- function(id) {
           shiny::uiOutput(
             outputId = ns("settingsPca")
           ),
+          shiny::actionButton(
+            inputId = ns("pcaComments"),
+            label = "Add comments"
+          ),
           shiny::hr(),
           shiny::actionButton(
             inputId = ns("remove"),
@@ -47,15 +51,21 @@ mod_pca_server <- function(id, r){
 
     analysis_settings <- shiny::reactiveValues(
       pca = list(
-        x = "PC1",
-        y = "PC2",
-        nPcs = 4,
-        plot = "scores",
-        scaling = "uv",
-        transformation = "log",
-        sample_annotation = "none",
-        feature_annotation = "none",
-        table = "raw"
+        settings = list(
+          x = "PC1",
+          y = "PC2",
+          nPcs = 4,
+          plot = "scores",
+          scaling = "uv",
+          transformation = "log",
+          sample_annotation = "none",
+          feature_annotation = "none",
+          table = "raw"
+        ),
+        comments = list(
+          comment_before = NULL,
+          comment_after = NULL
+        )
       )
     )
 
@@ -89,12 +99,12 @@ mod_pca_server <- function(id, r){
                 inputId = ns("pcaSelectTable"),
                 label = "Select data table:",
                 choices = selection[selection %in% selected],
-                selected = shiny::isolate(analysis_settings$pca$table)
+                selected = shiny::isolate(analysis_settings$pca$settings$table)
               ),
               shiny::sliderInput(
                 inputId = ns("pcaNumberPcs"),
                 label = "Maximum number of PCs:",
-                value = shiny::isolate(analysis_settings$pca$nPcs),
+                value = shiny::isolate(analysis_settings$pca$settings$nPcs),
                 min = 2,
                 max = 10,
                 step = 1
@@ -105,7 +115,7 @@ mod_pca_server <- function(id, r){
                 choices = c("None" = "none",
                             "Log10" = "log10",
                             "Log1p" = "log1p"),
-                selected = shiny::isolate(analysis_settings$pca$transformation)
+                selected = shiny::isolate(analysis_settings$pca$settings$transformation)
               ),
               shiny::selectInput(
                 inputId = ns("pcaScaling"),
@@ -113,7 +123,7 @@ mod_pca_server <- function(id, r){
                 choices = c("None" = "none",
                             "UV" = "uv",
                             "Pareto" = "pareto"),
-                selected = shiny::isolate(analysis_settings$pca$scaling)
+                selected = shiny::isolate(analysis_settings$pca$settings$scaling)
               )
             ),
             bslib::accordion_panel(
@@ -123,14 +133,14 @@ mod_pca_server <- function(id, r){
                 inputId = ns("pcaSampleAnnotation"),
                 label = "Sample annotation:",
                 choices = c("none", r$columns$groups),
-                selected = shiny::isolate(analysis_settings$pca$sample_annotation)
+                selected = shiny::isolate(analysis_settings$pca$settings$sample_annotation)
               ),
               shiny::selectInput(
                 inputId = ns("pcaFeatureAnnotation"),
                 label = "Feature annotation:",
                 choices = c("None" = "none",
                             "Lipid class" = "Class"),
-                selected = shiny::isolate(analysis_settings$pca$feature_annotation)
+                selected = shiny::isolate(analysis_settings$pca$settings$feature_annotation)
               ),
               shiny::selectInput(
                 inputId = ns("pcaSelectPlot"),
@@ -138,19 +148,19 @@ mod_pca_server <- function(id, r){
                 choices = c("Scores" = "scores",
                             "Loadings" = "loadings",
                             "Summary of fit" = "summary_fit"),
-                selected = shiny::isolate(analysis_settings$pca$plot)
+                selected = shiny::isolate(analysis_settings$pca$settings$plot)
               ),
               shiny::selectInput(
                 inputId = ns("pcaX"),
                 label = "x-axis:",
-                choices = paste0("PC", 1:analysis_settings$pca$nPcs),
-                selected = shiny::isolate(analysis_settings$pca$x)
+                choices = paste0("PC", 1:analysis_settings$pca$settings$nPcs),
+                selected = shiny::isolate(analysis_settings$pca$settings$x)
               ),
               shiny::selectInput(
                 inputId = ns("pcaY"),
                 label = "y-axis:",
-                choices = paste0("PC", 1:analysis_settings$pca$nPcs),
-                selected = shiny::isolate(analysis_settings$pca$y)
+                choices = paste0("PC", 1:analysis_settings$pca$settings$nPcs),
+                selected = shiny::isolate(analysis_settings$pca$settings$y)
               )
             )
           ), # end accordion
@@ -170,15 +180,15 @@ mod_pca_server <- function(id, r){
         input$pcaSampleAnnotation,
         input$pcaFeatureAnnotation),
       {
-        analysis_settings$pca$nPcs <- input$pcaNumberPcs
-        analysis_settings$pca$x <- input$pcaX
-        analysis_settings$pca$y <- input$pcaY
-        analysis_settings$pca$plot <- input$pcaSelectPlot
-        analysis_settings$pca$sample_annotation <- input$pcaSampleAnnotation
-        analysis_settings$pca$feature_annotation <- input$pcaFeatureAnnotation
-        analysis_settings$pca$table <- input$pcaSelectTable
-        analysis_settings$pca$transformation <- input$pcaTransformation
-        analysis_settings$pca$scaling <- input$pcaScaling
+        analysis_settings$pca$settings$nPcs <- input$pcaNumberPcs
+        analysis_settings$pca$settings$x <- input$pcaX
+        analysis_settings$pca$settings$y <- input$pcaY
+        analysis_settings$pca$settings$plot <- input$pcaSelectPlot
+        analysis_settings$pca$settings$sample_annotation <- input$pcaSampleAnnotation
+        analysis_settings$pca$settings$feature_annotation <- input$pcaFeatureAnnotation
+        analysis_settings$pca$settings$table <- input$pcaSelectTable
+        analysis_settings$pca$settings$transformation <- input$pcaTransformation
+        analysis_settings$pca$settings$scaling <- input$pcaScaling
       })
 
 
@@ -223,11 +233,48 @@ mod_pca_server <- function(id, r){
       return(plys[[input$pcaSelectPlot]])
     })
 
+
+    #-------------------------------------------------------------- comment ----
+    shiny::observeEvent(input$pcaComments, {
+      shiny::showModal(
+        shiny::modalDialog(
+          title = "Add comments for PCA",
+          size = "l",
+          easyClose = TRUE,
+          footer = shiny::modalButton(label = "Close"),
+          shiny::textAreaInput(
+            label = "Comment before:",
+            inputId = ns("pcaCommentBefore"),
+            value = analysis_settings$pca$comments$comment_before,
+            width = "100%"
+          ),
+          shiny::textAreaInput(
+            label = "Comment after:",
+            inputId = ns("pcaCommentAfter"),
+            value = analysis_settings$pca$comments$comment_after,
+            width = "100%"
+          )
+        ),
+        session = session
+      )
+    })
+
+
+    shiny::observeEvent(c(input$pcaCommentBefore), {
+      analysis_settings$pca$comments$comment_before <- input$pcaCommentBefore
+    })
+
+
+    shiny::observeEvent(c(input$pcaCommentAfter), {
+      analysis_settings$pca$comments$comment_after <- input$pcaCommentAfter
+    })
+
     #--------------------------------------------------------------- export ----
     export <- function() {
       res <- list(
         plot = exportplot$plot,
-        settings = analysis_settings$pca
+        settings = analysis_settings$pca$settings,
+        comments = analysis_settings$pca$comments
       )
 
       return(res)
