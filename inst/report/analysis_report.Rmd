@@ -180,7 +180,6 @@ if(any(pca_index)) {
   for(a in 1:length(pca_data)) {
     names_settings <- names(pca_data[[a]]$settings)
     settings <- htmltools::tagList(
-      htmltools::h3(pca_data[[a]]$label),
       htmltools::p("Settings:"),
       htmltools::tags$ul(
         lapply(names_settings, function(setting) {
