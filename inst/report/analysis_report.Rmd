@@ -171,56 +171,53 @@ if(any(heatmap_index)) {
 
 ```{r pca-title, results='asis'}
 if(any(pca_index)) {
-  cat("## PCA {.tabset}\n\n")
+  cat("## PCA {.tabset}", "\n\n", sep = "")
 }
 ```
 
-```{r pca-plots}
+```{r pca-plots, results='asis', echo=FALSE}
 if(any(pca_index)) {
-  l <- htmltools::tagList()
   for(a in 1:length(pca_data)) {
     names_settings <- names(pca_data[[a]]$settings)
-    l[[a]] <- htmltools::tagList(
+    settings <- htmltools::tagList(
       htmltools::h3(pca_data[[a]]$label),
       htmltools::p("Settings:"),
       htmltools::tags$ul(
         lapply(names_settings, function(setting) {
           tags$li(paste0(setting, ": ", paste(pca_data[[a]]$settings[[setting]], collapse = ", ")))
         })
-      ),
-      htmltools::p(pca_data[[a]]$comments$comment_before),
-      htmltools::div(
-        style = "height: 250px; margin-bottom: 25px;",
-        pca_data[[a]]$plot[["summary_fit"]] |> 
-          plotly::layout(height = 250)
-      ),
-      
-      htmltools::div(
-        style = paste(
-          "display: grid;",
-          "grid-template-columns: repeat(2, minmax(0, 1fr));",
-          "gap: 16px;",
-          "margin-bottom: 50px;"
-        ),
-        # Left plot
-        htmltools::div(
-          style = "height: 500px;",
-          pca_data[[a]]$plot[["scores"]] |> 
-            plotly::layout(height = 500) |>
-            plotly::config(responsive = TRUE)
-        ),
-        # Right plot
-        htmltools::div(
-          style = "height: 500px;",
-          pca_data[[a]]$plot[["loadings"]] |> 
-            plotly::layout(height = 500) |>
-            plotly::config(responsive = TRUE)
-        )
-      ),
-      htmltools::p(pca_data[[a]]$comments$comment_after)
+      )
     )
+    
+    plot1 <- htmltools::div(
+      style = "height: 250px; margin-bottom: 25px;",
+      pca_data[[a]]$plot[["summary_fit"]] |> 
+        plotly::layout(height = 250)
+    )
+    
+    plot2 <- htmltools::div(
+      style = "height: 500px; margin-bottom: 25px;",
+      htmltools::tagList(
+        pca_data[[a]]$plot[["scores"]] |> 
+          plotly::layout(height = 500)
+      )
+    )
+    plot3 <- htmltools::div(
+      style = "height: 500px; margin-bottom: 25px;",
+      htmltools::tagList(
+        pca_data[[a]]$plot[["loadings"]] |> 
+          plotly::layout(height = 500)
+      )
+    )
+    
+    cat("###", pca_data[[a]]$label, "\n\n")
+    print(settings)
+    print(htmltools::p(pca_data[[a]]$comments$comment_before))
+    print(plot1)
+    print(plot2)
+    print(plot3)
+    print(htmltools::p(pca_data[[a]]$comments$comment_after))
   }
-  l
 }
 ```
 
