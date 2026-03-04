@@ -148,11 +148,13 @@ if(any(heatmap_index)) {
           tags$li(paste0(setting, ": ", paste(heatmap_data[[a]]$settings[[setting]], collapse = ", ")))
         })
       ),
+      htmltools::p(heatmap_data[[a]]$comments$comment_before),
       htmltools::div(
         style = "height: 1200px; margin-bottom: 25px;",
         heatmap_data[[a]]$plot |> 
           plotly::layout(height = 1200)
-      )
+      ),
+      htmltools::p(heatmap_data[[a]]$comments$comment_after)
     )
   }
   l

@@ -183,6 +183,7 @@ mod_export_server <- function(id, r) {
             analyses[[a]]$label <- m$label
             analyses[[a]]$plot <- m$export()$plot
             analyses[[a]]$settings <- m$export()$settings
+            analyses[[a]]$comments <- m$export()$comments
           }
 
           params <- list(
