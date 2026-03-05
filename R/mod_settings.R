@@ -178,7 +178,12 @@ mod_settings_ui <- function(id) {
         title = "Samples",
         value = "samples",
         bslib::card(
-          shiny::p(shiny::strong("NOTE:"), "Removing a file or selecting a file will cause everything to be recalculated!"),
+          shiny::p(shiny::strong("NOTE:"), "CAREFUL!!, when you click recalculate all previous curated information is removed!"),
+          shiny::actionButton(
+            inputId = ns("settings_samples_recalc"),
+            label = "Recalculate",
+            width = "200px"
+          ),
           bslib::layout_column_wrap(
             width = 1 / 3,
             shiny::uiOutput(outputId = ns("settings_blanks_list")),
@@ -698,6 +703,83 @@ mod_settings_server <- function(id, r){
     })
 
 
+    shiny::observeEvent(input$settings_samples_recalc, {
+      shiny::req(input$settings_select_blanks,
+                 input$settings_select_pools,
+                 input$settings_select_samples)
+
+      w$show()
+
+      print("(De-) select samples and recalculate")
+
+      selected_samples <- c(input$settings_select_blanks,
+                            input$settings_select_pools,
+                            input$settings_select_samples)
+
+      r$index$selected_blanks <- input$settings_select_blanks
+      r$index$selected_pools <- input$settings_select_pools
+      r$index$selected_samples <- input$settings_select_samples
+
+      r$tables$analysis_data <- r$tables$clean_data[
+        r$tables$clean_data$sample_name %in% selected_samples, ]
+
+      # RSD filtering
+      if(r$settings$apply_rsd_cutoff) {
+        rsd_res <- calc_rsd(data = r$tables$clean_data,
+                            pools = r$index$selected_pools,
+                            cut_off = r$settings$rsd_cutoff)
+        r$index$keep_rsd <- rsd_res$keep
+        r$tables$qc_data <- rsd_res$qc_data
+        r$tables$analysis_data$rsd_keep <- r$tables$analysis_data$my_id %in% r$index$keep_rsd
+      } else {
+        r$index$keep_rsd <- unique(r$tables$analysis_data$my_id)
+        r$tables$analysis_data$rsd_keep <- TRUE
+      }
+
+      # ID filtering
+      if(r$settings$apply_id_filtering) {
+        r$index$keep_id <- filter_id(data = r$tables$clean_data,
+                                     dot_cutoff = r$settings$dot_cutoff,
+                                     revdot_cutoff = r$settings$revdot_cutoff)
+        r$tables$analysis_data$match_keep <- r$tables$analysis_data$my_id %in%
+          r$index$keep_id
+      } else {
+        r$index$keep_id <- unique(r$tables$analysis_data$my_id)
+        r$tables$analysis_data$match_keep <- TRUE
+      }
+
+      if(r$settings$apply_blank_filtering) {
+        # Blank filtering
+        r$index$keep_blankratio <- calc_blank_ratio(data = r$tables$clean_data,
+                                                    blanks = r$index$selected_blanks,
+                                                    samples = r$index$selected_samples,
+                                                    batch = r$columns$batch,
+                                                    ratio = r$settings$blanksample_ratio,
+                                                    threshold = r$settings$blanksample_threshold,
+                                                    group_threshold = r$settings$blanksample_threshold_group,
+                                                    group_column = r$columns$blanksample)
+        r$tables$analysis_data$background_keep <- r$tables$analysis_data$my_id %in%
+          r$index$keep_blankratio
+      } else {
+        r$index$keep_blankratio <- unique(r$tables$analysis_data$my_id)
+        r$tables$analysis_data$background_keep <- TRUE
+      }
+
+      r$tables$analysis_data$keep <- mapply(all,
+                                            r$tables$analysis_data$rsd_keep,
+                                            r$tables$analysis_data$match_keep,
+                                            r$tables$analysis_data$background_keep)
+
+      r$tables$analysis_data$comment <- "keep"
+      r$tables$analysis_data$comment[!r$tables$analysis_data$background_keep] <- "high_bg"
+      r$tables$analysis_data$comment[!r$tables$analysis_data$match_keep] <- "no_match"
+      r$tables$analysis_data$comment[!r$tables$analysis_data$rsd_keep] <- "large_rsd"
+
+      w$hide()
+
+    })
+
+
     shiny::observeEvent(
       c(input$settings_select_blanks,
         input$settings_select_pools,
@@ -707,7 +789,7 @@ mod_settings_server <- function(id, r){
                    input$settings_select_pools,
                    input$settings_select_samples)
 
-        w$show()
+        # w$show()
 
         print("(De-) select samples")
 
@@ -719,47 +801,47 @@ mod_settings_server <- function(id, r){
         r$index$selected_pools <- input$settings_select_pools
         r$index$selected_samples <- input$settings_select_samples
 
-        r$tables$analysis_data <- r$tables$clean_data[
-          r$tables$clean_data$sample_name %in% selected_samples, ]
+        r$tables$analysis_data <- r$tables$analysis_data[
+          r$tables$analysis_data$sample_name %in% selected_samples, ]
 
-        # RSD filtering
-        rsd_res <- calc_rsd(data = r$tables$clean_data,
-                            pools = r$index$selected_pools,
-                            cut_off = r$settings$rsd_cutoff)
-        r$index$keep_rsd <- rsd_res$keep
-        r$tables$qc_data <- rsd_res$qc_data
-
-        # ID filtering
-        r$index$keep_id <- filter_id(data = r$tables$clean_data,
-                                     dot_cutoff = r$settings$dot_cutoff,
-                                     revdot_cutoff = r$settings$revdot_cutoff)
-        # Blank filtering
-        r$index$keep_blankratio <- calc_blank_ratio(data = r$tables$clean_data,
-                                                    blanks = r$index$selected_blanks,
-                                                    samples = r$index$selected_samples,
-                                                    batch = r$columns$batch,
-                                                    ratio = r$settings$blanksample_ratio,
-                                                    threshold = r$settings$blanksample_threshold,
-                                                    group_threshold = r$settings$blanksample_threshold_group,
-                                                    group_column = r$columns$blanksample)
-
-        r$tables$analysis_data$rsd_keep <- r$tables$analysis_data$my_id %in%
-          r$index$keep_rsd
-        r$tables$analysis_data$match_keep <- r$tables$analysis_data$my_id %in%
-          r$index$keep_id
-        r$tables$analysis_data$background_keep <- r$tables$analysis_data$my_id %in%
-          r$index$keep_blankratio
-        r$tables$analysis_data$keep <- mapply(all,
-                                              r$tables$analysis_data$rsd_keep,
-                                              r$tables$analysis_data$match_keep,
-                                              r$tables$analysis_data$background_keep)
-
-        r$tables$analysis_data$comment <- "keep"
-        r$tables$analysis_data$comment[!r$tables$analysis_data$background_keep] <- "high_bg"
-        r$tables$analysis_data$comment[!r$tables$analysis_data$match_keep] <- "no_match"
-        r$tables$analysis_data$comment[!r$tables$analysis_data$rsd_keep] <- "large_rsd"
-
-        w$hide()
+        # # RSD filtering
+        # rsd_res <- calc_rsd(data = r$tables$clean_data,
+        #                     pools = r$index$selected_pools,
+        #                     cut_off = r$settings$rsd_cutoff)
+        # r$index$keep_rsd <- rsd_res$keep
+        # r$tables$qc_data <- rsd_res$qc_data
+        #
+        # # ID filtering
+        # r$index$keep_id <- filter_id(data = r$tables$clean_data,
+        #                              dot_cutoff = r$settings$dot_cutoff,
+        #                              revdot_cutoff = r$settings$revdot_cutoff)
+        # # Blank filtering
+        # r$index$keep_blankratio <- calc_blank_ratio(data = r$tables$clean_data,
+        #                                             blanks = r$index$selected_blanks,
+        #                                             samples = r$index$selected_samples,
+        #                                             batch = r$columns$batch,
+        #                                             ratio = r$settings$blanksample_ratio,
+        #                                             threshold = r$settings$blanksample_threshold,
+        #                                             group_threshold = r$settings$blanksample_threshold_group,
+        #                                             group_column = r$columns$blanksample)
+        #
+        # r$tables$analysis_data$rsd_keep <- r$tables$analysis_data$my_id %in%
+        #   r$index$keep_rsd
+        # r$tables$analysis_data$match_keep <- r$tables$analysis_data$my_id %in%
+        #   r$index$keep_id
+        # r$tables$analysis_data$background_keep <- r$tables$analysis_data$my_id %in%
+        #   r$index$keep_blankratio
+        # r$tables$analysis_data$keep <- mapply(all,
+        #                                       r$tables$analysis_data$rsd_keep,
+        #                                       r$tables$analysis_data$match_keep,
+        #                                       r$tables$analysis_data$background_keep)
+        #
+        # r$tables$analysis_data$comment <- "keep"
+        # r$tables$analysis_data$comment[!r$tables$analysis_data$background_keep] <- "high_bg"
+        # r$tables$analysis_data$comment[!r$tables$analysis_data$match_keep] <- "no_match"
+        # r$tables$analysis_data$comment[!r$tables$analysis_data$rsd_keep] <- "large_rsd"
+        #
+        # w$hide()
       },
       # everything is still recalculated the first time you visit Settings - Samples
       ignoreInit = TRUE
