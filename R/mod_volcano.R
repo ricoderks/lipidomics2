@@ -187,6 +187,7 @@ mod_volcano_server <- function(id, r){
         input$volcanoGroup,
         input$volcanoGroup1,
         input$volcanoGroup2,
+        input$volcanoFeatureAnnotation,
         input$volcanoFcThreshold,
         input$volcanoPValueThreshold
       ), {
@@ -196,6 +197,7 @@ mod_volcano_server <- function(id, r){
         analysis_settings$volcano$settings$group <- input$volcanoGroup
         analysis_settings$volcano$settings$group1 <- input$volcanoGroup1
         analysis_settings$volcano$settings$group2 <- input$volcanoGroup2
+        analysis_settings$volcano$settings$feature_annotation <- input$volcanoFeatureAnnotation
         analysis_settings$volcano$settings$fc_threshold <- input$volcanoFcThreshold
         analysis_settings$volcano$settings$pvalue_threshold <- input$volcanoPValueThreshold
       },
