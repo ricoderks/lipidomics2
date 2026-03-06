@@ -65,6 +65,9 @@ mod_pca_server <- function(id, r){
         comments = list(
           comment_before = NULL,
           comment_after = NULL
+        ),
+        data = list(
+         var_data = NULL
         )
       )
     )
@@ -220,8 +223,12 @@ mod_pca_server <- function(id, r){
                           scaling = input$pcaScaling,
                           transformation = input$pcaTransformation)
 
+      # store the data for the variable plot
+      analysis_settings$pca$data$var_data <- plot_data[["var_data"]]
+
       plys <- show_pca(
         data = plot_data,
+        name = id,
         x = input$pcaX,
         y = input$pcaY,
         sample_annotation = input$pcaSampleAnnotation,
@@ -230,8 +237,58 @@ mod_pca_server <- function(id, r){
 
       exportplot$plot <- plys
 
-      return(plys[[input$pcaSelectPlot]])
+      if(input$pcaSelectPlot != "summary_fit") {
+        show_plot <- plys[[input$pcaSelectPlot]] |>
+          plotly::event_register(event = "plotly_click")
+      } else {
+        show_plot <- plys[[input$pcaSelectPlot]]
+      }
+      return(show_plot)
     })
+
+
+    #-------------------------------------------------------- pop-up scores ----
+    shiny::observeEvent(
+      plotly::event_data(
+        event = "plotly_click",
+        source = paste0(id, "_scores")
+      ), {
+
+        ns <- session$ns
+
+        ed <- plotly::event_data(event = "plotly_click",
+                                 source = paste0(id, "_scores"))
+
+        if (is.null(ed) || is.null(ed$customdata)) return()
+
+        sample_id <- ed$customdata
+
+        output$pca_scores_modal <- plotly::renderPlotly({
+          plot_data <- analysis_settings$pca$data$var_data
+          plot_data <- plot_data[plot_data$sample_name == sample_id, ]
+
+          ply <- show_var_plot(
+            plot_data = plot_data,
+            feature_annotation = input$pcaFeatureAnnotation
+          )
+
+          return(ply)
+        })
+
+        shiny::showModal(
+          shiny::modalDialog(
+            title = paste("Selected sample:", sample_id),
+            size = "l",
+            easyClose = TRUE,
+            footer = shiny::modalButton(label = "Close"),
+            plotly::plotlyOutput(
+              outputId = ns("pca_scores_modal"),
+              height = "450px"
+            )
+          ),
+          session = session
+        )
+      })
 
 
     #-------------------------------------------------------------- comment ----
