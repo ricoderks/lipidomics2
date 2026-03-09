@@ -16,7 +16,7 @@
 #'
 #' @author Rico Derks
 #'
-#' @importFrom tidyr pivot_wider pivot_longer
+#' @importFrom tidyr pivot_wider pivot_longer all_of
 #'
 #' @noRd
 do_pca <- function(data = NULL,
@@ -64,7 +64,7 @@ do_pca <- function(data = NULL,
   var_data$sample_name <- rownames(pca_data)
   var_data <- var_data |>
     tidyr::pivot_longer(
-      cols = !sample_name,
+      cols = !tidyr::all_of("sample_name"),
       names_to = "my_id",
       values_to = "value"
     )
@@ -461,10 +461,14 @@ show_var_plot <- function(plot_data = NULL,
               "#E98AC3", "#974F51", "#79D4D8", "#008200", "#8DD700", "#76C495",
               "#FF16B8", "#555626", "#0D79FC", "#8000DC", "#D9C580", "#963B96",
               "#BD6D40", "#FC6280")
+  # order the x-axis according to lipid class and then lipid
+  plot_data$order_x <- paste(plot_data$Class, plot_data$ShortLipidName, sep = "_")
+  plot_data <- plot_data[order(plot_data$order_x), ]
 
-  # plot_data$order_x <- paste(plot_data$Class, plot_data$ShortLipidName, sep = "_")
+  # create list for the hovertemplate
   custom_list <- plot_data[, c("ShortLipidName", "LongLipidName", "Class")]
   custom_list <- split(custom_list, seq_len(nrow(custom_list)))
+
   ply <- plot_data |>
     plotly::plot_ly(
       x = ~ShortLipidName,
@@ -483,8 +487,8 @@ show_var_plot <- function(plot_data = NULL,
       # order the x-axis according to lipid class and then lipid
       xaxis = list(
         type = "category",
-        categoryorder = "array"
-        # categoryarray =  ~order_x
+        categoryorder = "array",
+        categoryarray =  ~order_x
       )
     ) |>
     plotly::layout(
