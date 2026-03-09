@@ -278,11 +278,63 @@ mod_pca_server <- function(id, r){
         shiny::showModal(
           shiny::modalDialog(
             title = paste("Selected sample:", sample_id),
-            size = "l",
+            size = "xl",
             easyClose = TRUE,
             footer = shiny::modalButton(label = "Close"),
             plotly::plotlyOutput(
               outputId = ns("pca_scores_modal"),
+              height = "450px"
+            )
+          ),
+          session = session
+        )
+      })
+
+
+    #------------------------------------------------------ pop-up loadings ----
+    shiny::observeEvent(
+      plotly::event_data(
+        event = "plotly_click",
+        source = paste0(id, "_loadings")
+      ), {
+        ns <- session$ns
+
+        ed <- plotly::event_data(event = "plotly_click",
+                                 source = paste0(id, "_loadings"))
+
+        if (is.null(ed) || is.null(ed$customdata)) return()
+
+        my_id <- ed$customdata
+
+        output$pca_loadings_modal <- plotly::renderPlotly({
+          plot_data <- analysis_settings$pca$data$var_data
+          plot_data <- plot_data[plot_data$my_id == my_id, ]
+          if(input$pcaSampleAnnotation != "none") {
+            plot_data <- merge(
+              x = plot_data,
+              y = r$tables$meta_data,
+              by.x = "sample_name",
+              by.y = r$columns$filename,
+              all.x = TRUE
+            )
+          }
+
+          ply <- show_obs_plot(
+            plot_data = plot_data,
+            observation_annotation = input$pcaSampleAnnotation
+          )
+
+          return(ply)
+        })
+
+        shiny::showModal(
+          shiny::modalDialog(
+            title = paste("Selected variable:", my_id),
+            size = "xl",
+            easyClose = TRUE,
+            footer = shiny::modalButton(label = "Close"),
+            plotly::plotlyOutput(
+              outputId = ns("pca_loadings_modal"),
               height = "450px"
             )
           ),

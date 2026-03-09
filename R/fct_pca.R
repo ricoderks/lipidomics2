@@ -321,6 +321,7 @@ loadings_plot <- function(data = NULL,
     y = ~.data[[y]],
     color = color_arg,
     colors = colors,
+    customdata = ~my_id,
     text = ~paste0(
       "Class: ", Class, "<br>",
       "Lipid (short): ", ShortLipidName, "<br>",
@@ -494,6 +495,51 @@ show_var_plot <- function(plot_data = NULL,
     plotly::layout(
       yaxis = list(tickformat = ".2e"),
       xaxis = list(title = "Lipid")
+    ) |>
+    plotly::hide_legend()
+
+  return(ply)
+}
+
+
+#' @title Observation plot
+#'
+#' @description
+#' Observation plot.
+#'
+#' @param plot_data data.frame.
+#' @param observation_annotation character(1), what to color in the plot.
+#'
+#' @details
+#' Show the difference to the mean.
+#'
+#' @returns Observation plot as plotly object.
+#'
+#' @author Rico Derks
+#'
+#' @importFrom plotly plot_ly layout add_bars
+#' @importFrom stats as.formula
+#'
+#' @noRd
+#'
+show_obs_plot <- function(plot_data = NULL,
+                          observation_annotation = NULL) {
+  if(observation_annotation == "none") {
+    color_arg <- NULL
+  } else {
+    color_arg <- stats::as.formula(paste0("~", observation_annotation))
+  }
+
+  ply <- plot_data |>
+    plotly::plot_ly(
+      x = ~sample_name,
+      y = ~value,
+      color = color_arg
+    ) |>
+    plotly::add_bars() |>
+    plotly::layout(
+      yaxis = list(tickformat = ".2e"),
+      xaxis = list(title = "Sample name")
     ) |>
     plotly::hide_legend()
 
