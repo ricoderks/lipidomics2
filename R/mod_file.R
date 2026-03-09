@@ -656,6 +656,10 @@ mod_file_server <- function(id, r){
                        message = "Processing...",
                        detail = NULL)
 
+          # extract feature table
+          r$tables$feature_data <- extract_features(data = r$tables$clean_data)
+          print(r$tables$feature_data)
+
           r$settings$feature_class <- sort(unique(r$tables$clean_data$class_ion))
 
           # trend calculation
