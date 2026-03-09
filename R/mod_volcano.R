@@ -237,9 +237,6 @@ mod_volcano_server <- function(id, r){
                  input$volcanoFcThreshold,
                  input$volcanoPValueThreshold)
 
-      print("show plot")
-      print(id)
-
       area_column <- switch(
         input$volcanoSelectTable,
         "raw" = "area",
