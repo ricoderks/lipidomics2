@@ -33,6 +33,7 @@ golem::add_module(name = "about", with_test = FALSE)
 golem::add_module(name = "heatmap", with_test = FALSE)
 golem::add_module(name = "pca", with_test = FALSE)
 golem::add_module(name = "volcano", with_test = FALSE)
+golem::add_module(name = "fa_analysis", with_test = FALSE)
 
 ## Add helper functions ----
 ## Creates fct_* and utils_*
@@ -45,6 +46,7 @@ golem::add_fct("heatmap", with_test = TRUE)
 golem::add_fct("pca", with_test = TRUE)
 golem::add_fct("volcano", with_test = TRUE)
 golem::add_fct("settings", with_test = TRUE)
+golem::add_fct("fa_analysis", with_test = TRUE)
 # golem::add_utils("helpers", with_test = TRUE)
 
 ## External resources

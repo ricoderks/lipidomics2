@@ -45,12 +45,13 @@ mod_analysis_server <- function(id, r) {
 
     rv <- shiny::reactiveValues(
       next_id = 0L,
-      type_counts = setNames(as.list(rep(0L, 3L)), c("heatmap", "pca", "volcano")),
+      type_counts = setNames(as.list(rep(0L, 4L)), c("heatmap", "pca", "volcano", "faAnalysis")),
       modules = list(),   # id -> list(type, label, export)
       labels  = list()    # id -> label
     )
 
     add_analysis_tab <- function(type = NULL) {
+      print(type)
       rv$next_id <- rv$next_id + 1L
       rv$type_counts[[type]] <- rv$type_counts[[type]] + 1L
       tabId <- paste0(tolower(gsub("[^a-zA-Z0-9]+", "_", type)), "_", rv$next_id)
@@ -59,8 +60,9 @@ mod_analysis_server <- function(id, r) {
       ui_content <- switch(
         type,
         "heatmap" = mod_heatmap_ui(id = ns(tabId)),
-        "pca"     = mod_pca_ui(id = ns(tabId)),
-        "volcano"  = mod_volcano_ui(id = ns(tabId)),
+        "pca" = mod_pca_ui(id = ns(tabId)),
+        "volcano" = mod_volcano_ui(id = ns(tabId)),
+        "faAnalysis" = mod_fa_analysis_ui(id = ns(tabId)),
         div("Unknown analysis type.")
       )
 
@@ -79,8 +81,9 @@ mod_analysis_server <- function(id, r) {
       mod <- switch(
         type,
         "heatmap" = mod_heatmap_server(id = tabId, r = r),
-        "pca"     = mod_pca_server(id = tabId, r = r),
-        "volcano"  = mod_volcano_server(id = tabId, r = r),
+        "pca" = mod_pca_server(id = tabId, r = r),
+        "volcano" = mod_volcano_server(id = tabId, r = r),
+        "faAnalysis" = mod_fa_analysis_server(id = tabId, r = r),
         NULL
       )
 
@@ -116,7 +119,8 @@ mod_analysis_server <- function(id, r) {
           choices = list(
             "Heatmap" = "heatmap",
             "PCA" = "pca",
-            "Volcano plot" = "volcano"
+            "Volcano plot" = "volcano",
+            "Fatty acid analysis" = "faAnalysis"
           )
         ),
         shiny::actionButton(
