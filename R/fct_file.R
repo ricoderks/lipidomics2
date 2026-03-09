@@ -751,6 +751,15 @@ extract_features <- function(data = NULL) {
     tails
   )
 
+  # correct some lipid classes: Lyso, CE, FA
+  # They have one tail, but table shows now only total
+  lipid_classes <- c("CE", "FA", "LPA", "LPC", "LPE", "LPG", "LPI", "LPS",
+                     "NAOrn", "NAE", "OxFA", "MG", "MGMG",
+                     "etherLPA", "etherLPC", "etherLPE", "etherLPG", "etherLPI",
+                     "etherLPS")
+  data$carbon_1[data$Class %in% lipid_classes] <- data$carbon_tot[data$Class %in% lipid_classes]
+  data$db_1[data$Class %in% lipid_classes] <- data$db_tot[data$Class %in% lipid_classes]
+
   return(data)
 }
 

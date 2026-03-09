@@ -657,8 +657,13 @@ mod_file_server <- function(id, r){
                        detail = NULL)
 
           # extract feature table
-          r$tables$feature_data <- extract_features(data = r$tables$clean_data)
-          print(r$tables$feature_data)
+          feature_data <- unique(
+            r$tables$clean_data[, c("my_id", "ShortLipidName", "LongLipidName",
+                                    "Class", "class_ion")]
+          )
+          feature_data <- feature_data[order(feature_data$Class,
+                                             feature_data$ShortLipidName), ]
+          r$tables$feature_data <- extract_features(data = feature_data)
 
           r$settings$feature_class <- sort(unique(r$tables$clean_data$class_ion))
 
