@@ -103,14 +103,14 @@ mod_fa_analysis_server <- function(id, r){
             label = "Select view:",
             choices = c("FA overview per class" = "faClass",
                         "Class overview per FA" = "classFa"),
-            selected = shiny::isolate(analysis_setting$faAnalysis$settings$view)
+            selected = shiny::isolate(analysis_settings$faAnalysis$settings$view)
           ),
           # select input for lipid class
           shiny::selectInput(
             inputId = ns("faSelectClass"),
             label = "Select lipid class:",
             choices = lipid_classes,
-            selected = shiny::isolate(analysis_setting$faAnalysis$settings$lipid_class)
+            selected = shiny::isolate(analysis_settings$faAnalysis$settings$lipid_class)
           ),
           # select input for fa tails
           # select input for group
@@ -133,12 +133,46 @@ mod_fa_analysis_server <- function(id, r){
         input$faSelectView,
         input$faSelectGroup
       ), {
-        analysis_setting$faAnalysis$settings$table <- input$faSelectTable
-        analysis_setting$faAnalysis$settings$lipid_class <- input$faSelectClass
-        analysis_setting$faAnalysis$settings$view <- input$faSelectView
-        analysis_setting$faAnalysis$settings$group <- input$faSelectGroup
+        analysis_settings$faAnalysis$settings$table <- input$faSelectTable
+        analysis_settings$faAnalysis$settings$lipid_class <- input$faSelectClass
+        analysis_settings$faAnalysis$settings$view <- input$faSelectView
+        analysis_settings$faAnalysis$settings$group <- input$faSelectGroup
       }
     )
+
+
+    output$faPlot <- plotly::renderPlotly({
+      shiny::req(
+        input$faSelectTable,
+        input$faSelectClass,
+        input$faSelectView,
+        input$faSelectGroup
+      )
+
+      area_column <- switch(
+        input$faSelectTable,
+        "raw" = "area",
+        "totNorm" = "totNormArea",
+        "pqnNorm" = "pqnNormArea",
+        "protNorm" = "protNormArea"
+      )
+
+      fa_data <- r$tables$analysis_data[r$tables$analysis$keep == TRUE &
+                                          r$tables$analysis$class_keep == TRUE &
+                                          r$tables$analysis$sample_name %in% r$index$selected_samples, ]
+
+      keep_ids <- unique(fa_data$my_id)
+
+      plot_data <- fa_analysis_calc(data = fa_data,
+                                    feature_data = r$tables$feature_data[r$tables$feature_data$my_id %in% keep_ids, ],
+                                    area_column = area_column,
+                                    group_column = input$faSelectGroup,
+                                    selected_lipidclass = input$faSelectClass)
+
+      print(plot_data[1:10, 1:5])
+
+      return(NULL)
+    })
 
     #-------------------------------------------------------------- comment ----
     shiny::observeEvent(input$faComments, {

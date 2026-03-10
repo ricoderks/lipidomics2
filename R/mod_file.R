@@ -967,6 +967,7 @@ mod_file_server <- function(id, r){
       r$tables$rsd_data_batch <- import_env$r$tables$rsd_data_batch
       r$tables$analysis_data <- import_env$r$tables$analysis_data
       r$tables$trend_data <- import_env$r$tables$trend_data
+      r$tables$feature_data <- import_env$r$tables$feature_data
 
       total_features <- sum(c(length(unique(r$tables$raw_data_pos$`Alignment ID`)),
                               length(unique(r$tables$raw_data_neg$`Alignment ID`))), na.rm = TRUE)

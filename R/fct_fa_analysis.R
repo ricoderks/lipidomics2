@@ -7,11 +7,13 @@
 #'
 #' @param data data.frame with the actual data.
 #' @param feature_data data.frame with all the feature data information.
+#' @param area_column character(1) name of the column with the area.
+#' @param group_column character(1) name of the grouping column.
 #' @param selected_lipidclass character(1) selected lipid class.
 #'
 #' @returns The fatty acid analysis data as data.frame
 #'
-#' @importFrom tidyr pivot_longer
+#' @importFrom tidyr pivot_longer pivot_wider all_of any_of
 #'
 #' @author Rico Derks
 #'
@@ -19,7 +21,19 @@
 #'
 fa_analysis_calc <- function(data = NULL,
                              feature_data = NULL,
+                             area_column = NULL,
+                             group_column = NULL,
                              selected_lipidclass = NULL) {
+
+  id_cols <- c("sample_name", group_column)
+
+  data <- data |>
+    tidyr::pivot_wider(
+      id_cols = tidyr::all_of(id_cols),
+      values_from = tidyr::all_of(area_column),
+      names_from = tidyr::all_of("my_id")
+    ) |>
+    as.data.frame()
 
   # get the species from the selected lipid classes
   if(selected_lipidclass == "all") {
@@ -33,7 +47,7 @@ fa_analysis_calc <- function(data = NULL,
 
   ## Data
   # select the correct data
-  sel_raw_data <- raw_data[, sel_feat_idx, drop = FALSE]
+  sel_raw_data <- data[, sel_feat_idx, drop = FALSE]
 
   # get the unique chain lengths and unsaturation
   uniq_carbon <- sort(unique(c(sel_feature_data$carbon_1,
@@ -99,23 +113,23 @@ fa_analysis_calc <- function(data = NULL,
   })
   res <- res[, !empty_idx, drop = FALSE]
 
-  res <- cbind(sampleName = sat_data$sampleName,
-               Group = sat_data$Group,
+  res <- cbind(sample_name = feature_data$sample_name,
+               group = feature_data[[group_column]],
                res)
 
   res <- res |>
-    tidyr::pivot_longer(cols = -c("sampleName", "Group"),
+    tidyr::pivot_longer(cols = -c("sample_name", "group"),
                         names_to = "fa_tails",
                         values_to = "value")
 
-  plot_data <- tapply(as.data.frame(res), list(res$Group, res$fa_tails), function(x) {
+  plot_data <- tapply(as.data.frame(res), list(res$group, res$fa_tails), function(x) {
     avg <- mean(x[, "value"], na.rm = TRUE)
     stdev <- stats::sd(x[, "value"], na.rm = TRUE)
 
     return(list(avg = avg,
                 stdev = stdev,
                 fa_tails = x[1, "fa_tails"],
-                group = x[1, "Group"]))
+                group = x[1, "group"]))
   })
 
   plot_data <- do.call(rbind.data.frame, plot_data)
