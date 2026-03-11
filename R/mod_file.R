@@ -656,6 +656,15 @@ mod_file_server <- function(id, r){
                        message = "Processing...",
                        detail = NULL)
 
+          # extract feature table
+          feature_data <- unique(
+            r$tables$clean_data[, c("my_id", "ShortLipidName", "LongLipidName",
+                                    "Class", "class_ion")]
+          )
+          feature_data <- feature_data[order(feature_data$Class,
+                                             feature_data$ShortLipidName), ]
+          r$tables$feature_data <- extract_features(data = feature_data)
+
           r$settings$feature_class <- sort(unique(r$tables$clean_data$class_ion))
 
           # trend calculation
@@ -958,6 +967,7 @@ mod_file_server <- function(id, r){
       r$tables$rsd_data_batch <- import_env$r$tables$rsd_data_batch
       r$tables$analysis_data <- import_env$r$tables$analysis_data
       r$tables$trend_data <- import_env$r$tables$trend_data
+      r$tables$feature_data <- import_env$r$tables$feature_data
 
       total_features <- sum(c(length(unique(r$tables$raw_data_pos$`Alignment ID`)),
                               length(unique(r$tables$raw_data_neg$`Alignment ID`))), na.rm = TRUE)

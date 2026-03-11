@@ -59,6 +59,15 @@ if(any(heatmap_index)) {
   heatmap_data <- params$analyses[heatmap_index]
 }
 
+faAnalysis_index <- sapply(params$analyses, function(analysis) {
+  grepl(x = analysis$label,
+        pattern = "faAnalysis")
+})
+
+if(any(faAnalysis_index)) {
+  faAnalysis_data <- params$analyses[faAnalysis_index]
+}
+
 general_settings <- params$general_settings
 columns <- params$columns
 ```
@@ -239,7 +248,7 @@ if(any(volcano_index)) {
       )
     )
     plot <- htmltools::div(
-      style = "height: 800px; margin-bottom: 25px;",
+      style = "height: 600px; margin-bottom: 25px;",
       htmltools::tagList(
         volcano_data[[a]]$plot |> 
           plotly::layout(height = 600)
@@ -250,6 +259,52 @@ if(any(volcano_index)) {
     print(htmltools::p(volcano_data[[a]]$comments$comment_before))
     print(plot)
     print(htmltools::p(volcano_data[[a]]$comments$comment_after))
+  }
+}
+```
+
+```{r faAnalysis-title, results='asis', echo=FALSE}
+if(any(faAnalysis_index)) {
+  cat("## Fatty acid analysis {.tabset}", "\n\n", sep = "")
+}
+```
+
+```{r faAnalysis-plots, results='asis', echo=FALSE}
+if(any(faAnalysis_index)) {
+  for(a in 1:length(faAnalysis_data)) {
+    names_settings <- names(faAnalysis_data[[a]]$settings)
+    # remove lipid class setting
+    names_settings <- names_settings[-2]
+    settings <- htmltools::tagList(
+      htmltools::p("Settings:"),
+      htmltools::tags$ul(
+        lapply(names_settings, function(setting) {
+          tags$li(paste0(setting, ": ", paste(faAnalysis_data[[a]]$settings[[setting]], collapse = ", ")))
+        })
+      )
+    )
+    
+    lipid_classes <- names(faAnalysis_data[[a]]$plot)
+    lipid_classes[1:2] <- c("All (incl. TG)", "All (excl. TG)")
+    
+    plot_list <- lapply(faAnalysis_data[[a]]$plot, function(plot) {
+      htmltools::div(
+      style = "height: 600px; margin-bottom: 25px;",
+      htmltools::tagList(
+        plot |> 
+          plotly::layout(height = 600)
+      )
+    )
+    })
+    
+    cat("###", faAnalysis_data[[a]]$label, "{.tabset}", "\n\n")
+    print(settings)
+    print(htmltools::p(faAnalysis_data[[a]]$comments$comment_before))
+    for(b in 1:length(faAnalysis_data[[a]]$plot)) {
+      cat("####", lipid_classes[b], "\n\n")
+      print(plot_list[[b]])
+    }
+    print(htmltools::p(faAnalysis_data[[a]]$comments$comment_after))    
   }
 }
 ```

@@ -498,7 +498,7 @@ find_delim = function(file_path = NULL) {
 #'
 #' @noRd
 #'
-#'@author Rico Derks
+#' @author Rico Derks
 #'
 #'
 distribution_plot <- function(data = NULL,
@@ -708,4 +708,149 @@ filter_id <- function(data = NULL,
                               data$RevDotProduct < revdot_cutoff)])
 
   return(keep)
+}
+
+
+#' @title Extract features from the data
+#'
+#' @description
+#' Extract features from the data.
+#'
+#' @param data data.frame.
+#'
+#' @details
+#' Sommy short lipid name notations end with _1, _2, etc. This will be removed
+#' first.
+#'
+#'
+#' @returns Extracted features as data.frame.
+#'
+#' @author Rico Derks
+#'
+#' @noRd
+#'
+extract_features <- function(data = NULL) {
+  print("Extract features")
+
+  data$ShortLipidName <- gsub(
+    pattern = "(.*)_[0-9]{1}$",
+    replacement = "\\1",
+    x = data$ShortLipidName
+  )
+
+  # extract total carbon and double bond
+  res <- t(sapply(data$ShortLipidName, extract_carbondb))
+  data$carbon_tot <- res[, "carbon"]
+  data$db_tot <- res[, "double_bonds"]
+
+  # extract all fatty acid tails
+  tails <- extract_fa_tails(short = data$ShortLipidName,
+                            long = data$LongLipidName)
+  data <- cbind(
+    data,
+    tails
+  )
+
+  # correct some lipid classes: Lyso, CE, FA
+  # They have one tail, but table shows now only total
+  lipid_classes <- c("CE", "FA", "LPA", "LPC", "LPE", "LPG", "LPI", "LPS",
+                     "NAOrn", "NAE", "OxFA", "MG", "MGMG",
+                     "etherLPA", "etherLPC", "etherLPE", "etherLPG", "etherLPI",
+                     "etherLPS")
+  data$carbon_1[data$Class %in% lipid_classes] <- data$carbon_tot[data$Class %in% lipid_classes]
+  data$db_1[data$Class %in% lipid_classes] <- data$db_tot[data$Class %in% lipid_classes]
+
+  return(data)
+}
+
+
+#' @title Extract total carbon number and double bond
+#'
+#' @description
+#' Extract total carbon number and double bond.
+#'
+#' @param x character(1) short lipid name.
+#'
+#' @returns Named vector with total carbon number and double bond.
+#'
+#' @author Rico Derks
+#'
+#' @noRd
+#'
+extract_carbondb <- function(x = NULL) {
+  pattern <- regexpr(pattern = "[0-9]+:[0-9]+",
+                     text = x)
+
+  if (pattern[1] == -1) {
+    return(
+      c(carbon = NA_integer_,
+        double_bonds = NA_integer_)
+    )
+  }
+
+  match <- regmatches(x = x, m = pattern)
+  parts <- strsplit(x = match,
+                    split = ":")[[1]]
+
+  return(
+    c(carbon = as.integer(parts[1]),
+      double_bonds = as.integer(parts[2]))
+  )
+}
+
+
+#' @title Extract fatty acid tails
+#'
+#' @description
+#' Extract fatty acid tails.
+#'
+#' @param short character(1) short lipid name notation.
+#' @param long character(1) long lipid name notation.
+#'
+#' @returns data.frame with the carbon number and double bond of all fatty acid
+#' tails.
+#'
+#' @author Rico Derks
+#'
+#' @noRd
+#'
+extract_fa_tails <- function(short = NULL,
+                             long = NULL) {
+  stopifnot(length(short) == length(long))
+  max_tails <- 4
+
+  n <- length(long)
+  outnames <- as.vector(rbind(paste0("carbon_", 1:max_tails),
+                              paste0("db_", 1:max_tails)))
+  out <- as.data.frame(matrix(0, nrow = n, ncol = length(outnames)))
+  names(out) <- outnames
+
+  # Better eligibility rule:
+  eligible <- !is.na(long) & !is.na(short) & (long != short)
+
+  mm <- gregexpr(pattern = "[0-9]+:[0-9]+",
+                 text = long)
+  matches <- regmatches(x = long,
+                        m = mm)
+
+  # Remove matches for ineligible cases (incl. CoQ8, identical names)
+  matches[!eligible] <- replicate(sum(!eligible), character(0), simplify = FALSE)
+
+  pad <- function(v, k) {
+    if (length(v) == 0L) return(rep("0", k))
+    v <- v[seq_len(min(length(v), k))]
+    c(v, rep("0", k - length(v)))
+  }
+
+  mat <- t(vapply(matches, pad, character(max_tails), k = max_tails))
+
+  carbon <- suppressWarnings(matrix(as.integer(sub(":.*", "", mat)), n))
+  dbonds <- suppressWarnings(matrix(as.integer(sub(".*:", "", mat)), n))
+
+  for (i in seq_len(max_tails)) {
+    out[[paste0("carbon_", i)]]  <- carbon[, i]
+    out[[paste0("db_", i)]] <- dbonds[, i]
+  }
+
+  return(out)
 }
