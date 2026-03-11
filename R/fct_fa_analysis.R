@@ -151,7 +151,8 @@ fa_analysis_calc <- function(data = NULL,
   return(
     list(
       plot_data = plot_data,
-      features = features
+      features = features,
+      class = selected_lipidclass
     )
   )
 }

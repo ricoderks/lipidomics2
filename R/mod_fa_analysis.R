@@ -133,52 +133,82 @@ mod_fa_analysis_server <- function(id, r){
     shiny::observeEvent(
       c(
         input$faSelectTable,
-        input$faSelectClass,
+        # input$faSelectClass,
         input$faSelectView,
         input$faSelectGroup
       ), {
         analysis_settings$faAnalysis$settings$table <- input$faSelectTable
-        analysis_settings$faAnalysis$settings$lipid_class <- input$faSelectClass
+        # analysis_settings$faAnalysis$settings$lipid_class <- input$faSelectClass
         analysis_settings$faAnalysis$settings$view <- input$faSelectView
         analysis_settings$faAnalysis$settings$group <- input$faSelectGroup
+
+        if(input$faSelectGroup != "none") {
+          print("Calculate FA analysis plots...")
+
+          area_column <- switch(
+            input$faSelectTable,
+            "raw" = "area",
+            "totNorm" = "totNormArea",
+            "pqnNorm" = "pqnNormArea",
+            "protNorm" = "protNormArea"
+          )
+
+          fa_data <- r$tables$analysis_data[r$tables$analysis$keep == TRUE &
+                                              r$tables$analysis$class_keep == TRUE &
+                                              r$tables$analysis$sample_name %in% r$index$selected_samples, ]
+
+          keep_ids <- unique(fa_data$my_id)
+          feature_data <- r$tables$feature_data[r$tables$feature_data$my_id %in% keep_ids, ]
+          lipid_classes <- unique(as.character(droplevels(feature_data[feature_data$carbon_1 != 0, "Class"])))
+          names(lipid_classes) <- lipid_classes
+          lipid_classes <- c("All (incl. TG)" = "all",
+                             "All (excl. TG)" = "all_noTG",
+                             lipid_classes)
+
+          res <- lapply(
+            lipid_classes,
+            function(x) {
+              fa_analysis_calc(data = fa_data,
+                               feature_data = r$tables$feature_data[r$tables$feature_data$my_id %in% keep_ids, ],
+                               area_column = area_column,
+                               group_column = input$faSelectGroup,
+                               selected_lipidclass = x)
+            }
+          )
+          names(res) <- lipid_classes
+
+          plys <- lapply(
+            res,
+            function(x) {
+              show_fa_plot(data = x$plot_data,
+                           title = x$class,
+                           subtitle = x$features,
+                           y_title = input$faSelectTable)
+            }
+          )
+          names(plys) <- lipid_classes
+
+          exportplot$plot <- plys
+        } else {
+          exportplot$plot <- NULL
+        }
       }
     )
 
 
+    shiny::observeEvent(input$faSelectClass, {
+      analysis_settings$faAnalysis$settings$lipid_class <- input$faSelectClass
+    })
+
+
     output$faPlot <- plotly::renderPlotly({
       shiny::req(
-        input$faSelectTable,
-        input$faSelectClass,
-        input$faSelectView,
-        input$faSelectGroup != "none"
+        input$faSelectClass
       )
 
-      area_column <- switch(
-        input$faSelectTable,
-        "raw" = "area",
-        "totNorm" = "totNormArea",
-        "pqnNorm" = "pqnNormArea",
-        "protNorm" = "protNormArea"
-      )
+      plys <- exportplot$plot
 
-      fa_data <- r$tables$analysis_data[r$tables$analysis$keep == TRUE &
-                                          r$tables$analysis$class_keep == TRUE &
-                                          r$tables$analysis$sample_name %in% r$index$selected_samples, ]
-
-      keep_ids <- unique(fa_data$my_id)
-
-      res <- fa_analysis_calc(data = fa_data,
-                              feature_data = r$tables$feature_data[r$tables$feature_data$my_id %in% keep_ids, ],
-                              area_column = area_column,
-                              group_column = input$faSelectGroup,
-                              selected_lipidclass = input$faSelectClass)
-
-      ply <- show_fa_plot(data = res$plot_data,
-                          title = input$faSelectClass,
-                          subtitle = res$features,
-                          y_title = input$faSelectTable)
-
-      return(ply)
+      return(plys[[input$faSelectClass]])
     })
 
     #-------------------------------------------------------------- comment ----
