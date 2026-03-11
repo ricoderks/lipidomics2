@@ -51,7 +51,6 @@ mod_analysis_server <- function(id, r) {
     )
 
     add_analysis_tab <- function(type = NULL) {
-      print(type)
       rv$next_id <- rv$next_id + 1L
       rv$type_counts[[type]] <- rv$type_counts[[type]] + 1L
       tabId <- paste0(tolower(gsub("[^a-zA-Z0-9]+", "_", type)), "_", rv$next_id)

@@ -105,8 +105,8 @@ mod_fa_analysis_server <- function(id, r){
           shiny::selectInput(
             inputId = ns("faSelectView"),
             label = "Select view:",
-            choices = c("FA overview per class" = "faClass",
-                        "Class overview per FA" = "classFa"),
+            choices = c("FA overview per class" = "faClass"),
+                        # "Class overview per FA" = "classFa"),
             selected = shiny::isolate(analysis_settings$faAnalysis$settings$view)
           ),
           # select input for lipid class
