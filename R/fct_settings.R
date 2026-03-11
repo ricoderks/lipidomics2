@@ -75,6 +75,8 @@ do_loess <- function(data = NULL,
       values_from = "area"
     ) |>
     as.data.frame()
+  print("Rico")
+  print(data_wide[1:10, 1:6])
 
   # sort by measurement order
   data_wide <- data_wide[order(data_wide[, inj_order_col]), ]
@@ -84,11 +86,11 @@ do_loess <- function(data = NULL,
 
   res <- data_wide
   for(batch in batches) {
-    tmp <- data_wide[data_wide[, batch_col] == batch, -c(1:3)]
-    sample_type <- ifelse(data_wide$sample_name %in% index$selected_pools, 1, 2)
+    tmp <- data_wide[data_wide[, batch_col] == batch, ]
+    sample_type <- ifelse(tmp$sample_name %in% index$selected_pools, 1, 2)
 
     res[res[, batch_col] == batch, -c(1:3)] <- qc_rlsc(
-      tab = tmp,
+      tab = tmp[, -c(1:3)],
       colv = sample_type,
       or = 1:nrow(tmp),
       verbose = FALSE
