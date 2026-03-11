@@ -169,9 +169,9 @@ mod_fa_analysis_server <- function(id, r){
                                     group_column = input$faSelectGroup,
                                     selected_lipidclass = input$faSelectClass)
 
-      print(plot_data[1:10, 1:5])
+      ply <- show_fa_plot(data = plot_data)
 
-      return(NULL)
+      return(ply)
     })
 
     #-------------------------------------------------------------- comment ----

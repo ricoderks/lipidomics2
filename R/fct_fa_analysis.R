@@ -113,8 +113,8 @@ fa_analysis_calc <- function(data = NULL,
   })
   res <- res[, !empty_idx, drop = FALSE]
 
-  res <- cbind(sample_name = feature_data$sample_name,
-               group = feature_data[[group_column]],
+  res <- cbind(sample_name = data$sample_name,
+               group = data[[group_column]],
                res)
 
   res <- res |>
@@ -144,4 +144,46 @@ fa_analysis_calc <- function(data = NULL,
                                levels = plot_data$fa_tails[order(plot_data$carbon, plot_data$db)])
 
   return(plot_data)
+}
+
+
+#' @title Show the fatty acid analysis plot
+#'
+#' @description
+#' Show the fatty acid analysis plot.
+#'
+#' @param data data.frame from fa_analysis_calc().
+#'
+#' @returns Fatty acid analysis plot as plotly object.
+#'
+#' @importFrom plotly plot_ly add_bars layout
+#'
+#' @author Rico Derks
+#'
+#' @noRd
+#'
+show_fa_plot <- function(data = NULL) {
+  ply <- data |>
+    plotly::plot_ly(
+      x = ~fa_tails,
+      y = ~avg,
+      color = ~group
+    ) |>
+    plotly::add_bars(
+      error_y = ~list(
+        array = stdev,
+        color = "#000000"
+      )
+    ) |>
+    plotly::layout(
+      xaxis = list(
+        title = "Fatty acid tail"
+      ),
+      yaxis = list(
+        title = "Average",
+        tickformat = ".2e"
+      )
+    )
+
+  return(ply)
 }
