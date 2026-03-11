@@ -80,10 +80,16 @@ mod_fa_analysis_server <- function(id, r){
 
       # for the lipid class selection, only show lipid class which have at least
       # one lipid with a lipid tail annotated.
-      my_id <- unique(r$tables$analysis_data$my_id)
-      feature_data <- r$tables$feature_data[r$tables$feature_data$my_id %in% my_id, ]
-      lipid_classes <- unique(as.character(feature_data[!is.na(feature_data$carbon_1) &
-                                                          !is.na(feature_data$db_1), "Class"]))
+      my_ids <- unique(
+        r$tables$analysis_data$my_id[r$tables$analysis$keep == TRUE &
+                                       r$tables$analysis$class_keep == TRUE &
+                                       r$tables$analysis$sample_name %in% r$index$selected_samples]
+      )
+
+      feature_data <- r$tables$feature_data[r$tables$feature_data$my_id %in% my_ids, ]
+      write.csv(x = feature_data,
+                file = "./features_settings.csv")
+      lipid_classes <- unique(as.character(droplevels(feature_data[feature_data$carbon_1 != 0, "Class"])))
       names(lipid_classes) <- lipid_classes
       lipid_classes <- c("All (incl. TG)" = "all",
                          "All (excl. TG)" = "all_noTG",
@@ -146,7 +152,7 @@ mod_fa_analysis_server <- function(id, r){
         input$faSelectTable,
         input$faSelectClass,
         input$faSelectView,
-        input$faSelectGroup
+        input$faSelectGroup != "none"
       )
 
       area_column <- switch(
@@ -163,13 +169,16 @@ mod_fa_analysis_server <- function(id, r){
 
       keep_ids <- unique(fa_data$my_id)
 
-      plot_data <- fa_analysis_calc(data = fa_data,
-                                    feature_data = r$tables$feature_data[r$tables$feature_data$my_id %in% keep_ids, ],
-                                    area_column = area_column,
-                                    group_column = input$faSelectGroup,
-                                    selected_lipidclass = input$faSelectClass)
+      res <- fa_analysis_calc(data = fa_data,
+                              feature_data = r$tables$feature_data[r$tables$feature_data$my_id %in% keep_ids, ],
+                              area_column = area_column,
+                              group_column = input$faSelectGroup,
+                              selected_lipidclass = input$faSelectClass)
 
-      ply <- show_fa_plot(data = plot_data)
+      ply <- show_fa_plot(data = res$plot_data,
+                          title = input$faSelectClass,
+                          subtitle = res$features,
+                          y_title = input$faSelectTable)
 
       return(ply)
     })

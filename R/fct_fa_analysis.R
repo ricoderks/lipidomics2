@@ -11,7 +11,9 @@
 #' @param group_column character(1) name of the grouping column.
 #' @param selected_lipidclass character(1) selected lipid class.
 #'
-#' @returns The fatty acid analysis data as data.frame
+#' @returns A list with the fatty acid analysis data as data.frame and character(1)
+#' with how many of the lipids of the selected lipid class contained fatty acid
+#' tail information.
 #'
 #' @importFrom tidyr pivot_longer pivot_wider all_of any_of
 #'
@@ -24,9 +26,9 @@ fa_analysis_calc <- function(data = NULL,
                              area_column = NULL,
                              group_column = NULL,
                              selected_lipidclass = NULL) {
-
+  write.csv(x = feature_data,
+            file = "./features_function.csv")
   id_cols <- c("sample_name", group_column)
-
   data <- data |>
     tidyr::pivot_wider(
       id_cols = tidyr::all_of(id_cols),
@@ -143,7 +145,17 @@ fa_analysis_calc <- function(data = NULL,
                                labels = plot_data$fa_tails[order(plot_data$carbon, plot_data$db)],
                                levels = plot_data$fa_tails[order(plot_data$carbon, plot_data$db)])
 
-  return(plot_data)
+  features <- sprintf(
+    "%s out of %s lipid species contain fatty acid tail information.",
+    length(sel_feature_data$my_id[sel_feature_data$carbon_1 != 0]),
+    length(sel_feature_data$my_id))
+
+  return(
+    list(
+      plot_data = plot_data,
+      features = features
+    )
+  )
 }
 
 
@@ -153,6 +165,9 @@ fa_analysis_calc <- function(data = NULL,
 #' Show the fatty acid analysis plot.
 #'
 #' @param data data.frame from fa_analysis_calc().
+#' @param title character(1) title of the plot.
+#' @param subtitle character(1) subtitle of the plot.
+#' @param y_title character(1) title of the y-axis.
 #'
 #' @returns Fatty acid analysis plot as plotly object.
 #'
@@ -162,7 +177,38 @@ fa_analysis_calc <- function(data = NULL,
 #'
 #' @noRd
 #'
-show_fa_plot <- function(data = NULL) {
+show_fa_plot <- function(data = NULL,
+                         title = NULL,
+                         subtitle = NULL,
+                         y_title = NULL) {
+  if(!is.null(title)) {
+    plot_title <- switch(
+      title,
+      "all" = "Lipid class: All (incl. TG)",
+      "all_noTG" = "Lipid class: All (excl. TG)",
+      paste0("Lipid class: ", title)
+    )
+  } else {
+    plot_title <- NULL
+  }
+
+  plot_title <- paste0(
+    plot_title, "<br>",
+    "<sup>", subtitle, "</sup>"
+  )
+
+  if(!is.null(y_title)) {
+    y_title <- switch(
+      y_title,
+      "raw" = "Average value",
+      "totNorm" = "Average totala area normalized value",
+      "pqnNorm" = "Average PQN normalized value",
+      "protNorm" = "Average protein normalized value"
+    )
+  } else {
+    y_title = NULL
+  }
+
   ply <- data |>
     plotly::plot_ly(
       x = ~fa_tails,
@@ -176,11 +222,23 @@ show_fa_plot <- function(data = NULL) {
       )
     ) |>
     plotly::layout(
+      title = list(
+        text = plot_title,
+        x = 0,
+        y = 1.2,
+        xref = "paper",
+        yref = "paper"
+        # this is not working
+        # https://plotly.com/r/reference/layout/
+        # subtitle = list(
+        #   text = "This is the subtitle"
+        # )
+      ),
       xaxis = list(
         title = "Fatty acid tail"
       ),
       yaxis = list(
-        title = "Average",
+        title = y_title,
         tickformat = ".2e"
       )
     )
