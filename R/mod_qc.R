@@ -58,6 +58,9 @@ mod_qc_ui <- function(id) {
         title = "QC - correlation ",
         value = "qc_correlation",
         bslib::card(
+          shiny::textOutput(
+            outputId = ns("qc_correlation_plot_status")
+          ),
           plotly::plotlyOutput(
             outputId = ns("qc_correlation_plot")
           )
@@ -145,18 +148,32 @@ mod_qc_server <- function(id, r){
     })
 
 
+    output$qc_correlation_plot_status <- shiny::renderText({
+      shiny::req(r$tables$analysis_data)
+
+      if(!r$settings$apply_trend_correction) {
+        return(NULL)
+      } else {
+        return("Trend correction applied! No correlation plot available!")
+      }
+    })
+
     output$qc_correlation_plot <- plotly::renderPlotly({
       shiny::req(r$tables$analysis_data)
 
-      cor_df <- calc_cor(data = r$tables$analysis_data,
-                         idx_pools = r$index$selected_pools,
-                         idx_samples = r$index$selected_samples)
+      if(!r$settings$apply_trend_correction) {
+        cor_df <- calc_cor(data = r$tables$analysis_data,
+                           idx_pools = r$index$selected_pools,
+                           idx_samples = r$index$selected_samples)
 
-      p <- qc_cor_plot(data = cor_df)
+        p <- qc_cor_plot(data = cor_df)
 
-      ply <- plotly::ggplotly(p = p)
+        ply <- plotly::ggplotly(p = p)
 
-      return(ply)
+        return(ply)
+      } else {
+        return(NULL)
+      }
     })
 
 

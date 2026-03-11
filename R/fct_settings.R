@@ -75,8 +75,6 @@ do_loess <- function(data = NULL,
       values_from = "area"
     ) |>
     as.data.frame()
-  print("Rico")
-  print(data_wide[1:10, 1:6])
 
   # sort by measurement order
   data_wide <- data_wide[order(data_wide[, inj_order_col]), ]
