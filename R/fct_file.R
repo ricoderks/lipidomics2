@@ -822,7 +822,7 @@ extract_fa_tails <- function(short = NULL,
   n <- length(long)
   outnames <- as.vector(rbind(paste0("carbon_", 1:max_tails),
                               paste0("db_", 1:max_tails)))
-  out <- as.data.frame(matrix(NA_integer_, nrow = n, ncol = length(outnames)))
+  out <- as.data.frame(matrix(0, nrow = n, ncol = length(outnames)))
   names(out) <- outnames
 
   # Better eligibility rule:
@@ -837,9 +837,9 @@ extract_fa_tails <- function(short = NULL,
   matches[!eligible] <- replicate(sum(!eligible), character(0), simplify = FALSE)
 
   pad <- function(v, k) {
-    if (length(v) == 0L) return(rep(NA_character_, k))
+    if (length(v) == 0L) return(rep("0", k))
     v <- v[seq_len(min(length(v), k))]
-    c(v, rep(NA_character_, k - length(v)))
+    c(v, rep("0", k - length(v)))
   }
 
   mat <- t(vapply(matches, pad, character(max_tails), k = max_tails))
