@@ -87,8 +87,6 @@ mod_fa_analysis_server <- function(id, r){
       )
 
       feature_data <- r$tables$feature_data[r$tables$feature_data$my_id %in% my_ids, ]
-      write.csv(x = feature_data,
-                file = "./features_settings.csv")
       lipid_classes <- unique(as.character(droplevels(feature_data[feature_data$carbon_1 != 0, "Class"])))
       names(lipid_classes) <- lipid_classes
       lipid_classes <- c("All (incl. TG)" = "all",

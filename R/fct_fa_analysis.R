@@ -26,8 +26,6 @@ fa_analysis_calc <- function(data = NULL,
                              area_column = NULL,
                              group_column = NULL,
                              selected_lipidclass = NULL) {
-  write.csv(x = feature_data,
-            file = "./features_function.csv")
   id_cols <- c("sample_name", group_column)
   data <- data |>
     tidyr::pivot_wider(
