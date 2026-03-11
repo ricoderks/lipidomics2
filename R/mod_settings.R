@@ -573,10 +573,7 @@ mod_settings_server <- function(id, r){
               columns = r$columns,
               index = r$index
             )
-
             r$tables$clean_data <- res
-            write.csv(x = res,
-                      file = "./res.csv")
 
             # after trend correction everything needs to be recalculated
             print("Recalculate everything!")
