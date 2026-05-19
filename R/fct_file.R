@@ -586,7 +586,7 @@ calc_rsd <- function(data = NULL,
     },
     simplify = FALSE)
 
-    res <- do.call("rbind", res)
+    res_overall <- do.call("rbind", res_overall)
   }
 
   keep <- res_overall$my_id[res_overall$rsd <= cut_off]
