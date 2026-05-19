@@ -1,6 +1,6 @@
 Package: lipidomics2
 Title: Lipidomics worklow Shiny app
-Version: 0.1.13
+Version: 0.1.13.9000
 Authors@R: 
     person("Rico", "Derks", , "r.j.e.derks@lumc.nl", role = c("aut", "cre"))
 Description: A lipidomics workflow app, build on the Shiny framework.  It
@@ -45,4 +45,4 @@ Config/testthat/edition: 3
 Encoding: UTF-8
 Language: en-US
 LazyData: true
-RoxygenNote: 7.3.3
+Config/roxygen2/version: 8.0.0

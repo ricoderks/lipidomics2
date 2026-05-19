@@ -157,8 +157,8 @@ app_server <- function(input, output, session) {
     ),
     settings = list(
       rsd_cutoff = 0.3,
-      dot_cutoff = 50,
-      revdot_cutoff = 50,
+      dot_cutoff = 60,
+      revdot_cutoff = 60,
       blanksample_ratio = 5,
       blanksample_threshold = 0.8,
       blanksample_threshold_group = 0.8,

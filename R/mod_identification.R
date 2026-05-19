@@ -6,12 +6,10 @@
 #'
 #' @noRd
 #'
-#' @importFrom shiny NS tagList moduleServer selectizeInput uiOutput htmlOutput
-#'     renderText
+#' @importFrom shiny NS tagList moduleServer selectizeInput uiOutput htmlOutput renderText
 #' @importFrom bslib layout_sidebar sidebar card card_header
 #' @importFrom plotly event_data event_register plotlyOutput ggplotly renderPlotly
-#' @importFrom ggplot2 ggplot aes theme_minimal theme geom_point geom_line
-#'     geom_text facet_grid labs guides element_rect element_text
+#' @importFrom ggplot2 ggplot aes theme_minimal theme geom_point geom_line geom_text facet_grid labs guides element_rect element_text
 #' @importFrom rlang is_empty
 #'
 mod_identification_ui <- function(id) {
