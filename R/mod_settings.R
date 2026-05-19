@@ -7,8 +7,7 @@
 #' @noRd
 #'
 #' @importFrom shiny NS tagList isolate req
-#' @importFrom bslib navset_card_tab nav_panel card tooltip card_header nav_show
-#'     nav_hide
+#' @importFrom bslib navset_card_tab nav_panel card tooltip card_header nav_show nav_hide
 #' @importFrom bsicons bs_icon
 #' @importFrom DT dataTableOutput
 #' @importFrom shinyWidgets progressBar
@@ -72,7 +71,7 @@ mod_settings_ui <- function(id) {
                   shiny::numericInput(
                     inputId = ns("settings_dot_cutoff"),
                     label = "Dot product cut off value :",
-                    value = 50,
+                    value = 60,
                     min = 0,
                     max = 100,
                     step = 1
@@ -80,7 +79,7 @@ mod_settings_ui <- function(id) {
                   shiny::numericInput(
                     inputId = ns("settings_revdot_cutoff"),
                     label = "Reverse dot product cut off value :",
-                    value = 50,
+                    value = 60,
                     min = 0,
                     max = 100,
                     step = 1

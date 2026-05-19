@@ -11,8 +11,7 @@
 #'
 #' @return ggplot2 object, histogram of the RSD values.
 #'
-#' @importFrom ggplot2 ggplot aes .data geom_vline geom_histogram labs guides
-#'     guide_legend theme_minimal theme
+#' @importFrom ggplot2 ggplot aes .data geom_vline geom_histogram labs guides guide_legend theme_minimal theme
 #'
 #' @export
 #'
@@ -49,8 +48,7 @@ show_overall_hist <- function(data = NULL,
 #'
 #' @return ggplot2 object, histogram of the RSD values.
 #'
-#' @importFrom ggplot2 ggplot aes .data geom_vline geom_histogram labs guides
-#'     guide_legend theme_minimal theme
+#' @importFrom ggplot2 ggplot aes .data geom_vline geom_histogram labs guides guide_legend theme_minimal theme
 #'
 #' @export
 #'
@@ -88,8 +86,7 @@ show_batch_hist <- function(data = NULL,
 #'
 #' @return ggplot2 object, violin plot of the RSD values per class.
 #'
-#' @importFrom ggplot2 ggplot aes .data geom_violin geom_hline labs guides
-#'     guide_legend theme_minimal theme
+#' @importFrom ggplot2 ggplot aes .data geom_violin geom_hline labs guides guide_legend theme_minimal theme
 #'
 #' @export
 #'
@@ -132,8 +129,7 @@ show_class_overall_violin <- function(data = NULL,
 #'
 #' @return ggplot2 object, violin plot of the RSD values per class.
 #'
-#' @importFrom ggplot2 ggplot aes .data geom_violin geom_hline labs guides
-#'     guide_legend theme_minimal theme facet_wrap
+#' @importFrom ggplot2 ggplot aes .data geom_violin geom_hline labs guides guide_legend theme_minimal theme facet_wrap
 #'
 #' @export
 #'
@@ -175,8 +171,7 @@ show_class_batch_violin <- function(data = NULL,
 #'
 #' @return ggplot2 object, histogram of the RSD values
 #'
-#' @importFrom ggplot2 ggplot aes .data geom_tile scale_fill_gradient
-#'     theme_minimal theme element_text element_blank guides guide_colourbar
+#' @importFrom ggplot2 ggplot aes .data geom_tile scale_fill_gradient theme_minimal theme element_text element_blank guides guide_colourbar
 #'
 #' @export
 #'
@@ -318,8 +313,7 @@ calc_trend <- function(pool_data = NULL,
 #'
 #' @returns trend plot as ggplot2 object.
 #'
-#' @importFrom ggplot2 ggplot aes geom_line labs facet_wrap theme_minimal
-#'     theme element_text .data geom_hline
+#' @importFrom ggplot2 ggplot aes geom_line labs facet_wrap theme_minimal theme element_text .data geom_hline
 #'
 #' @export
 #'
