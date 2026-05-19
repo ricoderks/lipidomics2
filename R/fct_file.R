@@ -704,8 +704,8 @@ filter_id <- function(data = NULL,
                       dot_cutoff = 60,
                       revdot_cutoff = 60) {
   print("Filter by DOT /reverse DOT product")
-  keep <- unique(data$my_id[!(data$DotProduct < dot_cutoff &
-                              data$RevDotProduct < revdot_cutoff)])
+  keep <- unique(data$my_id[(data$DotProduct >= dot_cutoff &
+                              data$RevDotProduct >= revdot_cutoff)])
 
   return(keep)
 }
