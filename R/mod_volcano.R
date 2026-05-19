@@ -210,18 +210,19 @@ mod_volcano_server <- function(id, r){
       # this needs to be fixed, sampleid or filename
       # this is in multiple locations
       choices_group <- unique(r$tables$meta_data[r$tables$meta_data[[r$columns$filename]] %in% r$index$selected_samples, input$volcanoGroup])
+      choices_group <- choices_group[!is.na(choices_group)]
       analysis_settings$volcano$settings$group1 <- choices_group[1]
       analysis_settings$volcano$settings$group2 <- choices_group[2]
 
       shiny::updateSelectInput(
         session = session,
-        inputId = ns("volcanoGroup1"),
+        inputId = "volcanoGroup1",
         choices = choices_group,
         selected = analysis_settings$volcano$settings$group1
       )
       shiny::updateSelectInput(
         session = session,
-        inputId = ns("volcanoGroup2"),
+        inputId = "volcanoGroup2",
         choices = choices_group,
         selected = analysis_settings$volcano$settings$group2
       )
@@ -248,6 +249,26 @@ mod_volcano_server <- function(id, r){
       test_data <- r$tables$analysis_data[r$tables$analysis$keep == TRUE &
                                             r$tables$analysis$class_keep == TRUE &
                                             r$tables$analysis$sample_name %in% r$index$selected_samples, ]
+
+      n_group1 <- length(unique(
+        test_data[test_data[[input$volcanoGroup]] == input$volcanoGroup1, "sample_name"]
+      ))
+      n_group2 <- length(unique(
+        test_data[test_data[[input$volcanoGroup]] == input$volcanoGroup2, "sample_name"]
+      ))
+
+      shiny::validate(
+        shiny::need(
+          n_group1 >= 2,
+          paste0("Not enough samples in group '", input$volcanoGroup1,
+                 "': found ", n_group1, " sample(s), need at least 2.")
+        ),
+        shiny::need(
+          n_group2 >= 2,
+          paste0("Not enough samples in group '", input$volcanoGroup2,
+                 "': found ", n_group2, " sample(s), need at least 2.")
+        )
+      )
 
       plot_data <- do_test(
         data = test_data,
