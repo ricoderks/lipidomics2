@@ -64,7 +64,7 @@ app_server <- function(input, output, session) {
                         pattern = "^(Ether|EtherS)?[DMS][GQ]DG$",
                         name = "Glycosyldiradylglycerols"),
           "OGL" = list(id = "OGL",
-                       pattern = "^([AL]?DG(GA|CC|TS/A)|TG_EST)$",
+                       pattern = "^([AL]?DG(GA|CC|TS)|TG_EST)$",
                        name = "Other glycerolipids")
         ),
         "Glycerophospholipids" = list(
