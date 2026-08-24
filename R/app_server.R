@@ -21,7 +21,7 @@ app_server <- function(input, output, session) {
                          "Cer_AS - [M+HCOO]-", "Cer_BS - [M+HCOO]-", "Cer_HS - [M+H]+", "Cer_NDS - [M+HCOO]-",
                          "Cer_NP - [M+HCOO]-", "Cer_NS - [M+HCOO]-", "CerP - [M+H]+",
                          "CL - [M+NH4]+", "CoQ - [M+H]+", "DCAE - [M+NH4]+", "DG - [M+NH4]+", "DGGA - [M-H]-", "EtherDG - [M+NH4]+",
-                         "EtherLPC - [M+HCOO]-", "EtherLPE - [M-H]-", "EtherMGDG - [M+NH4]+", "EtherPC - [M+HCOO]-",
+                         "EtherLPC - [M+HCOO]-", "EtherLPE - [M-H]-", "EtherMGDG - [M+NH4]+", "EtherPC - [M+HCOO]-", "EtherPE - [M+H]+",
                          "EtherPE - [M-H]-", "EtherPG - [M-H]-", "EtherPI - [M-H]-", "EtherTG - [M+NH4]+", "FA - [M-H]-", "FAHFA - [M-H]-",
                          "HBMP - [M-H]-", "Hex2Cer - [M+HCOO]-", "HexCer_EOS - [M-H]-", "HexCer_HS - [M+HCOO]-", "HexCer_NS - [M+HCOO]-",
                          "LPA - [M-H]-", "LPC - [M+HCOO]-", "LPE - [M-H]-", "LPI - [M-H]-",
@@ -64,7 +64,7 @@ app_server <- function(input, output, session) {
                         pattern = "^(Ether|EtherS)?[DMS][GQ]DG$",
                         name = "Glycosyldiradylglycerols"),
           "OGL" = list(id = "OGL",
-                       pattern = "^([AL]?DG(GA|CC|TS/A)|TG_EST)$",
+                       pattern = "^([AL]?DG(GA|CC|TS)|TG_EST)$",
                        name = "Other glycerolipids")
         ),
         "Glycerophospholipids" = list(
@@ -93,7 +93,7 @@ app_server <- function(input, output, session) {
                       pattern = "^(LNA)?(Ether)?L?PS$",
                       name = "Glycerophosphoserines (PS)"),
           "OPL" = list(id = "OPL",
-                       pattern = "^OxP[ACEGIS]$",
+                       pattern = "^(Ether)?OxP[ACEGIS]$",
                        name = "Oxidized glycerophospholipids"),
           "OGPL" = list(id = "OGPL",
                         pattern = "^P(Et|Me)OH$",
