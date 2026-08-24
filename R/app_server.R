@@ -93,7 +93,7 @@ app_server <- function(input, output, session) {
                       pattern = "^(LNA)?(Ether)?L?PS$",
                       name = "Glycerophosphoserines (PS)"),
           "OPL" = list(id = "OPL",
-                       pattern = "^OxP[ACEGIS]$",
+                       pattern = "^(Ether)?OxP[ACEGIS]$",
                        name = "Oxidized glycerophospholipids"),
           "OGPL" = list(id = "OGPL",
                         pattern = "^P(Et|Me)OH$",
