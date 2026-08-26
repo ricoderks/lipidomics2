@@ -147,7 +147,7 @@ update_zoom_ranges <- function(current = NULL,
 
   # incomplete ranges can not be used
   current <- current[vapply(current, function(x) {
-    length(x) == 2 && !anyNA(x)
+    length(x) == 2 && all(is.finite(x))
   }, FUN.VALUE = logical(1))]
 
   return(current)
@@ -164,9 +164,18 @@ update_zoom_ranges <- function(current = NULL,
 #' @param ranges list(), with the axes ranges as created by
 #'     `update_zoom_ranges()`.
 #'
-#' @return plotly object with the axes ranges set.
+#' @return plotly object which restores the axes ranges after it is drawn.
 #'
-#' @importFrom plotly layout
+#' @details
+#' The ranges are not set in the layout of the plot, but applied with
+#' `Plotly.relayout()` after the plot is drawn. Plotly.js stores the ranges of
+#' the very first draw as the ranges to go back to when double clicking or
+#' clicking the 'Reset axes' button, but only for axes which are not on
+#' autorange. So by drawing the plot on autorange first and zooming in
+#' afterwards, double clicking / resetting the axes shows everything again
+#' instead of going back to the restored zoom.
+#'
+#' @importFrom htmlwidgets onRender
 #'
 #' @noRd
 #'
@@ -178,15 +187,32 @@ apply_zoom_ranges <- function(p = NULL,
     return(p)
   }
 
-  for(axis in names(ranges)) {
-    axis_layout <- list(list(range = ranges[[axis]],
-                             autorange = FALSE))
-    names(axis_layout) <- axis
+  # relayout wants something like {"xaxis.range": [1, 2], "yaxis2.range": [3, 4]}
+  relayout_json <- paste0("\"", names(ranges), ".range\": [",
+                          sapply(ranges, function(x) {
+                            paste(formatC(x = x,
+                                          digits = 15,
+                                          width = 1,
+                                          format = "g"),
+                                  collapse = ", ")
+                          }),
+                          "]",
+                          collapse = ", ")
 
-    p <- do.call(what = plotly::layout,
-                 args = c(list(p = p),
-                          axis_layout))
-  }
+  js_code <- paste0("function(el) {\n",
+                    "  var ranges = {", relayout_json, "};\n",
+                    "  var restore = function(tries) {\n",
+                    "    if(el._fullLayout) {\n",
+                    "      Plotly.relayout(el, ranges);\n",
+                    "    } else if(tries < 20) {\n",
+                    "      setTimeout(function() { restore(tries + 1); }, 50);\n",
+                    "    }\n",
+                    "  };\n",
+                    "  restore(0);\n",
+                    "}")
+
+  p <- htmlwidgets::onRender(x = p,
+                             jsCode = js_code)
 
   return(p)
 }

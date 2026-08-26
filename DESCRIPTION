@@ -1,6 +1,6 @@
 Package: lipidomics2
 Title: Lipidomics worklow Shiny app
-Version: 0.1.19.9000
+Version: 0.1.19.9001
 Authors@R: 
     person("Rico", "Derks", , "r.j.e.derks@lumc.nl", role = c("aut", "cre"))
 Description: A lipidomics workflow app, build on the Shiny framework. It uses results files from MSDIAL.
@@ -18,6 +18,7 @@ Imports:
     ggplot2,
     golem,
     heatmaply,
+    htmlwidgets,
     openxlsx2,
     patchwork,
     pcaMethods,

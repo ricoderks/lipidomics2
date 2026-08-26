@@ -83,6 +83,7 @@ importFrom(heatmaply,
   RdBu,
   heatmaply
 )
+importFrom(htmlwidgets,onRender)
 importFrom(openxlsx2,write_xlsx)
 importFrom(plotly,
   add_bars,
