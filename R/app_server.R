@@ -247,6 +247,21 @@ app_server <- function(input, output, session) {
   mod_export_server(id = "export",
                     r = r)
 
+  #--------------------------------------------------------- unsaved work ----
+  # warn the user when closing the tab / browser or reloading the page, all
+  # data and results are lost when the session ends
+  shiny::observe({
+    unsaved_work <- !is.null(r$tables$meta_data) ||
+      !is.null(r$tables$raw_data_pos) ||
+      !is.null(r$tables$raw_data_neg) ||
+      !is.null(r$tables$raw_data)
+
+    session$sendCustomMessage(
+      type = "lipidomics2-unsaved-work",
+      message = list(unsaved = unsaved_work)
+    )
+  })
+
   #------------------------------------------------------------------- help ----
   mod_help_server(id = "help")
 
