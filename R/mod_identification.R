@@ -56,8 +56,13 @@ mod_identification_server <- function(id, r) {
       zoom_ranges(NULL)
     })
 
-    shiny::observeEvent(plotly::event_data(event = "plotly_relayout",
-                                           source = "bubbleplot_click"), {
+    # the plotly events are only registered when the plot is drawn, asking for
+    # the event data before that gives a warning
+    plot_drawn <- shiny::reactiveVal(FALSE)
+
+    shiny::observe({
+      shiny::req(plot_drawn())
+
       relayout <- plotly::event_data(event = "plotly_relayout",
                                      source = "bubbleplot_click")
 
@@ -176,12 +181,18 @@ mod_identification_server <- function(id, r) {
         ply <- plotly::ggplotly(p = p,
                                 source = "bubbleplot_click",
                                 height = plot_height) |>
-          plotly::config(modeBarButtonsToRemove = c("toImage", "select2d",
+          # double click always shows everything again, the 'Reset axes' button
+          # would go back to the restored zoom, so remove it
+          plotly::config(doubleClick = "autosize",
+                         modeBarButtonsToRemove = c("toImage", "select2d",
                                                     "lasso2d",
+                                                    "resetScale2d",
                                                     "hoverClosestCartesian",
                                                     "hoverCompareCartesian")) |>
           plotly::event_register(event = "plotly_click") |>
           plotly::event_register(event = "plotly_relayout")
+
+        plot_drawn(TRUE)
 
         # restore the zoom of before the plot was redrawn, isolate() to prevent
         # redrawing the plot every time the user zooms
