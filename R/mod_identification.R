@@ -47,6 +47,29 @@ mod_identification_server <- function(id, r) {
       color = "rgba(255, 255, 255, 0.5)"
     )
 
+    # keep track of the zoom of the bubble plot, so it can be restored when the
+    # plot is redrawn (e.g. after changing the reason to keep / remove a lipid)
+    zoom_ranges <- shiny::reactiveVal(NULL)
+
+    shiny::observeEvent(input$id_select_class, {
+      # a different class means a different plot, so start without zoom
+      zoom_ranges(NULL)
+    })
+
+    # the plotly events are only registered when the plot is drawn, asking for
+    # the event data before that gives a warning
+    plot_drawn <- shiny::reactiveVal(FALSE)
+
+    shiny::observe({
+      shiny::req(plot_drawn())
+
+      relayout <- plotly::event_data(event = "plotly_relayout",
+                                     source = "bubbleplot_click")
+
+      zoom_ranges(update_zoom_ranges(current = shiny::isolate(zoom_ranges()),
+                                     relayout = relayout))
+    })
+
     output$id_sidebar_ui <- shiny::renderUI({
       shiny::req(r$omics)
 
@@ -158,11 +181,23 @@ mod_identification_server <- function(id, r) {
         ply <- plotly::ggplotly(p = p,
                                 source = "bubbleplot_click",
                                 height = plot_height) |>
-          plotly::config(modeBarButtonsToRemove = c("toImage", "select2d",
+          # double click always shows everything again, the 'Reset axes' button
+          # would go back to the restored zoom, so remove it
+          plotly::config(doubleClick = "autosize",
+                         modeBarButtonsToRemove = c("toImage", "select2d",
                                                     "lasso2d",
+                                                    "resetScale2d",
                                                     "hoverClosestCartesian",
                                                     "hoverCompareCartesian")) |>
-          plotly::event_register(event = "plotly_click")
+          plotly::event_register(event = "plotly_click") |>
+          plotly::event_register(event = "plotly_relayout")
+
+        plot_drawn(TRUE)
+
+        # restore the zoom of before the plot was redrawn, isolate() to prevent
+        # redrawing the plot every time the user zooms
+        ply <- apply_zoom_ranges(p = ply,
+                                 ranges = shiny::isolate(zoom_ranges()))
       } else {
         print("Nothing to show")
         ply <- NULL
