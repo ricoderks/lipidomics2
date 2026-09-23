@@ -9,9 +9,12 @@
 #' @param method character(1) which method to use.
 #' @param columns list() with column names.
 #' @param index list() with the sample names.
+#' @param span numeric(1), span parameter of the loess fit (default 0.75).
 #'
 #' @details
 #' When method is 'loess' make sure the samples are sorted in order of measurement!
+#' If the data was already trend corrected, the correction is redone starting
+#' from the original areas (column 'areaOriginal').
 #'
 #' @returns Trend corrected data in long format again.
 #'
@@ -22,15 +25,22 @@
 do_trend_correction <- function(data = NULL,
                                 method = c("loess"),
                                 columns = NULL,
-                                index = NULL) {
+                                index = NULL,
+                                span = 0.75) {
 
-  data$areaOriginal <- data$area
+  if("areaOriginal" %in% colnames(data)) {
+    # already corrected before, start from the original data
+    data$area <- data$areaOriginal
+  } else {
+    data$areaOriginal <- data$area
+  }
 
   res <- switch(
     method,
     "loess" = do_loess(data = data,
                        columns = columns,
-                       index = index)
+                       index = index,
+                       span = span)
   )
 
   return(res)
@@ -45,6 +55,7 @@ do_trend_correction <- function(data = NULL,
 #' @param data data.frame() with the data in long format.
 #' @param columns list() with column names.
 #' @param index list() with the sample names.
+#' @param span numeric(1), span parameter of the loess fit (default 0.75).
 #'
 #' @details
 #' When method is 'loess' make sure the samples are sorted in order of measurement!
@@ -60,7 +71,8 @@ do_trend_correction <- function(data = NULL,
 #'
 do_loess <- function(data = NULL,
                      columns = NULL,
-                     index = NULL) {
+                     index = NULL,
+                     span = 0.75) {
   inj_order_col <- columns$acqorder
   batch_col <- columns$batch
   samples <- c(index$selected_pools, index$selected_samples)
@@ -84,13 +96,15 @@ do_loess <- function(data = NULL,
 
   res <- data_wide
   for(batch in batches) {
-    tmp <- data_wide[data_wide[, batch_col] == batch, -c(1:3)]
-    sample_type <- ifelse(data_wide$sample_name %in% index$selected_pools, 1, 2)
+    batch_rows <- data_wide[, batch_col] == batch
+    tmp <- data_wide[batch_rows, -c(1:3)]
+    sample_type <- ifelse(data_wide$sample_name[batch_rows] %in% index$selected_pools, 1, 2)
 
     res[res[, batch_col] == batch, -c(1:3)] <- qc_rlsc(
       tab = tmp,
       colv = sample_type,
       or = 1:nrow(tmp),
+      span = span,
       verbose = FALSE
     )
   }
@@ -123,6 +137,7 @@ do_loess <- function(data = NULL,
 #' @param tab table N*K (row * column) with N samples and K variables.
 #' @param colv integer(), vector N of numbers: 1 for QC samples and 2 for other samples.
 #' @param or integer(), vector of measuring order (see details).
+#' @param span numeric(1), span parameter of the loess fit (default 0.75).
 #' @param verbose print which variable has been corrected to monitor the process (default = FALSE).
 #'
 #' @return corrected table N*K
@@ -141,6 +156,7 @@ do_loess <- function(data = NULL,
 qc_rlsc <- function(tab = NULL,
                     colv = NULL,
                     or = NULL,
+                    span = 0.75,
                     verbose = FALSE) {
   # create table of the same size as initial
   tab_corr <- tab
@@ -148,15 +164,21 @@ qc_rlsc <- function(tab = NULL,
   # For each variable (columns) in the initial table
   for (i in 1:ncol(tab)) {
     # fit loess curve to the QCs
-    ll <- stats::loess(tab[which(colv == 1), i] ~ or[which(colv == 1)])
+    ll <- stats::loess(tab[which(colv == 1), i] ~ or[which(colv == 1)],
+                       span = span)
 
     # approximate the curve for all the samples
     aa <- stats::approx(x = or[which(colv == 1)],
                         y = ll$fitted,
                         xout = or)
 
+    # a fitted value of zero or below can not be used for correction (e.g. QC value of 0)
+    fit <- aa$y
+    fit[!is.finite(fit) | fit <= 0] <- NA
+
     # correct the variable according to the curve for all the samples
-    tab_corr[, i] <- tab[, i] / aa$y
+    tab_corr[, i] <- tab[, i] / fit
+    tab_corr[!is.finite(tab_corr[, i]), i] <- NA
 
     # print which variable has been corrected in order to monitor the progress
     if(verbose == TRUE) {

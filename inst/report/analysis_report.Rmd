@@ -133,7 +133,10 @@ if(general_settings$apply_blank_filtering) {
 htmltools::p(htmltools::strong("Trend correction:"))
 if(general_settings$apply_trend_correction) {
   htmltools::tags$ul(
-    htmltools::tags$li(paste0("Method: ", general_settings$trend_correction_method))
+    htmltools::tags$li(paste0("Method: ", general_settings$trend_correction_method)),
+    if(general_settings$trend_correction_method == "loess") {
+      htmltools::tags$li(paste0("Span: ", general_settings$loess_span))
+    }
   )
 } else {
   htmltools::p("No trend correction applied.")
