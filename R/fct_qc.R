@@ -98,8 +98,16 @@ show_class_overall_violin <- function(data = NULL,
     ggplot2::ggplot(ggplot2::aes(x = .data$class,
                                  y = .data$rsd)) +
     ggplot2::geom_violin(scale = "width") +
-    ggplot2::geom_jitter(ggplot2::aes(colour = .data$polarity),
-                         alpha = 0.7) +
+    # text aesthetic is only used for the plotly tooltip
+    suppressWarnings(
+      ggplot2::geom_jitter(ggplot2::aes(colour = .data$polarity,
+                                        text = sprintf("ID: %s<br>Class: %s<br>Polarity: %s<br>RSD: %0.3f",
+                                                       .data$my_id,
+                                                       .data$class,
+                                                       .data$polarity,
+                                                       .data$rsd)),
+                           alpha = 0.7)
+    ) +
     ggplot2::geom_hline(yintercept = rsd_cutoff,
                         colour = "red",
                         linetype = 2) +
@@ -141,8 +149,16 @@ show_class_batch_violin <- function(data = NULL,
     ggplot2::ggplot(ggplot2::aes(x = .data$class,
                                  y = .data$rsd)) +
     ggplot2::geom_violin(scale = "width") +
-    ggplot2::geom_jitter(ggplot2::aes(colour = .data$polarity),
-                         alpha = 0.7) +
+    # text aesthetic is only used for the plotly tooltip
+    suppressWarnings(
+      ggplot2::geom_jitter(ggplot2::aes(colour = .data$polarity,
+                                        text = sprintf("ID: %s<br>Class: %s<br>Polarity: %s<br>RSD: %0.3f",
+                                                       .data$my_id,
+                                                       .data$class,
+                                                       .data$polarity,
+                                                       .data$rsd)),
+                           alpha = 0.7)
+    ) +
     ggplot2::geom_hline(yintercept = rsd_cutoff,
                         colour = "red",
                         linetype = 2) +
@@ -331,14 +347,24 @@ trend_plot <- function(trend_data = NULL,
         ggplot2::ggplot(ggplot2::aes(x = .data$sample_name,
                                      y = .data$log2fc_batch,
                                      colour = .data$batch,
-                                     group = .data$my_id))
+                                     group = .data$my_id,
+                                     text = sprintf("ID: %s<br>Sample: %s<br>Batch: %s<br>log2(FC): %0.2f",
+                                                    .data$my_id,
+                                                    .data$sample_name,
+                                                    .data$batch,
+                                                    .data$log2fc_batch)))
     },
     "overall" = {
       trend_data |>
         ggplot2::ggplot(ggplot2::aes(x = .data$sample_name,
                                      y = .data$log2fc_overall,
                                      colour = .data$batch,
-                                     group = .data$my_id))
+                                     group = .data$my_id,
+                                     text = sprintf("ID: %s<br>Sample: %s<br>Batch: %s<br>log2(FC): %0.2f",
+                                                    .data$my_id,
+                                                    .data$sample_name,
+                                                    .data$batch,
+                                                    .data$log2fc_overall)))
     }
   )
 
