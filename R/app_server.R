@@ -163,6 +163,7 @@ app_server <- function(input, output, session) {
       blanksample_threshold = 0.8,
       blanksample_threshold_group = 0.8,
       trend_correction_method = "loess",
+      loess_span = 0.75,
       feature_class = NULL,
       selected_feature_class = NULL,
       apply_rsd_cutoff = TRUE,

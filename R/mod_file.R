@@ -870,6 +870,12 @@ mod_file_server <- function(id, r){
       r$settings$selected_feature_class <- import_env$r$settings$selected_feature_class
       r$settings$apply_trend_correction <- import_env$r$settings$apply_trend_correction
       r$settings$trend_correction_method <- import_env$r$settings$trend_correction_method
+      # older .rda files don't contain the loess span
+      r$settings$loess_span <- if(is.null(import_env$r$settings$loess_span)) {
+        0.75
+      } else {
+        import_env$r$settings$loess_span
+      }
 
       progress$set(value = 70,
                    message = "Processing...",

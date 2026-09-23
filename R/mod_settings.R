@@ -153,6 +153,18 @@ mod_settings_ui <- function(id) {
                   inputId = ns("settings_select_trend"),
                   label = "Select trend correction:",
                   choices = c("LOESS" = "loess")
+                ),
+                shiny::conditionalPanel(
+                  condition = "input.settings_select_trend == 'loess'",
+                  ns = ns,
+                  shiny::numericInput(
+                    inputId = ns("settings_loess_span"),
+                    label = "LOESS span:",
+                    value = 0.75,
+                    min = 0.1,
+                    max = 1,
+                    step = 0.05
+                  )
                 )
               ),
               style = "font-size:75%"
@@ -278,7 +290,13 @@ mod_settings_server <- function(id, r){
         inputId = "settings_select_trend",
         selected = r$settings$trend_correction_method
       )
+      shiny::updateNumericInput(
+        inputId = "settings_loess_span",
+        value = r$settings$loess_span
+      )
       shinyjs::toggleState(id = "settings_select_trend",
+                           condition = isTRUE(r$settings$apply_trend_correction))
+      shinyjs::toggleState(id = "settings_loess_span",
                            condition = isTRUE(r$settings$apply_trend_correction))
     },
     once = TRUE)
@@ -358,7 +376,13 @@ mod_settings_server <- function(id, r){
         inputId = "settings_select_trend",
         selected = r$settings$trend_correction_method
       )
+      shiny::updateNumericInput(
+        inputId = "settings_loess_span",
+        value = r$settings$loess_span
+      )
       shinyjs::toggleState(id = "settings_select_trend",
+                           condition = isTRUE(r$settings$apply_trend_correction))
+      shinyjs::toggleState(id = "settings_loess_span",
                            condition = isTRUE(r$settings$apply_trend_correction))
 
       # make sure r$rdata gets not updated to early
@@ -375,7 +399,8 @@ mod_settings_server <- function(id, r){
         "settings_threshold" = input$settings_threshold,
         "settings_threshold_group" = input$settings_threshold_group,
         "settings_apply_trend_correction" = input$settings_apply_trend_correction,
-        "settings_select_trend" = input$settings_select_trend
+        "settings_select_trend" = input$settings_select_trend,
+        "settings_loess_span" = input$settings_loess_span
       )
       check_defaults <- r$settings[c("apply_rsd_cutoff",
                                      "rsd_cutoff",
@@ -387,7 +412,8 @@ mod_settings_server <- function(id, r){
                                      "blanksample_threshold",
                                      "blanksample_threshold_group",
                                      "apply_trend_correction",
-                                     "trend_correction_method")]
+                                     "trend_correction_method",
+                                     "loess_span")]
 
       changed <- mapply(
         function(current_value, default_value) {
@@ -555,13 +581,17 @@ mod_settings_server <- function(id, r){
 
     #----------------------------------------------------- trend correction ----
     shiny::observeEvent(
-      shiny::req(!is.null(input$settings_apply_trend_correction)), {
+      shiny::req(!is.null(input$settings_apply_trend_correction),
+                 !is.null(input$settings_select_trend),
+                 !is.null(input$settings_loess_span)), {
         if(!is.null(r$tables$analysis_data) & isFALSE(r$rdata)) {
           r$settings$apply_trend_correction <- input$settings_apply_trend_correction
           if(r$settings$apply_trend_correction) {
             print("Trend correction!")
             shinyjs::enable(id = "settings_select_trend")
+            shinyjs::enable(id = "settings_loess_span")
             r$settings$trend_correction_method <- input$settings_select_trend
+            r$settings$loess_span <- input$settings_loess_span
 
             w$show()
 
@@ -570,7 +600,8 @@ mod_settings_server <- function(id, r){
               data = r$tables$analysis_data,
               method = input$settings_select_trend,
               columns = r$columns,
-              index = r$index
+              index = r$index,
+              span = input$settings_loess_span
             )
 
             r$tables$clean_data <- res
@@ -617,11 +648,14 @@ mod_settings_server <- function(id, r){
           } else {
             print("Disabled trend correction!")
             shinyjs::disable(id = "settings_select_trend")
+            shinyjs::disable(id = "settings_loess_span")
             w$show()
             print("Recalculate everything!")
 
             # put the uncorrected data back
-            r$tables$clean_data$area <- r$tables$clean_data$areaOriginal
+            if("areaOriginal" %in% colnames(r$tables$clean_data)) {
+              r$tables$clean_data$area <- r$tables$clean_data$areaOriginal
+            }
             r$tables$analysis_data <- r$tables$clean_data
 
             # Trend calculation
