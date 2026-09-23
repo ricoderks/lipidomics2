@@ -183,7 +183,19 @@ mod_qc_server <- function(id, r){
                         type = input$qc_select_trend_type)
 
         ply <- plotly::ggplotly(p = p,
-                                tooltip = "text")
+                                tooltip = "text") |>
+          plotly::plotly_build()
+
+        # ggplotly does not make room for the rotated sample names, move the
+        # x-axis title down so it does not overlap with them
+        title_shift <- -(15 + 5 * max(nchar(as.character(r$tables$trend_data$sample_name))))
+        for(i in seq_along(ply$x$layout$annotations)) {
+          if(identical(ply$x$layout$annotations[[i]]$text, "Sample name")) {
+            ply$x$layout$margin$b <- ply$x$layout$margin$b +
+              (ply$x$layout$annotations[[i]]$yshift - title_shift)
+            ply$x$layout$annotations[[i]]$yshift <- title_shift
+          }
+        }
       } else {
         ply <- NULL
       }

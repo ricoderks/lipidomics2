@@ -345,33 +345,40 @@ trend_plot <- function(trend_data = NULL,
   type <- match.arg(arg = type,
                     choices = c("batch", "overall"))
 
-  p <- switch(
+  y_col <- switch(
     type,
-    "batch" = {
-      trend_data |>
-        ggplot2::ggplot(ggplot2::aes(x = .data$sample_name,
-                                     y = .data$log2fc_batch,
-                                     colour = .data$batch,
-                                     group = .data$my_id,
-                                     text = sprintf("ID: %s<br>Sample: %s<br>Batch: %s<br>log2(FC): %0.2f",
-                                                    .data$my_id,
-                                                    .data$sample_name,
-                                                    .data$batch,
-                                                    .data$log2fc_batch)))
-    },
-    "overall" = {
-      trend_data |>
-        ggplot2::ggplot(ggplot2::aes(x = .data$sample_name,
-                                     y = .data$log2fc_overall,
-                                     colour = .data$batch,
-                                     group = .data$my_id,
-                                     text = sprintf("ID: %s<br>Sample: %s<br>Batch: %s<br>log2(FC): %0.2f",
-                                                    .data$my_id,
-                                                    .data$sample_name,
-                                                    .data$batch,
-                                                    .data$log2fc_overall)))
-    }
+    "batch" = "log2fc_batch",
+    "overall" = "log2fc_overall"
   )
+
+  # log2(FC) is -Inf when the area is 0 and Inf when the reference area is 0.
+  # plotly can not show non-finite values, so cap them just outside the range
+  # of the finite values.
+  log2fc <- trend_data[, y_col]
+  log2fc_finite <- log2fc[is.finite(log2fc)]
+  note <- rep("", length(log2fc))
+  note[which(log2fc == -Inf)] <- " (not detected)"
+  note[which(log2fc == Inf)] <- " (not detected in reference)"
+  if(length(log2fc_finite) > 0) {
+    log2fc[which(log2fc == -Inf)] <- min(log2fc_finite) - 1
+    log2fc[which(log2fc == Inf)] <- max(log2fc_finite) + 1
+  }
+
+  trend_data$log2fc_plot <- log2fc
+  trend_data$log2fc_text <- sprintf("ID: %s<br>Sample: %s<br>Batch: %s<br>log2(FC): %0.2f%s",
+                                    trend_data$my_id,
+                                    trend_data$sample_name,
+                                    trend_data$batch,
+                                    trend_data[, y_col],
+                                    note)
+
+  # text aesthetic is only used for the plotly tooltip
+  p <- trend_data |>
+    ggplot2::ggplot(ggplot2::aes(x = .data$sample_name,
+                                 y = .data$log2fc_plot,
+                                 colour = .data$batch,
+                                 group = .data$my_id,
+                                 text = .data$log2fc_text))
 
   p <- p +
     ggplot2::geom_hline(yintercept = -0.5,
