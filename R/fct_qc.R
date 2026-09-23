@@ -316,6 +316,11 @@ calc_trend <- function(pool_data = NULL,
   trend_data$log2fc_overall <- log2(trend_data$area / trend_data$refAreaOverall)
   trend_data$log2fc_batch <- log2(trend_data$area / trend_data$refAreaBatch)
 
+  # order the samples on the x-axis by acquisition order, not by sample name
+  sample_order <- unique(pool_data[order(pool_data[, order_column]), "sample_name"])
+  trend_data$sample_name <- factor(trend_data$sample_name,
+                                   levels = sample_order)
+
   return(trend_data)
 }
 
