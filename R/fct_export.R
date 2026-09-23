@@ -60,7 +60,8 @@ prepare_export_data <- function(meta_data = NULL,
       "raw" = "area",
       "totNorm" = "totNormArea",
       "pqnNorm" = "pqnNormArea",
-      "protNorm" = "protNormArea"
+      "protNorm" = "protNormArea",
+      "cellNorm" = "cellNormArea"
     )
     export_data <- analysis_data[analysis_data$keep == TRUE &
                                    analysis_data$class_keep == TRUE, ] |>

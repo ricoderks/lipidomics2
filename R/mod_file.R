@@ -63,6 +63,17 @@ mod_file_ui <- function(id) {
                   choices = NULL
                 ),
                 shiny::selectInput(
+                  inputId = ns("metadata_select_cellcount"),
+                  label = bslib::tooltip(
+                    trigger = list(
+                      "Cell count normalization",
+                      bsicons::bs_icon(name = "info-circle")
+                    ),
+                    "Select column with cell count. This will be used for cell count normalization."
+                  ),
+                  choices = NULL
+                ),
+                shiny::selectInput(
                   inputId = ns("metadata_select_blanksample"),
                   label = bslib::tooltip(
                     trigger = list(
@@ -465,6 +476,18 @@ mod_file_server <- function(id, r){
                             "select a column")
         )
         shiny::updateSelectInput(
+          inputId = "metadata_select_cellcount",
+          choices = c("select a column", sort(column_names)),
+          selected = ifelse(any(grepl(x = column_names,
+                                      pattern = ".*cell.?count.*",
+                                      ignore.case = TRUE)),
+                            grep(x = column_names,
+                                 pattern = ".*cell.?count.*",
+                                 ignore.case = TRUE,
+                                 value = TRUE)[1],
+                            "select a column")
+        )
+        shiny::updateSelectInput(
           inputId = "metadata_select_blanksample",
           choices = c("select a column", sort(column_names)),
           selected = "select a column"
@@ -516,6 +539,7 @@ mod_file_server <- function(id, r){
       input$metadata_select_acqorder,
       input$metadata_select_batch,
       input$metadata_select_protein,
+      input$metadata_select_cellcount,
       input$metadata_select_blanksample,
       input$metadata_select_groups
     ), {
@@ -525,6 +549,7 @@ mod_file_server <- function(id, r){
       r$columns$acqorder <- input$metadata_select_acqorder
       r$columns$batch <- input$metadata_select_batch
       r$columns$protein_normalisation <- input$metadata_select_protein
+      r$columns$cellcount_normalisation <- input$metadata_select_cellcount
       r$columns$blanksample <- input$metadata_select_blanksample
       r$columns$groups <- input$metadata_select_groups
     })
@@ -878,6 +903,11 @@ mod_file_server <- function(id, r){
       r$columns$acqorder <- import_env$r$columns$acqorder
       r$columns$batch <- import_env$r$columns$batch
       r$columns$protein_normalisation <- import_env$r$columns$protein_normalisation
+      r$columns$cellcount_normalisation <- if(is.null(import_env$r$columns$cellcount_normalisation)) {
+        "select a column"
+      } else {
+        import_env$r$columns$cellcount_normalisation
+      }
       r$columns$blanksample <- import_env$r$columns$blanksample
       r$columns$groups <- import_env$r$columns$groups
       r$text_patterns$blanks <- import_env$r$text_patterns$blanks
@@ -914,6 +944,11 @@ mod_file_server <- function(id, r){
         inputId = "metadata_select_protein",
         choices = c("select a column", sort(column_names)),
         selected = r$columns$protein_normalisation
+      )
+      shiny::updateSelectInput(
+        inputId = "metadata_select_cellcount",
+        choices = c("select a column", sort(column_names)),
+        selected = r$columns$cellcount_normalisation
       )
       shiny::updateSelectInput(
         inputId = "metadata_select_blanksample",

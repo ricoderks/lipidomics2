@@ -202,7 +202,8 @@ show_fa_plot <- function(data = NULL,
       "raw" = "Average value",
       "totNorm" = "Average totala area normalized value",
       "pqnNorm" = "Average PQN normalized value",
-      "protNorm" = "Average protein normalized value"
+      "protNorm" = "Average protein normalized value",
+      "cellNorm" = "Average cell count normalized value"
     )
   } else {
     y_title = NULL

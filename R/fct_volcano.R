@@ -18,14 +18,14 @@
 #'
 #' @noRd
 do_test <- function(data = NULL,
-                    area_column = c("area", "totNormArea", "pqnNormArea", "protNormArea"),
+                    area_column = c("area", "totNormArea", "pqnNormArea", "protNormArea", "cellNormArea"),
                     transformation = c("none", "log10", "log1p"),
                     test = c("ttest", "mw"),
                     group = NULL,
                     group1 = NULL,
                     group2 = NULL) {
   area_column <- match.arg(arg = area_column,
-                           choices = c("area", "totNormArea", "pqnNormArea", "protNormArea"))
+                           choices = c("area", "totNormArea", "pqnNormArea", "protNormArea", "cellNormArea"))
   transformation <- match.arg(arg = transformation,
                               choices = c("none", "log10", "log1p"),
                               several.ok = FALSE)
@@ -78,13 +78,13 @@ do_test <- function(data = NULL,
 #'
 #' @noRd
 do_test.ttest <- function(data = NULL,
-                          area_column = c("area", "totNormArea", "pqnNormArea", "protNormArea"),
+                          area_column = c("area", "totNormArea", "pqnNormArea", "protNormArea", "cellNormArea"),
                           transformation = c("none", "log10", "log1p"),
                           group = NULL,
                           group1 = NULL,
                           group2 = NULL) {
   area_column <- match.arg(arg = area_column,
-                           choices = c("area", "totNormArea", "pqnNormArea", "protNormArea"))
+                           choices = c("area", "totNormArea", "pqnNormArea", "protNormArea", "cellNormArea"))
   transformation <- match.arg(arg = transformation,
                               choices = c("none", "log10", "log1p"),
                               several.ok = FALSE)
@@ -136,13 +136,13 @@ do_test.ttest <- function(data = NULL,
 #'
 #' @noRd
 do_test.mw <- function(data = NULL,
-                       area_column = c("area", "totNormArea", "pqnNormArea", "protNormArea"),
+                       area_column = c("area", "totNormArea", "pqnNormArea", "protNormArea", "cellNormArea"),
                        transformation = c("none", "log10", "log1p"),
                        group = NULL,
                        group1 = NULL,
                        group2 = NULL) {
   area_column <- match.arg(arg = area_column,
-                           choices = c("area", "totNormArea", "pqnNormArea", "protNormArea"))
+                           choices = c("area", "totNormArea", "pqnNormArea", "protNormArea", "cellNormArea"))
   transformation <- match.arg(arg = transformation,
                               choices = c("none", "log10", "log1p"),
                               several.ok = FALSE)
@@ -346,12 +346,12 @@ show_volcano <- function(data = NULL,
 #' @noRd
 #'
 show_violin <- function(plot_data = NULL,
-                        area_column = c("area", "totNormArea", "pqnNormArea", "protNormArea"),
+                        area_column = c("area", "totNormArea", "pqnNormArea", "protNormArea", "cellNormArea"),
                         group = NULL,
                         group1 = NULL,
                         group2 = NULL) {
   area_column <- match.arg(arg = area_column,
-                           choices = c("area", "totNormArea", "pqnNormArea", "protNormArea"))
+                           choices = c("area", "totNormArea", "pqnNormArea", "protNormArea", "cellNormArea"))
 
   ply <- plotly::plot_ly(
     # data = plot_data,
