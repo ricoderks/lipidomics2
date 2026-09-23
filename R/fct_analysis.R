@@ -190,3 +190,28 @@ prot_norm <- function(data = NULL,
 
   return(data)
 }
+
+
+#' @title Cell count normalization
+#'
+#' @description Cell count normalization
+#'
+#' @param data data.frame in long format.
+#' @param column character(1), column containing the cell count.
+#'
+#' @return The return value, if any, from executing the function.
+#'
+#' @author Rico Derks
+#'
+#' @noRd
+cell_norm <- function(data = NULL,
+                      column = NULL) {
+  print("Do cell count normalization.")
+  if("cellNormArea" %in% colnames(data)) {
+    data$cellNormArea <- NULL
+  }
+
+  data$cellNormArea <- data$area / data[[column]]
+
+  return(data)
+}

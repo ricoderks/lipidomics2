@@ -40,6 +40,7 @@ mod_help_ui <- function(id){
             shiny::p("Additional columns which can be selected are:"),
             shiny::tags$ul(
               shiny::tags$li(shiny::strong("Protein normalization:"), "This column will be used to apply protein normalization on the data."),
+              shiny::tags$li(shiny::strong("Cell count normalization:"), "This column will be used to apply cell count normalization on the data."),
               shiny::tags$li(shiny::strong("Blank filtering:"), "This column will be used to apply the an additional blank filtering groupwise."),
               shiny::tags$li(shiny::strong("Groups:"), "Here you can select multiple columns which can later be used in the analysis module.")
             ),

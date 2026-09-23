@@ -86,7 +86,8 @@ mod_pca_server <- function(id, r){
         "Raw data" = "raw",
         "Total area normalization" = "totNorm",
         "PQN normalization" = "pqnNorm",
-        "Protein normalization" = "protNorm"
+        "Protein normalization" = "protNorm",
+        "Cell count normalization" = "cellNorm"
       )
 
       selected <- names(unlist(r$analysis$normalization)[unlist(r$analysis$normalization)])
@@ -208,7 +209,8 @@ mod_pca_server <- function(id, r){
         "raw" = "area",
         "totNorm" = "totNormArea",
         "pqnNorm" = "pqnNormArea",
-        "protNorm" = "protNormArea"
+        "protNorm" = "protNormArea",
+        "cellNorm" = "cellNormArea"
       )
 
       pca_data <- r$tables$analysis_data[r$tables$analysis$keep == TRUE &

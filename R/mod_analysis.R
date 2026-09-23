@@ -143,17 +143,18 @@ mod_analysis_server <- function(id, r) {
 
       normSelected <- names(unlist(r$analysis$normalization)[unlist(r$analysis$normalization)])
 
-      if(r$columns$protein_normalisation == "select a column") {
-        choices <- c(
-          "Total area normalization" = "totNorm",
-          "PQN normalization" = "pqnNorm"
-        )
-      } else {
-        choices <- c(
-          "Total area normalization" = "totNorm",
-          "PQN normalization" = "pqnNorm",
-          "Protein normalization" = "protNorm"
-        )
+      choices <- c(
+        "Total area normalization" = "totNorm",
+        "PQN normalization" = "pqnNorm"
+      )
+      if(r$columns$protein_normalisation != "select a column") {
+        choices <- c(choices,
+                     "Protein normalization" = "protNorm")
+      }
+      if(!is.null(r$columns$cellcount_normalisation) &&
+         r$columns$cellcount_normalisation != "select a column") {
+        choices <- c(choices,
+                     "Cell count normalization" = "cellNorm")
       }
 
       shiny::tagList(
@@ -193,6 +194,8 @@ mod_analysis_server <- function(id, r) {
                                QC = r$index$selected_pools),
           "protNorm" = prot_norm(data = r$tables$analysis_data,
                                  column = r$columns$protein_normalisation),
+          "cellNorm" = cell_norm(data = r$tables$analysis_data,
+                                 column = r$columns$cellcount_normalisation),
           r$tables$analysis_data
         )
         r$tables$analysis_data <- res
@@ -214,7 +217,8 @@ mod_analysis_server <- function(id, r) {
             selected,
             "totNorm" = "Total area normalization",
             "pqnNorm" = "PQN normalization",
-            "protNorm" = "Protein normalization"
+            "protNorm" = "Protein normalization",
+            "cellNorm" = "Cell count normalization"
           )
           statusText <- c(statusText, tmp)
         }
