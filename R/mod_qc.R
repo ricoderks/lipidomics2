@@ -47,7 +47,7 @@ mod_qc_ui <- function(id) {
                             "Per batch" = "batch")
               )
             ),
-            shiny::plotOutput(
+            plotly::plotlyOutput(
               outputId = ns("qc_class_plot")
             )
           )
@@ -76,7 +76,7 @@ mod_qc_ui <- function(id) {
                             "Per batch" = "batch")
               )
             ),
-            shiny::plotOutput(
+            plotly::plotlyOutput(
               outputId = ns("qc_trend_plot")
             )
           )
@@ -119,7 +119,7 @@ mod_qc_server <- function(id, r){
     })
 
 
-    output$qc_class_plot <- shiny::renderPlot({
+    output$qc_class_plot <- plotly::renderPlotly({
       shiny::req(r$tables$rsd_data_overall,
                  r$tables$rsd_data_batch,
                  r$settings$rsd_cutoff,
@@ -141,7 +141,21 @@ mod_qc_server <- function(id, r){
         }
       )
 
-      return(p)
+      ply <- plotly::ggplotly(p = p,
+                              tooltip = "text") |>
+        plotly::plotly_build()
+
+      # only show hover info for the data points, not for the violins and
+      # cutoff line
+      ply$x$data <- lapply(ply$x$data, function(trace) {
+        if(!is.null(trace$mode) && trace$mode == "lines") {
+          trace$hoverinfo <- "skip"
+        }
+
+        return(trace)
+      })
+
+      return(ply)
     })
 
 
@@ -160,17 +174,32 @@ mod_qc_server <- function(id, r){
     })
 
 
-    output$qc_trend_plot <- shiny::renderPlot({
+    output$qc_trend_plot <- plotly::renderPlotly({
       shiny::req(r$tables$trend_data,
                  input$qc_select_trend_type)
 
       if(!is.null(r$tables$trend_data)) {
         p <- trend_plot(trend_data = r$tables$trend_data,
                         type = input$qc_select_trend_type)
+
+        ply <- plotly::ggplotly(p = p,
+                                tooltip = "text") |>
+          plotly::plotly_build()
+
+        # ggplotly does not make room for the rotated sample names, move the
+        # x-axis title down so it does not overlap with them
+        title_shift <- -(15 + 5 * max(nchar(as.character(r$tables$trend_data$sample_name))))
+        for(i in seq_along(ply$x$layout$annotations)) {
+          if(identical(ply$x$layout$annotations[[i]]$text, "Sample name")) {
+            ply$x$layout$margin$b <- ply$x$layout$margin$b +
+              (ply$x$layout$annotations[[i]]$yshift - title_shift)
+            ply$x$layout$annotations[[i]]$yshift <- title_shift
+          }
+        }
       } else {
-        p <- NULL
+        ply <- NULL
       }
-      return(p)
+      return(ply)
     })
 
   })
