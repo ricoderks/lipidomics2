@@ -194,7 +194,8 @@ mod_export_server <- function(id, r) {
             analyses = analyses,
             meta_data = r$tables$meta_data,
             general_settings = r$settings,
-            columns = r$columns
+            columns = r$columns,
+            report_chapters = r$analysis$report_chapters
           )
         }
 
