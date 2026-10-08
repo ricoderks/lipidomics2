@@ -29,6 +29,13 @@ mod_analysis_ui <- function(id) {
               outputId = ns("analysisSettings")
             )
           )
+        ),
+        bslib::nav_panel(
+          title = "Report text",
+          value = "analysisReportTextPanel",
+          bslib::card(
+            mod_report_text_ui(id = ns("reportText"))
+          )
         )
       )
     )
@@ -49,6 +56,9 @@ mod_analysis_server <- function(id, r) {
       modules = list(),   # id -> list(type, label, export)
       labels  = list()    # id -> label
     )
+
+    mod_report_text_server(id = "reportText",
+                           r = r)
 
     add_analysis_tab <- function(type = NULL) {
       rv$next_id <- rv$next_id + 1L

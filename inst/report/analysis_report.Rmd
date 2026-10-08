@@ -16,6 +16,7 @@ params:
   meta_data: NULL
   general_settings: NULL
   columns: NULL
+  report_chapters: NULL
 ---
 
 ```{r setup, include=FALSE}
@@ -140,6 +141,16 @@ if(general_settings$apply_trend_correction) {
   )
 } else {
   htmltools::p("No trend correction applied.")
+}
+```
+
+```{r report-chapters, results='asis', echo=FALSE}
+for(chapter in params$report_chapters) {
+  title <- if(is.null(chapter$title)) "" else trimws(chapter$title)
+  text <- if(is.null(chapter$text)) "" else chapter$text
+  if(title == "" && trimws(text) == "") next
+  if(title == "") title <- "Untitled chapter"
+  cat("# ", title, "\n\n", text, "\n\n", sep = "")
 }
 ```
 

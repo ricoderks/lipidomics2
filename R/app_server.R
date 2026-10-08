@@ -225,7 +225,8 @@ app_server <- function(input, output, session) {
         protNorm = FALSE,
         cellNorm = FALSE
       ),
-      modules = NULL
+      modules = NULL,
+      report_chapters = NULL
     )
   )
 
