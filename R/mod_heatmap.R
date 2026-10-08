@@ -7,7 +7,7 @@
 #' @noRd
 #'
 #' @importFrom shiny NS tagList p
-#' @importFrom bslib card layout_sidebar
+#' @importFrom bslib card layout_sidebar input_task_button
 #'
 mod_heatmap_ui <- function(id) {
   ns <- shiny::NS(id)
@@ -39,9 +39,10 @@ mod_heatmap_ui <- function(id) {
         shiny::uiOutput(
           outputId = ns("settingsHeatmap")
         ),
-        shiny::actionButton(
-          inputId = ns("hmGenerate"),
-          label = "Generate heatmap"
+        bslib::input_task_button(
+          id = ns("hmGenerate"),
+          label = "Generate heatmap",
+          label_busy = "Calculating heatmap..."
         ),
         shiny::actionButton(
           inputId = ns("hmComments"),
