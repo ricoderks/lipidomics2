@@ -145,12 +145,12 @@ if(general_settings$apply_trend_correction) {
 ```
 
 ```{r report-chapters, results='asis', echo=FALSE}
+# title is escaped and html is sanitized in prepare_report_chapters(), the
+# html is preserved so pandoc will not interpret it as markdown
 for(chapter in params$report_chapters) {
-  title <- if(is.null(chapter$title)) "" else trimws(chapter$title)
-  text <- if(is.null(chapter$text)) "" else chapter$text
-  if(title == "" && trimws(text) == "") next
-  if(title == "") title <- "Untitled chapter"
-  cat("# ", title, "\n\n", text, "\n\n", sep = "")
+  title <- if(chapter$title == "") "Untitled chapter" else chapter$title
+  cat("# ", title, "\n\n", sep = "")
+  cat(htmltools::htmlPreserve(chapter$html), "\n\n", sep = "")
 }
 ```
 

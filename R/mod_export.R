@@ -186,16 +186,18 @@ mod_export_server <- function(id, r) {
             analyses[[a]]$comments <- m$export()$comments
           }
 
+          report_title <- sanitize_report_title(input$export_analysis_title)
+
           params <- list(
-            title = ifelse(input$export_analysis_title == "",
+            title = ifelse(report_title == "",
                            "Analysis report",
-                           input$export_analysis_title),
+                           report_title),
             author = paste0("CPM - Lipidomics | v", utils::packageVersion("lipidomics2")),
             analyses = analyses,
             meta_data = r$tables$meta_data,
             general_settings = r$settings,
             columns = r$columns,
-            report_chapters = r$analysis$report_chapters
+            report_chapters = prepare_report_chapters(r$analysis$report_chapters)
           )
         }
 

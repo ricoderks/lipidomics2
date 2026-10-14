@@ -36,6 +36,7 @@ importFrom(bslib,
   sidebar,
   tooltip
 )
+importFrom(commonmark,markdown_html)
 importFrom(dplyr,
   arrange,
   filter,
