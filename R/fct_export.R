@@ -77,3 +77,164 @@ prepare_export_data <- function(meta_data = NULL,
 
   return(export)
 }
+
+
+#' @title Prepare the user written report chapters
+#'
+#' @description Prepare the user written chapters for the analysis report. The
+#'     title is escaped so pandoc shows it as literal text and the text is
+#'     converted from markdown to sanitized html. Chapters without title and
+#'     text are removed.
+#'
+#' @param chapters list with chapters, each a list with a title and text.
+#'
+#' @return list with chapters, each a list with a title (escaped markdown) and
+#'     html (character).
+#'
+#' @noRd
+#'
+#' @author Rico Derks
+#'
+prepare_report_chapters <- function(chapters = NULL) {
+  res <- lapply(chapters, function(chapter) {
+    title <- if(is.null(chapter$title)) "" else trimws(chapter$title)
+    text <- if(is.null(chapter$text)) "" else chapter$text
+
+    if(title == "" && trimws(text) == "") {
+      return(NULL)
+    }
+
+    list(
+      title = escape_markdown_text(title),
+      html = sanitize_markdown_html(text)
+    )
+  })
+
+  Filter(Negate(is.null), res)
+}
+
+
+#' @title Convert markdown to sanitized html
+#'
+#' @description Convert user written markdown to html. Raw html in the text is
+#'     escaped (shown as plain text) and only http(s), mailto, in-page and
+#'     relative links are allowed, so no javascript can end up in the report.
+#'
+#' @param text character(1), markdown text.
+#'
+#' @return character(1) with html.
+#'
+#' @noRd
+#'
+#' @importFrom commonmark markdown_html
+#'
+#' @author Rico Derks
+#'
+sanitize_markdown_html <- function(text = NULL) {
+  if(is.null(text) || length(text) == 0) {
+    return("")
+  }
+  text <- paste(text, collapse = "\n")
+
+  # escape raw html, without '<' no html tag can be opened
+  text <- gsub(pattern = "&", replacement = "&amp;", x = text, fixed = TRUE)
+  text <- gsub(pattern = "<", replacement = "&lt;", x = text, fixed = TRUE)
+
+  html <- commonmark::markdown_html(text = text,
+                                    extensions = TRUE)
+
+  # only allow safe urls in links and images
+  matches <- gregexpr(pattern = '(href|src)="[^"]*"',
+                      text = html,
+                      perl = TRUE)
+  regmatches(html, matches) <- lapply(regmatches(html, matches), function(attrs) {
+    vapply(attrs, function(attr) {
+      attr_name <- sub(pattern = "=.*$", replacement = "", x = attr)
+      url <- sub(pattern = '^[a-z]+="(.*)"$', replacement = "\\1", x = attr)
+      if(is_safe_url(url)) {
+        attr
+      } else {
+        paste0(attr_name, '="#"')
+      }
+    }, character(1), USE.NAMES = FALSE)
+  })
+
+  html
+}
+
+
+#' @title Check if an url is safe
+#'
+#' @description Only http(s), mailto, in-page and relative urls (without a
+#'     scheme) are considered safe.
+#'
+#' @param url character(1), the url.
+#'
+#' @return logical(1).
+#'
+#' @noRd
+#'
+#' @author Rico Derks
+#'
+is_safe_url <- function(url = NULL) {
+  grepl(pattern = "^(https?://|mailto:|#)",
+        x = url,
+        ignore.case = TRUE) ||
+    !grepl(pattern = ":",
+           x = url,
+           fixed = TRUE)
+}
+
+
+#' @title Escape markdown text
+#'
+#' @description Replace all ASCII punctuation characters by numeric html
+#'     entities so pandoc shows the text as literal text (no html, attributes,
+#'     math or formatting). Backslash escaping is not used, because pandoc
+#'     interprets for example '\(' as the start of math. Newlines are replaced
+#'     by a space.
+#'
+#' @param x character(1), text to escape.
+#'
+#' @return character(1), escaped text.
+#'
+#' @noRd
+#'
+#' @author Rico Derks
+#'
+escape_markdown_text <- function(x = NULL) {
+  x <- gsub(pattern = "[\r\n]+", replacement = " ", x = x)
+  chars <- strsplit(x = x, split = "")[[1]]
+  punct <- grepl(pattern = "^[!-/:-@\\[-`{-~]$",
+                 x = chars,
+                 perl = TRUE)
+  chars[punct] <- paste0("&#", vapply(chars[punct], utf8ToInt, integer(1)), ";")
+
+  paste(chars, collapse = "")
+}
+
+
+#' @title Sanitize the report title
+#'
+#' @description Only keep letters, digits, spaces and a few safe punctuation
+#'     characters, so the title is safe to use in the yaml header of the
+#'     report.
+#'
+#' @param x character(1), the title.
+#'
+#' @return character(1), the sanitized title.
+#'
+#' @noRd
+#'
+#' @author Rico Derks
+#'
+sanitize_report_title <- function(x = NULL) {
+  if(is.null(x) || length(x) == 0) {
+    return("")
+  }
+  x <- gsub(pattern = "[^\\p{L}\\p{N} .,:;()+/'-]",
+            replacement = "",
+            x = x,
+            perl = TRUE)
+  trimws(x)
+}
