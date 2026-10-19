@@ -90,3 +90,43 @@ test_that("prepare_export_data sorts lipids by class and long lipid name", {
   expect_equal(export$raw$LongLipidName,
                c(NA, "LPC 16:0", "PC 16:0_16:0", "PC 16:0_18:1"))
 })
+
+test_that("prepare_export_data adds the real raw data when trend corrected", {
+  meta_data <- data.frame(filename = c("s1", "s2"),
+                          group = c("A", "B"))
+  analysis_data <- data.frame(
+    my_id = rep(c("1", "2"), each = 2),
+    ShortLipidName = rep(c("LPC 16:0", "PC 34:1"), each = 2),
+    LongLipidName = rep(c("LPC 16:0", "PC 16:0_18:1"), each = 2),
+    Class = rep(c("LPC", "PC"), each = 2),
+    ion = "[M+H]+",
+    sample_name = rep(c("s1", "s2"), times = 2),
+    area = c(11, 12, 13, 14),
+    areaOriginal = c(1, 2, 3, 4),
+    totNormArea = c(0.1, 0.2, 0.3, 0.4),
+    keep = TRUE,
+    class_keep = TRUE
+  )
+
+  export <- prepare_export_data(meta_data = meta_data,
+                                analysis_data = analysis_data,
+                                filename_column = "filename",
+                                normalization = list(totNorm = TRUE),
+                                samples = c("s1", "s2"),
+                                trend_correction = TRUE)
+
+  expect_named(export, c("raw", "raw (trend corr.)", "totNorm (trend corr.)"))
+  expect_equal(export$raw$s1[-1], c("1", "3"))
+  expect_equal(export$`raw (trend corr.)`$s1[-1], c("11", "13"))
+  expect_equal(export$`totNorm (trend corr.)`$s2[-1], c("0.2", "0.4"))
+
+  export <- prepare_export_data(meta_data = meta_data,
+                                analysis_data = analysis_data,
+                                filename_column = "filename",
+                                normalization = list(totNorm = TRUE),
+                                samples = c("s1", "s2"),
+                                trend_correction = FALSE)
+
+  expect_named(export, c("raw", "totNorm"))
+  expect_equal(export$raw$s1[-1], c("11", "13"))
+})
