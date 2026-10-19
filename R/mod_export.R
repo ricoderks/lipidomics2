@@ -101,7 +101,8 @@ mod_export_server <- function(id, r) {
                                       blanks = r$index$selected_blanks,
                                       qcpools = r$index$selected_pools,
                                       samples = r$index$selected_samples,
-                                      normalization = r$analysis$normalization)
+                                      normalization = r$analysis$normalization,
+                                      trend_correction = r$settings$apply_trend_correction)
 
         openxlsx2::write_xlsx(x = export,
                               file = file,

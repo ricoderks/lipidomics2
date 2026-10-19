@@ -2,7 +2,9 @@
 #' @title Create the export data.frame
 #'
 #' @description Create the export data.frame. The lipids are sorted by lipid
-#'     class and long lipid name.
+#'     class and long lipid name. When trend correction is applied, an extra
+#'     sheet with the uncorrected raw data is added and all other sheet names
+#'     get '(trend corr.)' appended.
 #'
 #' @param meta_data data.frame with meta data.
 #' @param analysis_data data.frame with the analysis data to export.
@@ -11,12 +13,13 @@
 #' @param blanks character() with file names of the blanks.
 #' @param qcpools character() with the file names of the pooled samples.
 #' @param samples character() with the file names of the samples.
+#' @param trend_correction logical(1), is trend correction applied.
 #'
 #' @return list with data.frames with export data.
 #'
 #' @noRd
 #'
-#' @importFrom tidyr pivot_longer pivot_wider
+#' @importFrom tidyr pivot_longer pivot_wider all_of
 #'
 #' @author Rico Derks
 #'
@@ -26,7 +29,8 @@ prepare_export_data <- function(meta_data = NULL,
                                 normalization = NULL,
                                 blanks = NULL,
                                 qcpools = NULL,
-                                samples = NULL) {
+                                samples = NULL,
+                                trend_correction = FALSE) {
 
   normalization <- names(unlist(normalization)[unlist(normalization)])
   normalization <- c("raw", normalization)
@@ -38,8 +42,8 @@ prepare_export_data <- function(meta_data = NULL,
                                   index.return = TRUE)$ix, ]
 
   export_meta <- export_meta |>
-    tidyr::pivot_longer(cols = -filename_column) |>
-    tidyr::pivot_wider(names_from = filename_column,
+    tidyr::pivot_longer(cols = -tidyr::all_of(filename_column)) |>
+    tidyr::pivot_wider(names_from = tidyr::all_of(filename_column),
                        values_from = "value")
 
   meta_cols <- colnames(export_meta)
@@ -52,11 +56,9 @@ prepare_export_data <- function(meta_data = NULL,
                             check.names = FALSE)
   colnames(export_meta)[1] <- "my_id"
 
-  # analysis data
-  export <- vector(mode = "list", length = length(normalization))
-  names(export) <- normalization
-  for(norm in normalization) {
-    values_column <- switch(
+  # which column goes into which sheet
+  values_columns <- vapply(normalization, function(norm) {
+    switch(
       norm,
       "raw" = "area",
       "totNorm" = "totNormArea",
@@ -64,18 +66,33 @@ prepare_export_data <- function(meta_data = NULL,
       "protNorm" = "protNormArea",
       "cellNorm" = "cellNormArea"
     )
+  }, character(1))
+
+  if(isTRUE(trend_correction)) {
+    names(values_columns) <- paste(names(values_columns), "(trend corr.)")
+    # add the real raw data (older Rdata files don't have the original area)
+    if("areaOriginal" %in% colnames(analysis_data)) {
+      values_columns <- c("raw" = "areaOriginal", values_columns)
+    }
+  }
+
+  # analysis data
+  export <- vector(mode = "list", length = length(values_columns))
+  names(export) <- names(values_columns)
+  for(sheet in names(values_columns)) {
+    values_column <- values_columns[[sheet]]
     export_data <- analysis_data[analysis_data$keep == TRUE &
                                    analysis_data$class_keep == TRUE, ] |>
       tidyr::pivot_wider(
         id_cols = c("my_id", "ShortLipidName",  "LongLipidName", "Class", "ion"),
         names_from = "sample_name",
-        values_from = values_column
+        values_from = tidyr::all_of(values_column)
       )
     # sort the lipids by class and long lipid name
     export_data <- export_data[order(export_data$Class,
                                      export_data$LongLipidName), ]
 
-    export[[norm]] <- rbind.data.frame(export_meta,
+    export[[sheet]] <- rbind.data.frame(export_meta,
                                        export_data)
   }
 
