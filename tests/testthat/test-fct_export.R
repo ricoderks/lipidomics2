@@ -62,3 +62,31 @@ test_that("prepare_report_chapters drops empty chapters", {
                "Results &#40;part 1&#41;")
   expect_length(prepare_report_chapters(NULL), 0)
 })
+
+test_that("prepare_export_data sorts lipids by class and long lipid name", {
+  meta_data <- data.frame(filename = c("s2", "s1"),
+                          group = c("B", "A"))
+  analysis_data <- data.frame(
+    my_id = rep(c("1", "2", "3"), each = 2),
+    ShortLipidName = rep(c("PC 34:1", "LPC 16:0", "PC 32:0"), each = 2),
+    LongLipidName = rep(c("PC 16:0_18:1", "LPC 16:0", "PC 16:0_16:0"), each = 2),
+    Class = factor(rep(c("PC", "LPC", "PC"), each = 2),
+                   levels = c("LPC", "PC")),
+    ion = "[M+H]+",
+    sample_name = rep(c("s1", "s2"), times = 3),
+    area = 1:6,
+    keep = TRUE,
+    class_keep = TRUE
+  )
+
+  export <- prepare_export_data(meta_data = meta_data,
+                                analysis_data = analysis_data,
+                                filename_column = "filename",
+                                normalization = list(totNorm = FALSE),
+                                samples = c("s1", "s2"))
+
+  expect_named(export, "raw")
+  expect_equal(export$raw$my_id, c("group", "2", "3", "1"))
+  expect_equal(export$raw$LongLipidName,
+               c(NA, "LPC 16:0", "PC 16:0_16:0", "PC 16:0_18:1"))
+})

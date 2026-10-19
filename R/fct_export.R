@@ -1,7 +1,8 @@
 #' export
 #' @title Create the export data.frame
 #'
-#' @description Create the export data.frame.
+#' @description Create the export data.frame. The lipids are sorted by lipid
+#'     class and long lipid name.
 #'
 #' @param meta_data data.frame with meta data.
 #' @param analysis_data data.frame with the analysis data to export.
@@ -70,6 +71,9 @@ prepare_export_data <- function(meta_data = NULL,
         names_from = "sample_name",
         values_from = values_column
       )
+    # sort the lipids by class and long lipid name
+    export_data <- export_data[order(export_data$Class,
+                                     export_data$LongLipidName), ]
 
     export[[norm]] <- rbind.data.frame(export_meta,
                                        export_data)
