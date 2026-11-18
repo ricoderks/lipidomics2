@@ -1,3 +1,11 @@
 # lipidomics2 (development version)
 
+* Support the alignment export format of MS-DIAL >= 5.5.261105. The MS-DIAL
+  export format/version is detected automatically when uploading a file. For
+  MS-DIAL >= 5.5.261105 annotations are kept when the column *Evidence source*
+  is `RuleBased`. For older versions the *low score:* and
+  *no MS2:* prefixes in the metabolite name are still used. Uploading positive
+  and negative mode files from different MS-DIAL versions gives an error.
+* MS-DIAL >= 5.5.261105 only exports the long lipid name, the short lipid name
+  (e.g. PC 34:1) is now calculated from the long lipid name (e.g. PC 16:0_18:1).
 * Initial CRAN submission.
