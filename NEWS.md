@@ -6,4 +6,6 @@
   is `RuleBased`. For older versions the *low score:* and
   *no MS2:* prefixes in the metabolite name are still used. Uploading positive
   and negative mode files from different MS-DIAL versions gives an error.
+* MS-DIAL >= 5.5.261105 only exports the long lipid name, the short lipid name
+  (e.g. PC 34:1) is now calculated from the long lipid name (e.g. PC 16:0_18:1).
 * Initial CRAN submission.

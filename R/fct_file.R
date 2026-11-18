@@ -325,7 +325,10 @@ clean_up <- function(raw_data = NULL,
 #' @param data The tibble.
 #' @param omics character(1), lipidomics or metabolomics data
 #'
-#' @details Low quality annotations are removed. For MS-DIAL >= 5.5.261105 this
+#' @details For MS-DIAL >= 5.5.261105 the short lipid name is calculated from
+#'     the long lipid name with `long_to_short_name()`.
+#'
+#'     Low quality annotations are removed. For MS-DIAL >= 5.5.261105 this
 #'     is based on the column `EvidenceSource` (only the values in
 #'     `msdial_keep_evidence` are kept). For older versions this is based on
 #'     the prefixes 'no MS2:' and 'low score:' in the feature name.
@@ -344,7 +347,8 @@ select_identified <- function(data = NULL,
                               omics = c("lip", "met")) {
   # MS-DIAL >= 5.5.261105 has the evidence source, older versions use a prefix
   # in the feature name
-  if(!is.null(data$EvidenceSource) && any(!is.na(data$EvidenceSource))) {
+  new_format <- !is.null(data$EvidenceSource) && any(!is.na(data$EvidenceSource))
+  if(new_format) {
     keep_quality <- data$EvidenceSource %in% msdial_keep_evidence
   } else {
     keep_quality <- !grepl(x = data$FeatureName,
@@ -389,7 +393,20 @@ select_identified <- function(data = NULL,
 
   data <- switch(
     omics,
-    "lip" = {
+    "lip" = if(new_format) {
+      # MS-DIAL >= 5.5.261105 only exports the long lipid name
+      data |>
+        dplyr::mutate(
+          # calculate the short lipid name from the long lipid name
+          ShortLipidName = long_to_short_name(x = .data$FeatureName),
+          # make a copy of the ShortLipidName
+          orgShortLipidName = .data$ShortLipidName,
+          LongLipidName = .data$FeatureName,
+          class_ion = paste(.data$Class, .data$ion,
+                            sep = " - "),
+        )
+    } else {
+      # older versions export 'short lipid name|long lipid name'
       data |>
         dplyr::mutate(
           # get the short lipid name
@@ -412,6 +429,91 @@ select_identified <- function(data = NULL,
   )
 
   return(data)
+}
+
+
+#' @title Calculate the short lipid name from the long lipid name
+#'
+#' @description MS-DIAL >= 5.5.261105 only exports the long lipid name (e.g.
+#'     'PC 16:0_18:1'). Calculate the short lipid name (e.g. 'PC 34:1') from it.
+#'
+#' @param x character() vector with long lipid names.
+#'
+#' @details The rules follow the short names exported by older MS-DIAL versions:
+#'     * the carbons and double bonds of all chains are summed.
+#'     * an ether prefix (O- or P-) is kept.
+#'     * all oxygens (;O, ;On, (2OH), (3OH), etc.) are summed.
+#'     * an ester linked fatty acid after a chain, e.g. '(FA 16:0)', adds one
+#'       extra double bond and one extra oxygen. A leading '(FA x:y)' or
+#'       '(O-x:y)' only adds the chain.
+#'     * FAHFA classes (class name ending with 'HFA') get one extra double bond
+#'       and one extra oxygen.
+#'     * an isotope label, e.g. '(d7)', is kept.
+#'     * names without a chain separator, names without chains and sterol / bile
+#'       acid esters (SE, BA) are not changed.
+#'
+#' @return character() vector with short lipid names.
+#'
+#' @noRd
+#'
+#' @author Rico Derks
+#'
+long_to_short_name <- function(x = NULL) {
+  vapply(x, function(name) {
+    # nothing to calculate
+    if(is.na(name) ||
+       !grepl(x = name, pattern = "_|/|\\(FA |\\(O-") ||
+       !grepl(x = name, pattern = "[0-9]+:[0-9]+") ||
+       grepl(x = name, pattern = "^(SE|BA) ")) {
+      return(name)
+    }
+
+    head <- sub(pattern = " .*$", replacement = "", x = name)
+    rest <- sub(pattern = "^[^ ]+ ", replacement = "", x = name)
+
+    # ether lipids
+    ether <- regmatches(x = rest, m = regexpr(pattern = "^[OP]-", text = rest))
+    ether <- if(length(ether) == 0) "" else ether
+
+    # isotope label, e.g. (d7)
+    label <- regmatches(x = rest, m = regexpr(pattern = "\\(d[0-9]+\\)", text = rest))
+    label <- if(length(label) == 0) "" else label
+
+    # sum carbons and double bonds of all chains
+    chains <- regmatches(x = rest, m = gregexpr(pattern = "[0-9]+:[0-9]+", text = rest))[[1]]
+    carbons <- sum(as.integer(sub(pattern = ":.*", replacement = "", x = chains)))
+    double_bonds <- sum(as.integer(sub(pattern = ".*:", replacement = "", x = chains)))
+
+    # sum all oxygens
+    oxygens <- regmatches(x = rest, m = gregexpr(pattern = ";O[0-9]*", text = rest))[[1]]
+    oxygens <- sum(ifelse(oxygens == ";O",
+                          1L,
+                          suppressWarnings(as.integer(sub(pattern = ";O", replacement = "", x = oxygens)))))
+    oxygens <- oxygens + lengths(regmatches(x = rest,
+                                            m = gregexpr(pattern = "\\([0-9]+OH\\)", text = rest)))
+
+    # ester linked fatty acids, not the leading one (e.g. LPE-N (FA 18:1)18:1)
+    esters <- lengths(regmatches(x = rest,
+                                 m = gregexpr(pattern = "\\(FA [0-9]+:[0-9]+\\)", text = rest))) -
+      grepl(x = rest, pattern = "^\\(FA ")
+    if(grepl(x = head, pattern = "HFA$")) {
+      esters <- esters + 1L
+    }
+    double_bonds <- double_bonds + esters
+    oxygens <- oxygens + esters
+
+    oxygen_text <- if(oxygens == 1) {
+      ";O"
+    } else if(oxygens > 1) {
+      paste0(";O", oxygens)
+    } else {
+      ""
+    }
+
+    paste0(head, " ", ether, carbons, ":", double_bonds, oxygen_text, label)
+  },
+  character(1),
+  USE.NAMES = FALSE)
 }
 
 
