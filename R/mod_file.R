@@ -310,6 +310,13 @@ mod_file_server <- function(id, r){
         })
         r$files$data_file_pos <- input$rawdata_pos_file
         tmp <- read_msdial(filename = input$rawdata_pos_file$datapath)
+        r$files$msdial_format_pos <- detect_msdial_format(column_names = colnames(tmp))
+        shiny::showNotification(
+          ui = paste0("Positive mode file: ",
+                      msdial_format_label(format = r$files$msdial_format_pos),
+                      " format detected."),
+          type = "message"
+        )
         if(any(tmp$`Adduct type` == "[M+H]+")) {
           r$tables$raw_data_pos <- data.frame("polarity" = "pos",
                                               tmp,
@@ -354,6 +361,13 @@ mod_file_server <- function(id, r){
         })
         r$files$data_file_neg <- input$rawdata_neg_file
         tmp <- read_msdial(filename = input$rawdata_neg_file$datapath)
+        r$files$msdial_format_neg <- detect_msdial_format(column_names = colnames(tmp))
+        shiny::showNotification(
+          ui = paste0("Negative mode file: ",
+                      msdial_format_label(format = r$files$msdial_format_neg),
+                      " format detected."),
+          type = "message"
+        )
 
         if(any(tmp$`Adduct type` == "[M-H]-")) {
           r$tables$raw_data_neg <- data.frame("polarity" = "neg",
@@ -622,6 +636,20 @@ mod_file_server <- function(id, r){
 
         # is it neg or pos or both data
         if(!is.null(r$tables$raw_data_pos) & !is.null(r$tables$raw_data_neg)) {
+          if(length(input$raw_which_files) != 1 &&
+             !identical(r$files$msdial_format_pos, r$files$msdial_format_neg)) {
+            shiny::showNotification(
+              ui = paste0("Error: The positive (",
+                          msdial_format_label(format = r$files$msdial_format_pos),
+                          ") and negative (",
+                          msdial_format_label(format = r$files$msdial_format_neg),
+                          ") mode files are exported from different MS-DIAL versions!"),
+              type = "error",
+              duration = NULL
+            )
+            r$tables$raw_data <- NULL
+            return()
+          }
           print("Combine data")
           r$tables$raw_data <- rbind.data.frame(r$tables$raw_data_pos,
                                                 r$tables$raw_data_neg)
@@ -884,6 +912,8 @@ mod_file_server <- function(id, r){
       r$files$meta_file <- import_env$r$files$meta_file
       r$files$data_file_pos <- import_env$r$files$data_file_pos
       r$files$data_file_neg <- import_env$r$files$data_file_neg
+      r$files$msdial_format_pos <- import_env$r$files$msdial_format_pos
+      r$files$msdial_format_neg <- import_env$r$files$msdial_format_neg
       r$files$rda_file <- input$load_rdata$datapath
       selected_files <- ""
       if(!is.null(r$files$data_file_pos)) {

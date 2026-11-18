@@ -175,6 +175,8 @@ app_server <- function(input, output, session) {
       meta_file = NULL,
       data_file_pos = NULL,
       data_file_neg = NULL,
+      msdial_format_pos = NULL,
+      msdial_format_neg = NULL,
       rda_file = NULL
     ),
     columns = list(

@@ -1,3 +1,71 @@
+#' @title Evidence source values to keep
+#'
+#' @description Values of the column `Evidence source` (MS-DIAL >= 5.5.261105)
+#'     for which an annotation is kept.
+#'
+#' @noRd
+#'
+msdial_keep_evidence <- c("RuleBased")
+
+
+#' @title Detect the MS-DIAL export format
+#'
+#' @description Detect the format (version) of an MS-DIAL alignment export file
+#'     based on its column names.
+#'
+#' @param column_names character() vector with the column names.
+#'
+#' @return character(1), one of:
+#'     * "v4": MS-DIAL 4.x.
+#'     * "v5": MS-DIAL 5.x, older than 5.5.261105.
+#'     * "v5_evidence": MS-DIAL >= 5.5.261105, contains the column `Evidence source`.
+#'
+#' @noRd
+#'
+#' @author Rico Derks
+#'
+detect_msdial_format <- function(column_names = NULL) {
+  column_names <- trimws(column_names)
+
+  if("Evidence source" %in% column_names) {
+    format <- "v5_evidence"
+  } else if("Simple dot product" %in% column_names) {
+    format <- "v5"
+  } else {
+    format <- "v4"
+  }
+
+  return(format)
+}
+
+
+#' @title Label of the MS-DIAL export format
+#'
+#' @description Human readable label of the MS-DIAL export format.
+#'
+#' @param format character(1), output of `detect_msdial_format()`.
+#'
+#' @return character(1), label.
+#'
+#' @noRd
+#'
+#' @author Rico Derks
+#'
+msdial_format_label <- function(format = NULL) {
+  if(is.null(format)) {
+    return("unknown MS-DIAL version")
+  }
+
+  switch(
+    format,
+    "v4" = "MS-DIAL 4.x",
+    "v5" = "MS-DIAL 5.x (< 5.5.261105)",
+    "v5_evidence" = "MS-DIAL >= 5.5.261105 (with Evidence source)",
+    "unknown MS-DIAL version"
+  )
+}
+
+
 #' file
 #'
 #' @title Read MS-DIAl files
@@ -23,45 +91,60 @@ read_msdial <- function(filename = NULL) {
                                              show_col_types = FALSE,
                                              skip = 4))
 
-  if("Simple dot product" %in% column_names) {
-    # version > 5.1
+  format <- detect_msdial_format(column_names = column_names)
+
+  if(format %in% c("v5", "v5_evidence")) {
+    # version >= 5.1
+    col_types <- list(`Alignment ID` = readr::col_integer(),
+                      `Average Rt(min)` = readr::col_double(),
+                      `Average Mz` = readr::col_double(),
+                      `Metabolite name` = readr::col_character(),
+                      `Adduct type` = readr::col_character(),
+                      `Post curation result` = readr::col_character(),
+                      `Fill %` = readr::col_double(),
+                      `MS/MS assigned` = readr::col_character(),
+                      `Reference RT` = readr::col_character(),
+                      `Reference m/z` = readr::col_character(),
+                      Formula = readr::col_character(),
+                      Ontology = readr::col_character(),
+                      INCHIKEY = readr::col_character(),
+                      SMILES = readr::col_character(),
+                      `Annotation tag (VS1.0)` = readr::col_character(),
+                      `RT matched` = readr::col_character(),
+                      `m/z matched` = readr::col_character(),
+                      `MS/MS matched` = readr::col_character(),
+                      Comment = readr::col_character(),
+                      `Manually modified for quantification` = readr::col_character(),
+                      `Manually modified for annotation` = readr::col_character(),
+                      `Isotope tracking parent ID` = readr::col_character(),
+                      `Isotope tracking weight number` = readr::col_character(),
+                      `Total score` = readr::col_double(),
+                      `RT similarity` = readr::col_double(),
+                      `Simple dot product` = readr::col_double(),
+                      `Reverse dot product` = readr::col_double(),
+                      `Weighted dot product` = readr::col_double(),
+                      `Matched peaks percentage` = readr::col_double(),
+                      `S/N average` = readr::col_double(),
+                      `Spectrum reference file name` = readr::col_character(),
+                      `MS1 isotopic spectrum` = readr::col_character(),
+                      `MS/MS spectrum` = readr::col_character())
+
+    if(format == "v5_evidence") {
+      # version >= 5.5.261105, extra columns. Set the types explicitly, the
+      # first rows are often empty which would mess up the type guessing.
+      col_types <- c(col_types,
+                     list(`Measured terms` = readr::col_character(),
+                          `Evidence source` = readr::col_character(),
+                          `Candidates found` = readr::col_integer(),
+                          `Candidates above threshold` = readr::col_integer(),
+                          `Candidates reference matched` = readr::col_integer()))
+    }
+
     res <- readr::read_delim(file = filename,
                              delim ="\t",
                              na = c("", "NA", "null"),
                              show_col_types = FALSE,
-                             col_types = readr::cols(`Alignment ID` = readr::col_integer(),
-                                                     `Average Rt(min)` = readr::col_double(),
-                                                     `Average Mz` = readr::col_double(),
-                                                     `Metabolite name` = readr::col_character(),
-                                                     `Adduct type` = readr::col_character(),
-                                                     `Post curation result` = readr::col_character(),
-                                                     `Fill %` = readr::col_double(),
-                                                     `MS/MS assigned` = readr::col_character(),
-                                                     `Reference RT` = readr::col_character(),
-                                                     `Reference m/z` = readr::col_character(),
-                                                     Formula = readr::col_character(),
-                                                     Ontology = readr::col_character(),
-                                                     INCHIKEY = readr::col_character(),
-                                                     SMILES = readr::col_character(),
-                                                     `Annotation tag (VS1.0)` = readr::col_character(),
-                                                     `RT matched` = readr::col_character(),
-                                                     `m/z matched` = readr::col_character(),
-                                                     `MS/MS matched` = readr::col_character(),
-                                                     Comment = readr::col_character(),
-                                                     `Manually modified for quantification` = readr::col_character(),
-                                                     `Manually modified for annotation` = readr::col_character(),
-                                                     `Isotope tracking parent ID` = readr::col_character(),
-                                                     `Isotope tracking weight number` = readr::col_character(),
-                                                     `Total score` = readr::col_double(),
-                                                     `RT similarity` = readr::col_double(),
-                                                     `Simple dot product` = readr::col_double(),
-                                                     `Reverse dot product` = readr::col_double(),
-                                                     `Weighted dot product` = readr::col_double(),
-                                                     `Matched peaks percentage` = readr::col_double(),
-                                                     `S/N average` = readr::col_double(),
-                                                     `Spectrum reference file name` = readr::col_character(),
-                                                     `MS1 isotopic spectrum` = readr::col_character(),
-                                                     `MS/MS spectrum` = readr::col_character()),
+                             col_types = do.call(readr::cols, col_types),
                              skip = 4)
   } else {
     # version 4.x
@@ -165,9 +248,18 @@ clean_up <- function(raw_data = NULL,
                      samples = NULL) {
   # remove spaces at the front or at the back of the column name
   colnames(raw_data) <- trimws(colnames(raw_data))
-  column_names <- colnames(raw_data)
+  format <- detect_msdial_format(column_names = colnames(raw_data))
 
-  if("Simple dot product" %in% column_names) {
+  # MS-DIAL >= 5.5.261105 contains the column 'Evidence source', for older
+  # versions add an empty column so the output is the same for all versions
+  if(format == "v5_evidence") {
+    raw_data <- raw_data |>
+      dplyr::rename(EvidenceSource = .data$`Evidence source`)
+  } else {
+    raw_data$EvidenceSource <- NA_character_
+  }
+
+  if(format %in% c("v5", "v5_evidence")) {
     # version > 5.1
     # rename some columns in the data frame for ease of access later on.
     raw_data <- raw_data |>
@@ -193,6 +285,7 @@ clean_up <- function(raw_data = NULL,
       dplyr::select(.data$my_id, .data$AlignmentID, .data$AverageRT, .data$AverageMZ, .data$ion, .data$FeatureName, .data$Class,
                     .data$DotProduct, .data$scale_DotProduct, .data$RevDotProduct, .data$scale_RevDotProduct,
                     .data$FragPresence, .data$TotalScore, .data$polarity, .data$MSMSspectrum,
+                    .data$EvidenceSource,
                     tidyselect::contains(c(blanks, pools, samples)))
   } else {
     # version 4.x
@@ -218,6 +311,7 @@ clean_up <- function(raw_data = NULL,
       dplyr::select(.data$my_id, .data$AlignmentID, .data$AverageRT, .data$AverageMZ, .data$ion, .data$FeatureName, .data$Class,
                     .data$DotProduct, .data$scale_DotProduct, .data$RevDotProduct, .data$scale_RevDotProduct,
                     .data$FragPresence, .data$TotalScore, .data$polarity, .data$MSMSspectrum,
+                    .data$EvidenceSource,
                     tidyselect::contains(c(blanks, pools, samples)))
   }
   return(raw_data)
@@ -231,6 +325,11 @@ clean_up <- function(raw_data = NULL,
 #' @param data The tibble.
 #' @param omics character(1), lipidomics or metabolomics data
 #'
+#' @details Low quality annotations are removed. For MS-DIAL >= 5.5.261105 this
+#'     is based on the column `EvidenceSource` (only the values in
+#'     `msdial_keep_evidence` are kept). For older versions this is based on
+#'     the prefixes 'no MS2:' and 'low score:' in the feature name.
+#'
 #' @return Returns a tibble
 #'
 #' @importFrom dplyr filter arrange mutate
@@ -243,6 +342,17 @@ clean_up <- function(raw_data = NULL,
 #'
 select_identified <- function(data = NULL,
                               omics = c("lip", "met")) {
+  # MS-DIAL >= 5.5.261105 has the evidence source, older versions use a prefix
+  # in the feature name
+  if(!is.null(data$EvidenceSource) && any(!is.na(data$EvidenceSource))) {
+    keep_quality <- data$EvidenceSource %in% msdial_keep_evidence
+  } else {
+    keep_quality <- !grepl(x = data$FeatureName,
+                           pattern = "(no MS2.*|low score.*)")
+  }
+
+  data <- data[keep_quality, ]
+
   # rename some columns in the data frame for ease of access later on.
   data <- data |>
     dplyr::filter(.data$FeatureName != "Unknown",
@@ -251,9 +361,7 @@ select_identified <- function(data = NULL,
                   !grepl(x = .data$FeatureName,
                          pattern = "w/o .*"),
                   !grepl(x = .data$FeatureName,
-                         pattern = "RIKEN"),
-                  !grepl(x = .data$FeatureName,
-                         pattern = "(no MS2.*|low score.*)")) |>
+                         pattern = "RIKEN")) |>
     dplyr::arrange(.data$Class, .data$FeatureName, .data$polarity) |>
     # add some extra columns
     dplyr::mutate(
